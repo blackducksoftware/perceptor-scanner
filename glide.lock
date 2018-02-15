@@ -1,18 +1,16 @@
-hash: 5930784ddd7e3a932e1f9388150ecf34d16810eea5303a0e50d34fcccf5537d4
-updated: 2018-02-15T15:03:05.92281029-05:00
+hash: 472295100d362a3cb1fa4c6c458a0768f7311a7f9cdbad87f9b12e56dea95955
+updated: 2018-02-15T15:49:39.998900654-05:00
 imports:
 - name: github.com/beorn7/perks
   version: 4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9
   subpackages:
   - quantile
 - name: github.com/blackducksoftware/perceptor
-  version: 0dcc8498c4eda91933e77eb3e24ced0df4420e60
+  version: 10e7e1dfe9e9a09c29b9bd52d929efee93fc07e6
   repo: git@github.com:blackducksoftware/perceptor.git
   vcs: git
   subpackages:
   - pkg/api
-  - pkg/docker
-  - pkg/scanner
 - name: github.com/fsnotify/fsnotify
   version: 629574ca2a5df945712d3079857300b5e4da0236
 - name: github.com/golang/protobuf
