@@ -31,6 +31,8 @@ import (
 	"os"
 	"time"
 
+	b64 "encoding/base64"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -41,15 +43,17 @@ const (
 type ImagePuller struct {
 	rootTarballDir string
 	client         *http.Client
+	dockerUser     string
+	dockerPassword string
 }
 
-func NewImagePuller() *ImagePuller {
+func NewImagePuller(dockerUser string, dockerPassword string) *ImagePuller {
 	fd := func(proto, addr string) (conn net.Conn, err error) {
 		return net.Dial("unix", dockerSocketPath)
 	}
 	tr := &http.Transport{Dial: fd}
 	client := &http.Client{Transport: tr}
-	return &ImagePuller{rootTarballDir: "./tmp", client: client}
+	return &ImagePuller{rootTarballDir: "./tmp", client: client, dockerUser: dockerUser, dockerPassword: dockerPassword}
 }
 
 // PullImage gives us access to a docker image by:
@@ -100,7 +104,20 @@ func (ip *ImagePuller) createImageInLocalDocker(image Image) (*time.Duration, er
 	start := time.Now()
 	imageURL := createURL(image)
 	log.Infof("Attempting to create %s ......", imageURL)
-	resp, err := ip.client.Post(imageURL, "", nil)
+	req, err := http.NewRequest("POST", imageURL, nil)
+	if err != nil {
+		log.Errorf("unable to create POST request for image %s: %s", imageURL, err.Error())
+		return nil, err
+	}
+
+	// TODO if the image *isn't* from the local registry, then don't do this header stuff
+
+	data := fmt.Sprintf(`{"username":"%s", "password":"%s"}`, ip.dockerUser, ip.dockerPassword)
+	auth := b64.StdEncoding.EncodeToString([]byte(data))
+	req.Header.Set("X-Registry-Auth", auth)
+
+	resp, err := ip.client.Do(req)
+	//	resp, err := ip.client.Post(imageURL, "", nil)
 	if err != nil {
 		log.Errorf("Create failed for image %s: %s", imageURL, err.Error())
 		return nil, err

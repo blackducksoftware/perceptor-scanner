@@ -30,6 +30,7 @@ import (
 
 	pdocker "github.com/blackducksoftware/perceptor-scanner/pkg/docker"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 func main() {
@@ -37,7 +38,12 @@ func main() {
 }
 
 func setupHTTPServer() {
-	imagePuller := pdocker.NewImagePuller()
+	config, err := GetConfig()
+	if err != nil {
+		log.Errorf("unable to read config: %s", err.Error())
+		panic(err)
+	}
+	imagePuller := pdocker.NewImagePuller(config.DockerUser, config.DockerPassword)
 	results := []pdocker.ImagePullStats{}
 	http.HandleFunc("/pull", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -103,4 +109,28 @@ func (image *Image) DockerPullSpec() string {
 
 func (image *Image) DockerTarFilePath() string {
 	return strings.Replace(image.PullSpec, "/", "_", -1)
+}
+
+type Config struct {
+	DockerUser     string
+	DockerPassword string
+}
+
+func GetConfig() (*Config, error) {
+	var config *Config
+
+	viper.SetConfigName("imagefacadewebserver_conf")
+	viper.AddConfigPath("/etc/imagefacadewebserver")
+
+	err := viper.ReadInConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read config file: %v", err)
+	}
+
+	err = viper.Unmarshal(&config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal config: %v", err)
+	}
+
+	return config, nil
 }
