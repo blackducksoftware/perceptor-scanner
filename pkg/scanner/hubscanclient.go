@@ -43,9 +43,10 @@ type HubScanClient struct {
 // a HubScanClient.
 func NewHubScanClient(host string, username string, password string, imagePuller pdocker.ImagePullerInterface) (*HubScanClient, error) {
 	hsc := HubScanClient{
-		host:     host,
-		username: username,
-		password: password}
+		host:        host,
+		username:    username,
+		password:    password,
+		imagePuller: imagePuller}
 	return &hsc, nil
 }
 
