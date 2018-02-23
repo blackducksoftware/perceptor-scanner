@@ -43,6 +43,7 @@ func setupHTTPServer() {
 		log.Errorf("unable to read config: %s", err.Error())
 		panic(err)
 	}
+	log.Infof("got config: %+v", config)
 	imagePuller := pdocker.NewImagePuller(config.DockerUser, config.DockerPassword)
 	results := []pdocker.ImagePullStats{}
 	http.HandleFunc("/pull", func(w http.ResponseWriter, r *http.Request) {
