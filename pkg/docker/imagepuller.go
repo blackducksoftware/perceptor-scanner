@@ -38,6 +38,9 @@ import (
 
 const (
 	dockerSocketPath = "/var/run/docker.sock"
+
+	createStage = "create docker image"
+	getStage    = "get docker image"
 )
 
 type ImagePuller struct {
@@ -61,37 +64,26 @@ func NewImagePuller(dockerUser string, dockerPassword string) *ImagePuller {
 //   2. pulling down the newly created image and saving as a tarball
 // It does this by accessing the host's docker daemon, locally, over the docker
 // socket.  This gives us a window into any images that are local.
-func (ip *ImagePuller) PullImage(image Image) ImagePullStats {
-	stats := ImagePullStats{}
+func (ip *ImagePuller) PullImage(image Image) error {
 	start := time.Now()
 
-	createDuration, err := ip.createImageInLocalDocker(image)
-	if createDuration != nil {
-		stats.CreateDuration = createDuration
-	}
+	err := ip.createImageInLocalDocker(image)
 	if err != nil {
-		stats.Err = &ImagePullError{Code: ErrorTypeUnableToCreateImage, RootCause: err}
-		return stats
+		log.Errorf("unable to continue processing image %s: %s", image.DockerPullSpec(), err.Error())
+		return err
 	}
 	log.Infof("Processing image: %s", image.DockerPullSpec())
 
-	startSave := time.Now()
-	fileSize, pullError := ip.saveImageToTar(image)
-	saveDuration := time.Now().Sub(startSave)
-	stats.SaveDuration = &saveDuration
-	if pullError != nil {
-		log.Errorf("save image %+v to tar failed: %s", image, pullError.Error())
-		stats.Err = pullError
-		return stats
+	err = ip.saveImageToTar(image)
+	if err != nil {
+		log.Errorf("unable to continue processing image %s: %s", image.DockerPullSpec(), err.Error())
+		return err
 	}
 
-	stop := time.Now()
+	recordDockerTotalDuration(time.Now().Sub(start))
 
 	log.Infof("Ready to scan image %s at path %s", image.DockerPullSpec(), image.DockerTarFilePath())
-	duration := stop.Sub(start)
-	stats.TotalDuration = &duration
-	stats.TarFileSizeMBs = fileSize
-	return stats
+	return nil
 }
 
 // createImageInLocalDocker could also be implemented using curl:
@@ -100,14 +92,15 @@ func (ip *ImagePuller) PullImage(image Image) ImagePullStats {
 // this example hits the kipp registry:
 //   curl --unix-socket /var/run/docker.sock -X POST http://localhost/images/create\?fromImage\=registry.kipp.blackducksoftware.com%2Fblackducksoftware%2Fhub-jobrunner%3A4.5.0
 //
-func (ip *ImagePuller) createImageInLocalDocker(image Image) (*time.Duration, error) {
+func (ip *ImagePuller) createImageInLocalDocker(image Image) error {
 	start := time.Now()
 	imageURL := createURL(image)
 	log.Infof("Attempting to create %s ......", imageURL)
 	req, err := http.NewRequest("POST", imageURL, nil)
 	if err != nil {
 		log.Errorf("unable to create POST request for image %s: %s", imageURL, err.Error())
-		return nil, err
+		recordDockerError(createStage, "unable to create POST request", image, err)
+		return err
 	}
 
 	// TODO if the image *isn't* from the local registry, then don't do this header stuff
@@ -117,39 +110,48 @@ func (ip *ImagePuller) createImageInLocalDocker(image Image) (*time.Duration, er
 	req.Header.Set("X-Registry-Auth", auth)
 
 	resp, err := ip.client.Do(req)
-	//	resp, err := ip.client.Post(imageURL, "", nil)
 	if err != nil {
 		log.Errorf("Create failed for image %s: %s", imageURL, err.Error())
-		return nil, err
+		recordDockerError(createStage, "POST request failed", image, err)
+		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		message := fmt.Sprintf("Create may have failed for %s: status code %d, response %+v", imageURL, resp.StatusCode, resp)
 		log.Errorf(message)
-		return nil, errors.New(message)
+		recordDockerError(createStage, "POST request failed", image, err)
+		return errors.New(message)
 	}
 
 	_, err = ioutil.ReadAll(resp.Body)
-	duration := time.Now().Sub(start)
-	return &duration, err
+	if err != nil {
+		recordDockerError(createStage, "unable to read POST response body", image, err)
+		log.Errorf("unable to read response body for %s: %s", imageURL, err.Error())
+	}
+
+	recordDockerGetDuration(time.Now().Sub(start))
+
+	return err
 }
 
 // saveImageToTar: part of what it does is to issue an http request similar to the following:
 //   curl --unix-socket /var/run/docker.sock -X GET http://localhost/images/openshift%2Forigin-docker-registry%3Av3.6.1/get
-func (ip *ImagePuller) saveImageToTar(image Image) (*int, *ImagePullError) {
+func (ip *ImagePuller) saveImageToTar(image Image) error {
+	start := time.Now()
 	url := getURL(image)
-	log.Infof("Making http request: [%s]", url)
+	log.Infof("Making HTTP GET image request: %s", url)
 	resp, err := ip.client.Get(url)
 	if err != nil {
-		return nil, &ImagePullError{Code: ErrorTypeUnableToGetImage, RootCause: err}
+		recordDockerError(getStage, "GET request failed", image, err)
+		return err
 	} else if resp.StatusCode != http.StatusOK {
-		return nil, &ImagePullError{
-			Code:      ErrorTypeBadStatusCodeFromGetImage,
-			RootCause: fmt.Errorf("HTTP ERROR: received status != 200 from %s: %s", url, resp.Status)}
+		err = fmt.Errorf("HTTP ERROR: received status != 200 from %s: %s", url, resp.Status)
+		recordDockerError(getStage, "GET request failed", image, err)
+		return err
 	}
 
-	log.Infof("GET request for %s successful", url)
+	log.Infof("GET request for image %s successful", url)
 
 	body := resp.Body
 	defer func() {
@@ -163,11 +165,15 @@ func (ip *ImagePuller) saveImageToTar(image Image) (*int, *ImagePullError) {
 
 	f, err := os.OpenFile(tarFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777)
 	if err != nil {
-		return nil, &ImagePullError{Code: ErrorTypeUnableToCreateTarFile, RootCause: err}
+		recordDockerError(getStage, "unable to create tar file", image, err)
+		return err
 	}
 	if _, err = io.Copy(f, body); err != nil {
-		return nil, &ImagePullError{Code: ErrorTypeUnableToCopyTarFile, RootCause: err}
+		recordDockerError(getStage, "unable to copy tar file", image, err)
+		return err
 	}
+
+	recordDockerGetDuration(time.Now().Sub(start))
 
 	// What's the right way to get the size of the file?
 	//  1. resp.ContentLength
@@ -176,10 +182,12 @@ func (ip *ImagePuller) saveImageToTar(image Image) (*int, *ImagePullError) {
 	stats, err := os.Stat(tarFilePath)
 
 	if err != nil {
-		return nil, &ImagePullError{Code: ErrorTypeUnableToGetFileStats, RootCause: err}
+		recordDockerError(getStage, "unable to get tar file stats", image, err)
+		return err
 	}
 
 	fileSizeInMBs := int(stats.Size() / (1024 * 1024))
+	recordTarFileSize(fileSizeInMBs)
 
-	return &fileSizeInMBs, nil
+	return nil
 }

@@ -60,17 +60,20 @@ func mapKeys(m map[string]ScanJob) []string {
 	return keys
 }
 
-func (hsc *HubScanClient) Scan(job ScanJob) ScanClientJobResults {
+func (hsc *HubScanClient) Scan(job ScanJob) error {
 	startTotal := time.Now()
-	results := ScanClientJobResults{}
-	pullStats := hsc.imagePuller.PullImage(job)
-	results.DockerStats = pullStats
+	err := hsc.imagePuller.PullImage(job)
+
 	defer cleanUpTarFile(job.DockerTarFilePath())
-	if pullStats.Err != nil {
-		results.Err = &ScanError{Code: ErrorTypeUnableToPullDockerImage, RootCause: pullStats.Err}
-		log.Errorf("unable to pull docker image %s: %s", job.Sha, pullStats.Err.Error())
-		return results
+
+	if err != nil {
+		// TODO do we even need to add this metric?  since the errors should already
+		//   have been reported in the docker package
+		// recordError("docker image pull and tar file creation", errorName)
+		log.Errorf("unable to pull docker image %s: %s", job.PullSpec, err.Error())
+		return err
 	}
+
 	// TODO coupla problems here:
 	//   1. hardcoded path
 	//   2. hardcoded version number
@@ -95,21 +98,21 @@ func (hsc *HubScanClient) Scan(job ScanJob) ScanClientJobResults {
 		"--insecure", // TODO not sure about this
 		"-v",
 		path)
+
 	log.Infof("running command %+v for image %s\n", cmd, job.Sha)
 	startScanClient := time.Now()
 	stdoutStderr, err := cmd.CombinedOutput()
-	stopScanClient := time.Now()
-	scanClientDuration := stopScanClient.Sub(startScanClient)
-	results.ScanClientDuration = &scanClientDuration
-	totalDuration := time.Now().Sub(startTotal)
-	results.TotalDuration = &totalDuration
+
+	recordScanClientDuration(time.Now().Sub(startScanClient), err == nil)
+	recordTotalScannerDuration(time.Now().Sub(startTotal), err == nil)
+
 	if err != nil {
-		results.Err = &ScanError{Code: ErrorTypeFailedToRunJavaScanner, RootCause: err}
-		log.Errorf("java scanner failed for image %s with output:\n%s\n", job.Sha, string(stdoutStderr))
-		return results
+		recordError("scan client failed")
+		log.Errorf("java scanner failed for image %s with error %s and output:\n%s\n", job.Sha, err.Error(), string(stdoutStderr))
+		return err
 	}
 	log.Infof("successfully completed java scanner for image %s: %s", job.Sha, stdoutStderr)
-	return results
+	return err
 }
 
 // func (hsc *HubScanClient) ScanCliSh(job ScanJob) error {
@@ -156,6 +159,7 @@ func (hsc *HubScanClient) Scan(job ScanJob) ScanClientJobResults {
 
 func cleanUpTarFile(path string) {
 	err := os.Remove(path)
+	recordCleanUpTarFile(err == nil)
 	if err != nil {
 		log.Errorf("unable to remove file %s: %s", path, err.Error())
 	} else {
