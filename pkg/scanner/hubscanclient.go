@@ -36,17 +36,17 @@ type HubScanClient struct {
 	host        string
 	username    string
 	password    string
-	imagePuller *pdocker.ImagePuller
+	imagePuller pdocker.ImagePullerInterface
 }
 
 // NewHubScanClient requires login credentials in order to instantiate
 // a HubScanClient.
-func NewHubScanClient(host string, username string, password string) (*HubScanClient, error) {
+func NewHubScanClient(host string, username string, password string, imagePuller pdocker.ImagePullerInterface) (*HubScanClient, error) {
 	hsc := HubScanClient{
 		host:        host,
 		username:    username,
 		password:    password,
-		imagePuller: pdocker.NewImagePuller()}
+		imagePuller: imagePuller}
 	return &hsc, nil
 }
 

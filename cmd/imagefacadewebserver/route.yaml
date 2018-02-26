@@ -4,7 +4,7 @@ metadata:
   name: if-route
   namespace: bds-perceptor
 spec:
-  host: if-bds-perceptor.34.227.56.110.xip.io
+  host: if-bds-perceptor.54.67.89.98.xip.io
   to:
     kind: Service
     name: if

@@ -30,6 +30,7 @@ import (
 	"os"
 	"time"
 
+	pdocker "github.com/blackducksoftware/perceptor-scanner/pkg/docker"
 	"github.com/blackducksoftware/perceptor/pkg/api"
 	log "github.com/sirupsen/logrus"
 )
@@ -52,12 +53,13 @@ type Scanner struct {
 	httpStats      chan HttpResult
 }
 
-func NewScanner(hubHost string, hubUser string, hubPassword string) (*Scanner, error) {
+func NewScanner(hubHost string, hubUser string, hubPassword string, dockerUser string, dockerPassword string) (*Scanner, error) {
 	os.Setenv("BD_HUB_PASSWORD", hubPassword)
 
 	log.Infof("instantiating scanner with hub %s, user %s", hubHost, hubUser)
 
-	scanClient, err := NewHubScanClient(hubHost, hubUser, hubPassword)
+	imagePuller := pdocker.NewImagePuller(dockerUser, dockerPassword)
+	scanClient, err := NewHubScanClient(hubHost, hubUser, hubPassword, imagePuller)
 	if err != nil {
 		log.Errorf("unable to instantiate hub scan client: %s", err.Error())
 		return nil, err
