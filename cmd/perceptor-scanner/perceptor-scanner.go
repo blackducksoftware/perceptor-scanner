@@ -23,9 +23,7 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 	"net/http"
-	"os"
 
 	"github.com/blackducksoftware/perceptor-scanner/pkg/scanner"
 	"github.com/blackducksoftware/perceptor/pkg/api"
@@ -62,12 +60,6 @@ func main() {
 
 	log.Info("successfully instantiated scanner: %s", scannerManager)
 
-	hostName, err := os.Hostname()
-	if err != nil {
-		log.Errorf("unable to get hostname: %s", err.Error())
-		hostName = fmt.Sprintf("%d", rand.Int())
-	}
-	log.Infof("using hostName %s", hostName)
 	http.Handle("/metrics", prometheus.Handler())
 
 	addr := fmt.Sprintf(":%s", api.PerceptorScannerPort)
