@@ -47,10 +47,8 @@ import (
 // number of times asked for a job and didn't get one
 
 type Scanner struct {
-	scanClient     ScanClientInterface
-	httpClient     *http.Client
-	imageScanStats chan ScanClientJobResults
-	httpStats      chan HttpResult
+	scanClient ScanClientInterface
+	httpClient *http.Client
 }
 
 func NewScanner(hubHost string, hubUser string, hubPassword string, dockerUser string, dockerPassword string) (*Scanner, error) {
@@ -68,22 +66,12 @@ func NewScanner(hubHost string, hubUser string, hubPassword string, dockerUser s
 	httpClient := &http.Client{Timeout: 5 * time.Second}
 
 	scanner := Scanner{
-		scanClient:     scanClient,
-		httpClient:     httpClient,
-		imageScanStats: make(chan ScanClientJobResults),
-		httpStats:      make(chan HttpResult)}
+		scanClient: scanClient,
+		httpClient: httpClient}
 
 	scanner.startRequestingScanJobs()
 
 	return &scanner, nil
-}
-
-func (scanner *Scanner) ImageScanStats() <-chan ScanClientJobResults {
-	return scanner.imageScanStats
-}
-
-func (scanner *Scanner) HttpStats() <-chan HttpResult {
-	return scanner.httpStats
 }
 
 func (scanner *Scanner) startRequestingScanJobs() {
@@ -107,15 +95,16 @@ func (scanner *Scanner) requestAndRunScanJob() {
 		log.Info("requested scan job, got nil")
 		return
 	}
+
 	job := NewScanJob(image.PullSpec, image.Sha, image.HubProjectName, image.HubProjectVersionName, image.HubScanName)
-	scanResults := scanner.scanClient.Scan(*job)
-	scanner.imageScanStats <- scanResults
+	err = scanner.scanClient.Scan(*job)
 	errorString := ""
-	if scanResults.Err != nil {
-		errorString = scanResults.Err.Error()
+	if err != nil {
+		errorString = err.Error()
 	}
+
 	finishedJob := api.FinishedScanClientJob{Err: errorString, Sha: job.Sha}
-	log.Infof("about to finish job, going to send over %v", finishedJob)
+	log.Infof("about to finish job, going to send over %+v", finishedJob)
 	err = scanner.finishScan(finishedJob)
 	if err != nil {
 		log.Errorf("unable to finish scan job: %s", err.Error())
@@ -125,24 +114,28 @@ func (scanner *Scanner) requestAndRunScanJob() {
 func (scanner *Scanner) requestScanJob() (*api.ImageSpec, error) {
 	nextImageURL := fmt.Sprintf("%s:%s/%s", api.PerceptorBaseURL, api.PerceptorPort, api.NextImagePath)
 	resp, err := scanner.httpClient.Post(nextImageURL, "", bytes.NewBuffer([]byte{}))
-	if resp != nil {
-		scanner.httpStats <- HttpResult{Path: PathGetNextImage, StatusCode: resp.StatusCode}
-	} else {
-		// let's just assume this is due to something we did wrong
-		scanner.httpStats <- HttpResult{Path: PathGetNextImage, StatusCode: 500}
-	}
+
 	if err != nil {
+		if resp != nil {
+			log.Errorf("wow, something really weird happened -- check your understanding of golang's http library")
+		}
+		recordError("unable to POST get next image")
 		log.Errorf("unable to POST to %s: %s", nextImageURL, err.Error())
 		return nil, err
 	}
+
+	recordHttpStats(api.NextImagePath, resp.StatusCode)
+
 	if resp.StatusCode != 200 {
 		err = fmt.Errorf("http POST request to %s failed with status code %d", nextImageURL, resp.StatusCode)
 		log.Error(err.Error())
 		return nil, err
 	}
+
 	defer resp.Body.Close()
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		recordError("unable to read response body")
 		log.Errorf("unable to read response body from %s: %s", nextImageURL, err.Error())
 		return nil, err
 	}
@@ -150,6 +143,7 @@ func (scanner *Scanner) requestScanJob() (*api.ImageSpec, error) {
 	var nextImage api.NextImage
 	err = json.Unmarshal(bodyBytes, &nextImage)
 	if err != nil {
+		recordError("unmarshaling JSON body failed")
 		log.Errorf("unmarshaling JSON body bytes %s failed for URL %s: %s", string(bodyBytes), nextImageURL, err.Error())
 		return nil, err
 	}
@@ -166,24 +160,23 @@ func (scanner *Scanner) finishScan(results api.FinishedScanClientJob) error {
 	finishedScanURL := fmt.Sprintf("%s:%s/%s", api.PerceptorBaseURL, api.PerceptorPort, api.FinishedScanPath)
 	jsonBytes, err := json.Marshal(results)
 	if err != nil {
+		recordError("unable to marshal json for finished job")
 		log.Errorf("unable to marshal json for finished job: %s", err.Error())
 		return err
 	}
+
 	log.Infof("about to send over json text for finishing a job: %s", string(jsonBytes))
 	// TODO change to exponential backoff or something ... but don't loop indefinitely in production
 	for {
 		resp, err := scanner.httpClient.Post(finishedScanURL, "application/json", bytes.NewBuffer(jsonBytes))
-		if resp != nil {
-			scanner.httpStats <- HttpResult{Path: PathPostScanResults, StatusCode: resp.StatusCode}
-		} else {
-			// TODO this error may mean that we weren't even able to issue the request
-			// ... so what should we use for the status code?
-			scanner.httpStats <- HttpResult{Path: PathPostScanResults, StatusCode: 0}
-		}
 		if err != nil {
+			recordError("unable to POST finished job")
 			log.Errorf("unable to POST to %s: %s", finishedScanURL, err.Error())
 			continue
 		}
+
+		recordHttpStats(api.FinishedScanPath, resp.StatusCode)
+
 		defer resp.Body.Close()
 		if resp.StatusCode != 200 {
 			log.Errorf("POST to %s failed with status code %d", finishedScanURL, resp.StatusCode)

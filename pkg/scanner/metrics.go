@@ -23,115 +23,53 @@ package scanner
 
 import (
 	"fmt"
-	"net/http"
-	"os"
+	"time"
 
-	"github.com/blackducksoftware/perceptor-scanner/pkg/docker"
+	"github.com/blackducksoftware/perceptor-scanner/pkg/common"
 	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
 )
 
-// ScannerMetricsHandler handles http requests to get prometheus metrics
-// for image scanning
-func ScannerMetricsHandler(hostName string, imageScanStats <-chan ScanClientJobResults, httpStats <-chan HttpResult) http.Handler {
-	prometheus.Unregister(prometheus.NewProcessCollector(os.Getpid(), ""))
-	prometheus.Unregister(prometheus.NewGoCollector())
+var httpResults *prometheus.CounterVec
 
-	tarballSize := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Namespace:   "perceptor",
-			Subsystem:   "scanner",
-			Name:        "tarballsize",
-			Help:        "tarball file size in MBs",
-			Buckets:     prometheus.ExponentialBuckets(1, 2, 15),
-			ConstLabels: map[string]string{"hostName": hostName},
-		},
-		[]string{"tarballSize"})
+func recordHttpStats(path string, statusCode int) {
+	httpResults.With(prometheus.Labels{"path": path, "code": fmt.Sprintf("%d", statusCode)}).Inc()
+}
 
-	durations := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Namespace:   "perceptor",
-			Subsystem:   "scanner",
-			Name:        "timings",
-			Help:        "time durations of scanner operations",
-			Buckets:     prometheus.ExponentialBuckets(0.25, 2, 20),
-			ConstLabels: map[string]string{"hostName": hostName},
-		},
-		[]string{"stage"})
+func recordScanClientDuration(duration time.Duration, isSuccess bool) {
+	operation := "scan client success"
+	if !isSuccess {
+		operation = "scan client error"
+	}
+	common.RecordDuration(operation, duration)
+}
 
-	errors := prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace:   "perceptor",
-		Subsystem:   "scanner",
-		Name:        "scannerErrors",
-		Help:        "error codes from image pulling and scanning",
-		ConstLabels: map[string]string{"hostName": hostName},
-	}, []string{"stage", "errorName"})
+func recordTotalScannerDuration(duration time.Duration, isSuccess bool) {
+	operation := "scanner total success"
+	if !isSuccess {
+		operation = "scanner total error"
+	}
+	common.RecordDuration(operation, duration)
+}
 
-	httpResults := prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace:   "perceptor",
-		Subsystem:   "scanner",
-		Name:        "http_response_status_codes",
-		Help:        "status codes for responses from HTTP requests issued by scanner",
-		ConstLabels: map[string]string{"hostName": hostName},
+func recordError(errorName string) {
+	common.RecordError("scan client", errorName)
+}
+
+func recordCleanUpTarFile(isSuccess bool) {
+	if !isSuccess {
+		recordError("clean up tar file")
+	}
+	// TODO should we have a metric for success?
+}
+
+func init() {
+	httpResults = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "perceptor",
+		Subsystem: "scanner",
+		Name:      "http_response_status_codes",
+		Help:      "status codes for responses from HTTP requests issued by scanner",
 	},
-		[]string{"request", "code"})
+		[]string{"path", "code"})
 
-	go func() {
-		for {
-			select {
-			case stats := <-imageScanStats:
-				log.Infof("got new image scan stats: %+v", stats)
-				// durations
-				if stats.ScanClientDuration != nil {
-					durations.With(prometheus.Labels{"stage": "scan client"}).Observe(stats.ScanClientDuration.Seconds())
-				}
-				if stats.TotalDuration != nil {
-					durations.With(prometheus.Labels{"stage": "scan total"}).Observe(stats.TotalDuration.Seconds())
-				}
-				if stats.DockerStats.CreateDuration != nil {
-					durations.With(prometheus.Labels{"stage": "docker create"}).Observe(stats.DockerStats.CreateDuration.Seconds())
-				}
-				if stats.DockerStats.SaveDuration != nil {
-					durations.With(prometheus.Labels{"stage": "docker save"}).Observe(stats.DockerStats.SaveDuration.Seconds())
-				}
-				if stats.DockerStats.TotalDuration != nil {
-					durations.With(prometheus.Labels{"stage": "docker get image total"}).Observe(stats.DockerStats.TotalDuration.Seconds())
-				}
-				// file size
-				if stats.DockerStats.TarFileSizeMBs != nil {
-					tarballSize.WithLabelValues("tarballSize").Observe(float64(*stats.DockerStats.TarFileSizeMBs))
-				}
-				// errors
-				err := stats.Err
-				if err != nil {
-					var stage string
-					var errorName string
-					switch e := err.RootCause.(type) {
-					case docker.ImagePullError:
-						stage = "docker pull"
-						errorName = e.Code.String()
-					default:
-						stage = "running scan client"
-						errorName = err.Code.String()
-					}
-					errors.With(prometheus.Labels{"stage": stage, "errorName": errorName}).Inc()
-				}
-			case httpStats := <-httpStats:
-				var request string
-				switch httpStats.Path {
-				case PathGetNextImage:
-					request = "getNextImage"
-				case PathPostScanResults:
-					request = "finishScan"
-				}
-				httpResults.With(prometheus.Labels{"request": request, "code": fmt.Sprintf("%d", httpStats.StatusCode)}).Inc()
-			}
-		}
-	}()
-	prometheus.MustRegister(tarballSize)
-	prometheus.MustRegister(durations)
-	prometheus.MustRegister(errors)
 	prometheus.MustRegister(httpResults)
-
-	return prometheus.Handler()
 }

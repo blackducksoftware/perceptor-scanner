@@ -22,5 +22,5 @@ under the License.
 package docker
 
 type ImagePullerInterface interface {
-	PullImage(image Image) ImagePullStats
+	PullImage(image Image) error
 }

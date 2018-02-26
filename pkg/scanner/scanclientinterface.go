@@ -22,7 +22,7 @@ under the License.
 package scanner
 
 type ScanClientInterface interface {
-	Scan(job ScanJob) ScanClientJobResults
+	Scan(job ScanJob) error
 	//ScanCliSh(job ScanJob) error
 	//ScanDockerSh(job ScanJob) error
 }

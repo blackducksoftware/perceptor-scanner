@@ -29,6 +29,7 @@ import (
 
 	"github.com/blackducksoftware/perceptor-scanner/pkg/scanner"
 	"github.com/blackducksoftware/perceptor/pkg/api"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -59,13 +60,15 @@ func main() {
 		panic(err)
 	}
 
+	log.Info("successfully instantiated scanner: %s", scannerManager)
+
 	hostName, err := os.Hostname()
 	if err != nil {
 		log.Errorf("unable to get hostname: %s", err.Error())
 		hostName = fmt.Sprintf("%d", rand.Int())
 	}
 	log.Infof("using hostName %s", hostName)
-	http.Handle("/metrics", scanner.ScannerMetricsHandler(hostName, scannerManager.ImageScanStats(), scannerManager.HttpStats()))
+	http.Handle("/metrics", prometheus.Handler())
 
 	addr := fmt.Sprintf(":%s", api.PerceptorScannerPort)
 	http.ListenAndServe(addr, nil)
