@@ -99,24 +99,7 @@ func (ifp *imageFacadePuller) startImagePull(image *common.Image) error {
 	}
 
 	defer resp.Body.Close()
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Errorf("unable to read body for image %s: %s", image.PullSpec, err.Error())
-		return err
-	}
-
-	var pullImage api.PullImageResponse
-	err = json.Unmarshal(bodyBytes, &pullImage)
-	if err != nil {
-		log.Errorf("unable to unmarshal body for image %s: %s", image.PullSpec, err.Error())
-		return err
-	}
-
-	if !pullImage.IsSuccess {
-		err = fmt.Errorf("image pull %s failed", image.PullSpec)
-		log.Errorf(err.Error())
-		return err
-	}
+	_, _ = ioutil.ReadAll(resp.Body)
 
 	log.Infof("image pull for image %s succeeded", image.PullSpec)
 

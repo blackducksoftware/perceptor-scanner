@@ -73,30 +73,22 @@ func (h *HTTPServer) setup() {
 				http.Error(w, err.Error(), 400)
 				return
 			}
-			var response api.PullImageResponse
-			var success bool
+			var pullError error
 			var wg sync.WaitGroup
 			wg.Add(1)
 			continuation := func(err error) {
-				success = err == nil
-				response = api.PullImageResponse{PullSpec: image.PullSpec, IsSuccess: success}
+				pullError = err
 				wg.Done()
 			}
 
 			h.pullImage <- &pullImage{image, continuation}
 			wg.Wait()
 
-			responseBytes, err := json.Marshal(response)
-			if err != nil {
-				log.Errorf("unable to marshal JSON response for pullimage: %s", err.Error())
-				http.Error(w, err.Error(), 500)
-				return
-			}
-			if success {
-				log.Infof("successfully handled pullimage for %s: %+v", image.PullSpec, response)
-				fmt.Fprint(w, string(responseBytes))
+			if pullError == nil {
+				log.Infof("successfully handled pullimage for %s", image.PullSpec)
+				fmt.Fprint(w, "")
 			} else {
-				http.Error(w, string(responseBytes), 503)
+				http.Error(w, pullError.Error(), 503)
 			}
 		default:
 			http.NotFound(w, r)
