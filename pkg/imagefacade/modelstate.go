@@ -19,27 +19,24 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package scanner
+package imagefacade
 
-import "github.com/blackducksoftware/perceptor-scanner/pkg/common"
+import "fmt"
 
-type ScanJob struct {
-	PullSpec              string
-	Sha                   string
-	HubProjectName        string
-	HubProjectVersionName string
-	HubScanName           string
-}
+type ModelState int
 
-func NewScanJob(pullSpec string, sha string, hubProjectName string, hubProjectVersionName string, hubScanName string) *ScanJob {
-	return &ScanJob{
-		PullSpec:              pullSpec,
-		Sha:                   sha,
-		HubProjectName:        hubProjectName,
-		HubProjectVersionName: hubProjectVersionName,
-		HubScanName:           hubScanName}
-}
+const (
+	ModelStateReady   ModelState = iota
+	ModelStatePulling ModelState = iota
+)
 
-func (sj *ScanJob) image() *common.Image {
-	return &common.Image{PullSpec: sj.PullSpec}
+func (m ModelState) String() string {
+	switch m {
+	case ModelStateReady:
+		return "ModelStateReady"
+	case ModelStatePulling:
+		return "ModelStatePulling"
+	default:
+		panic(fmt.Errorf("invalid ModelState value: %d", int(m)))
+	}
 }

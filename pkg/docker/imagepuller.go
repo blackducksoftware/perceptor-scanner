@@ -140,18 +140,18 @@ func (ip *ImagePuller) createImageInLocalDocker(image Image) error {
 func (ip *ImagePuller) saveImageToTar(image Image) error {
 	start := time.Now()
 	url := getURL(image)
-	log.Infof("Making HTTP GET image request: %s", url)
+	log.Infof("Making docker GET image request: %s", url)
 	resp, err := ip.client.Get(url)
 	if err != nil {
 		recordDockerError(getStage, "GET request failed", image, err)
 		return err
 	} else if resp.StatusCode != http.StatusOK {
-		err = fmt.Errorf("HTTP ERROR: received status != 200 from %s: %s", url, resp.Status)
+		err = fmt.Errorf("docker GET failed: received status != 200 from %s: %s", url, resp.Status)
 		recordDockerError(getStage, "GET request failed", image, err)
 		return err
 	}
 
-	log.Infof("GET request for image %s successful", url)
+	log.Infof("docker GET request for image %s successful", url)
 
 	body := resp.Body
 	defer func() {

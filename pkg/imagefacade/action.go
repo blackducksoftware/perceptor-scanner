@@ -19,27 +19,43 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package scanner
+package imagefacade
 
 import "github.com/blackducksoftware/perceptor-scanner/pkg/common"
 
-type ScanJob struct {
-	PullSpec              string
-	Sha                   string
-	HubProjectName        string
-	HubProjectVersionName string
-	HubScanName           string
+type Action interface {
+	apply(model *Model)
 }
 
-func NewScanJob(pullSpec string, sha string, hubProjectName string, hubProjectVersionName string, hubScanName string) *ScanJob {
-	return &ScanJob{
-		PullSpec:              pullSpec,
-		Sha:                   sha,
-		HubProjectName:        hubProjectName,
-		HubProjectVersionName: hubProjectVersionName,
-		HubScanName:           hubScanName}
+type pullImage struct {
+	image        *common.Image
+	continuation func(err error)
 }
 
-func (sj *ScanJob) image() *common.Image {
-	return &common.Image{PullSpec: sj.PullSpec}
+func (p *pullImage) apply(model *Model) {
+	err := model.pullImage(p.image)
+	go p.continuation(err)
+}
+
+type getImage struct {
+	image        *common.Image
+	continuation func(isDone bool)
+}
+
+func newGetImage(image *common.Image, continuation func(isDone bool)) *getImage {
+	return &getImage{image: image, continuation: continuation}
+}
+
+func (g *getImage) apply(model *Model) {
+	isDone := model.isImageDone(g.image)
+	go g.continuation(isDone)
+}
+
+type finishedImagePull struct {
+	image *common.Image
+	err   error
+}
+
+func (f *finishedImagePull) apply(model *Model) {
+	model.finishImagePull(f.image, f.err)
 }

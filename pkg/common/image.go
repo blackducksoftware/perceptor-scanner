@@ -19,27 +19,22 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package scanner
+package common
 
-import "github.com/blackducksoftware/perceptor-scanner/pkg/common"
+import (
+	"fmt"
+	"strings"
+)
 
-type ScanJob struct {
-	PullSpec              string
-	Sha                   string
-	HubProjectName        string
-	HubProjectVersionName string
-	HubScanName           string
+type Image struct {
+	PullSpec string
 }
 
-func NewScanJob(pullSpec string, sha string, hubProjectName string, hubProjectVersionName string, hubScanName string) *ScanJob {
-	return &ScanJob{
-		PullSpec:              pullSpec,
-		Sha:                   sha,
-		HubProjectName:        hubProjectName,
-		HubProjectVersionName: hubProjectVersionName,
-		HubScanName:           hubScanName}
+func (image *Image) DockerPullSpec() string {
+	return image.PullSpec
 }
 
-func (sj *ScanJob) image() *common.Image {
-	return &common.Image{PullSpec: sj.PullSpec}
+func (image *Image) DockerTarFilePath() string {
+	filePath := strings.Replace(image.PullSpec, "/", "_", -1)
+	return fmt.Sprintf("/var/images/%s.tar", filePath)
 }

@@ -19,27 +19,37 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package scanner
+package imagefacade
 
-import "github.com/blackducksoftware/perceptor-scanner/pkg/common"
+import (
+	"fmt"
+	"reflect"
+	"time"
+)
 
-type ScanJob struct {
-	PullSpec              string
-	Sha                   string
-	HubProjectName        string
-	HubProjectVersionName string
-	HubScanName           string
-}
+type reducer struct{}
 
-func NewScanJob(pullSpec string, sha string, hubProjectName string, hubProjectVersionName string, hubScanName string) *ScanJob {
-	return &ScanJob{
-		PullSpec:              pullSpec,
-		Sha:                   sha,
-		HubProjectName:        hubProjectName,
-		HubProjectVersionName: hubProjectVersionName,
-		HubScanName:           hubScanName}
-}
+func newReducer(initialModel *Model, actions <-chan Action) *reducer {
+	stop := time.Now()
+	model := initialModel
+	go func() {
+		for {
+			select {
+			case nextAction := <-actions:
+				// metrics: log message type
+				recordActionType(fmt.Sprintf("%s", reflect.TypeOf(nextAction)))
 
-func (sj *ScanJob) image() *common.Image {
-	return &common.Image{PullSpec: sj.PullSpec}
+				// metrics: how long idling since the last action finished processing?
+				start := time.Now()
+				recordReducerActivity(false, start.Sub(stop))
+
+				nextAction.apply(model)
+
+				// metrics: how long did the work take?
+				stop = time.Now()
+				recordReducerActivity(true, stop.Sub(start))
+			}
+		}
+	}()
+	return &reducer{}
 }

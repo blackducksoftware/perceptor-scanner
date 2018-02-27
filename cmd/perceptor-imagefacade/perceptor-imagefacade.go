@@ -25,61 +25,41 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/blackducksoftware/perceptor-scanner/pkg/scanner"
-	"github.com/blackducksoftware/perceptor/pkg/api"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/blackducksoftware/perceptor-scanner/pkg/imagefacade"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
-// TODO metrics
-// number of images scanned
-// file size
-// pull duration
-// get duration
-// scan client duration
-// number of successes
-// number of failures
-// amount of time (or cycles?) idled
-// number of times asked for a job and didn't get one
-
 func main() {
 	log.Info("started")
 
-	config, err := GetScannerConfig()
+	config, err := GetConfig()
 	if err != nil {
 		log.Errorf("Failed to load configuration: %s", err.Error())
 		panic(err)
 	}
 
-	scannerManager, err := scanner.NewScanner(config.HubHost, config.HubUser, config.HubUserPassword)
-	if err != nil {
-		log.Errorf("unable to instantiate scanner: %s", err.Error())
-		panic(err)
-	}
+	imageFacade := imagefacade.NewImageFacade(config.DockerUser, config.DockerPassword)
 
-	log.Info("successfully instantiated scanner: %s", scannerManager)
+	log.Infof("successfully instantiated imagefacade -- %+v", imageFacade)
 
-	http.Handle("/metrics", prometheus.Handler())
-
-	addr := fmt.Sprintf(":%s", api.PerceptorScannerPort)
+	port := "3004"
+	addr := fmt.Sprintf(":%s", port) // api.PerceptorImagefacadePort)
 	http.ListenAndServe(addr, nil)
 	log.Info("Http server started!")
 }
 
-// ScannerConfig contains all configuration for Perceptor
-type ScannerConfig struct {
-	HubHost         string
-	HubUser         string
-	HubUserPassword string
+type Config struct {
+	DockerUser     string // DockerUser and DockerPassword are openshift specific -- to allow pulling from the openshift docker registry
+	DockerPassword string
 }
 
-// GetScannerConfig returns a configuration object to configure Perceptor
-func GetScannerConfig() (*ScannerConfig, error) {
-	var cfg *ScannerConfig
+// GetConfig returns a configuration object to configure Perceptor
+func GetConfig() (*Config, error) {
+	var cfg *Config
 
-	viper.SetConfigName("perceptor_scanner_conf")
-	viper.AddConfigPath("/etc/perceptor_scanner")
+	viper.SetConfigName("perceptor_imagefacade_conf")
+	viper.AddConfigPath("/etc/perceptor_imagefacade")
 
 	err := viper.ReadInConfig()
 	if err != nil {
