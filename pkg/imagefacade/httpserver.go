@@ -28,6 +28,7 @@ import (
 	"net/http"
 	"sync"
 
+	api "github.com/blackducksoftware/perceptor-scanner/pkg/api"
 	common "github.com/blackducksoftware/perceptor-scanner/pkg/common"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
@@ -71,30 +72,35 @@ func (h *HTTPServer) setup() {
 				http.Error(w, err.Error(), 400)
 				return
 			}
-			var response string
+			var response api.PullImageResponse
 			var success bool
 			var wg sync.WaitGroup
 			wg.Add(1)
 			continuation := func(err error) {
 				success = err == nil
-				response = fmt.Sprintf(`{"PullSpec":"%s","Success":"%t"}`, image.PullSpec, success)
+				response = api.PullImageResponse{PullSpec: image.PullSpec, IsSuccess: success}
 				wg.Done()
 			}
 			h.pullImage <- &pullImage{image, continuation}
 			wg.Done()
+			responseBytes, err := json.Marshal(response)
+			if err != nil {
+				http.Error(w, err.Error(), 500)
+				return
+			}
 			if success {
-				fmt.Fprint(w, response)
+				fmt.Fprint(w, string(responseBytes))
 			} else {
-				http.Error(w, response, 503)
+				http.Error(w, string(responseBytes), 503)
 			}
 		default:
 			http.NotFound(w, r)
 		}
 	})
 
-	http.HandleFunc("/image", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/checkimage", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
-		case "GET":
+		case "POST":
 			body, err := ioutil.ReadAll(r.Body)
 			if err != nil {
 				log.Errorf("unable to read body for getimage: %s", err.Error())
@@ -108,16 +114,21 @@ func (h *HTTPServer) setup() {
 				http.Error(w, err.Error(), 400)
 				return
 			}
-			var response string
+			var response api.CheckImageResponse
 			var wg sync.WaitGroup
 			wg.Add(1)
 			continuation := func(isDone bool) {
-				response = fmt.Sprintf(`{"PullSpec":"%s","Done":"%t"}`, image.PullSpec, isDone)
+				response = api.CheckImageResponse{IsDone: isDone, PullSpec: image.PullSpec}
 				wg.Done()
 			}
 			h.getImage <- &getImage{image: image, continuation: continuation}
 			wg.Wait()
-			fmt.Fprintf(w, response)
+			responseBytes, err := json.Marshal(response)
+			if err != nil {
+				http.Error(w, err.Error(), 500)
+				return
+			}
+			fmt.Fprintf(w, string(responseBytes))
 		default:
 			http.NotFound(w, r)
 		}

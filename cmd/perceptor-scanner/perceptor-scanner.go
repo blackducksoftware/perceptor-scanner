@@ -52,7 +52,7 @@ func main() {
 		panic(err)
 	}
 
-	scannerManager, err := scanner.NewScanner(config.HubHost, config.HubUser, config.HubUserPassword, config.DockerUser, config.DockerPassword)
+	scannerManager, err := scanner.NewScanner(config.HubHost, config.HubUser, config.HubUserPassword)
 	if err != nil {
 		log.Errorf("unable to instantiate scanner: %s", err.Error())
 		panic(err)
@@ -72,8 +72,6 @@ type ScannerConfig struct {
 	HubHost         string
 	HubUser         string
 	HubUserPassword string
-	DockerUser      string // DockerUser and DockerPassword are openshift specific -- to allow pulling from the openshift docker registry
-	DockerPassword  string
 }
 
 // GetScannerConfig returns a configuration object to configure Perceptor

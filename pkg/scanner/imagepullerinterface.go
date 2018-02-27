@@ -19,8 +19,10 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package docker
+package scanner
+
+import "github.com/blackducksoftware/perceptor-scanner/pkg/common"
 
 type ImagePullerInterface interface {
-	PullImage(image Image) error
+	PullImage(image *common.Image) error
 }

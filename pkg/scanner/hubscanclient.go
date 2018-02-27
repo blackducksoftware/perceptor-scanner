@@ -26,7 +26,6 @@ import (
 	"os/exec"
 	"time"
 
-	pdocker "github.com/blackducksoftware/perceptor-scanner/pkg/docker"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -36,12 +35,12 @@ type HubScanClient struct {
 	host        string
 	username    string
 	password    string
-	imagePuller pdocker.ImagePullerInterface
+	imagePuller ImagePullerInterface
 }
 
 // NewHubScanClient requires login credentials in order to instantiate
 // a HubScanClient.
-func NewHubScanClient(host string, username string, password string, imagePuller pdocker.ImagePullerInterface) (*HubScanClient, error) {
+func NewHubScanClient(host string, username string, password string, imagePuller ImagePullerInterface) (*HubScanClient, error) {
 	hsc := HubScanClient{
 		host:        host,
 		username:    username,
@@ -62,9 +61,10 @@ func mapKeys(m map[string]ScanJob) []string {
 
 func (hsc *HubScanClient) Scan(job ScanJob) error {
 	startTotal := time.Now()
-	err := hsc.imagePuller.PullImage(job)
+	image := job.image()
+	err := hsc.imagePuller.PullImage(image)
 
-	defer cleanUpTarFile(job.DockerTarFilePath())
+	defer cleanUpTarFile(image.DockerTarFilePath())
 
 	if err != nil {
 		// TODO do we even need to add this metric?  since the errors should already
@@ -79,7 +79,7 @@ func (hsc *HubScanClient) Scan(job ScanJob) error {
 	//   2. hardcoded version number
 	scanCliImplJarPath := "./dependencies/scan.cli-4.3.0/lib/cache/scan.cli.impl-standalone.jar"
 	scanCliJarPath := "./dependencies/scan.cli-4.3.0/lib/scan.cli-4.3.0-standalone.jar"
-	path := job.DockerTarFilePath()
+	path := image.DockerTarFilePath()
 	cmd := exec.Command("java",
 		"-Xms512m",
 		"-Xmx4096m",

@@ -21,7 +21,10 @@ under the License.
 
 package common
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type Image struct {
 	PullSpec string
@@ -32,5 +35,6 @@ func (image *Image) DockerPullSpec() string {
 }
 
 func (image *Image) DockerTarFilePath() string {
-	return strings.Replace(image.PullSpec, "/", "_", -1)
+	filePath := strings.Replace(image.PullSpec, "/", "_", -1)
+	return fmt.Sprintf("./tmp/%s.tar", filePath)
 }
