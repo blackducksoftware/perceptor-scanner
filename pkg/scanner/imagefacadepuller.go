@@ -50,8 +50,11 @@ func newImageFacadePuller() *imageFacadePuller {
 }
 
 func (ifp *imageFacadePuller) PullImage(image *common.Image) error {
+	log.Infof("attempting to pull image %s", image.PullSpec)
+
 	err := ifp.startImagePull(image)
 	if err != nil {
+		log.Errorf("unable to pull image %s: %s", image.PullSpec, err.Error())
 		return err
 	}
 
@@ -59,8 +62,14 @@ func (ifp *imageFacadePuller) PullImage(image *common.Image) error {
 		time.Sleep(5 * time.Second)
 		var isDone bool
 		isDone, err = ifp.checkImage(image)
+
 		// TODO add some better error handling
-		if err != nil && isDone {
+		if err != nil {
+			log.Errorf("unable to check image %s: %s", image.PullSpec, err.Error())
+		}
+
+		if isDone {
+			log.Infof("finished pulling image %s", image.PullSpec)
 			break
 		}
 	}
@@ -73,34 +82,43 @@ func (ifp *imageFacadePuller) startImagePull(image *common.Image) error {
 
 	requestBytes, err := json.Marshal(image)
 	if err != nil {
+		log.Errorf("unable to marshal JSON for %s: %s", image.PullSpec, err.Error())
 		return err
 	}
 
 	resp, err := ifp.httpClient.Post(url, "application/json", bytes.NewBuffer(requestBytes))
 	if err != nil {
+		log.Errorf("unable to create request to %s for image %s: %s", url, image.PullSpec, err.Error())
 		return err
 	}
 
 	if resp.StatusCode != 200 {
 		err = fmt.Errorf("image pull to %s failed with status code %d", url, resp.StatusCode)
+		log.Errorf(err.Error())
 		return err
 	}
 
 	defer resp.Body.Close()
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		log.Errorf("unable to read body for image %s: %s", image.PullSpec, err.Error())
 		return err
 	}
 
 	var pullImage api.PullImageResponse
 	err = json.Unmarshal(bodyBytes, &pullImage)
 	if err != nil {
+		log.Errorf("unable to unmarshal body for image %s: %s", image.PullSpec, err.Error())
 		return err
 	}
 
 	if !pullImage.IsSuccess {
-		return fmt.Errorf("image pull %s failed", image.PullSpec)
+		err = fmt.Errorf("image pull %s failed", image.PullSpec)
+		log.Errorf(err.Error())
+		return err
 	}
+
+	log.Infof("image pull for image %s succeeded", image.PullSpec)
 
 	return nil
 }
@@ -110,16 +128,19 @@ func (ifp *imageFacadePuller) checkImage(image *common.Image) (bool, error) {
 
 	requestBytes, err := json.Marshal(image)
 	if err != nil {
+		log.Errorf("unable to marshal JSON for %s: %s", image.PullSpec, err.Error())
 		return false, err
 	}
 
 	resp, err := ifp.httpClient.Post(url, "application/json", bytes.NewBuffer(requestBytes))
 	if err != nil {
+		log.Errorf("unable to create request to %s for image %s: %s", url, image.PullSpec, err.Error())
 		return false, err
 	}
 
 	if resp.StatusCode != 200 {
 		err = fmt.Errorf("GET %s failed with status code %d", url, resp.StatusCode)
+		log.Errorf(err.Error())
 		return false, err
 	}
 
@@ -131,13 +152,15 @@ func (ifp *imageFacadePuller) checkImage(image *common.Image) (bool, error) {
 		return false, err
 	}
 
-	var getImage api.GetImageResponse
+	var getImage api.CheckImageResponse
 	err = json.Unmarshal(bodyBytes, &getImage)
 	if err != nil {
 		recordError("unmarshaling JSON body failed")
 		log.Errorf("unmarshaling JSON body bytes %s failed for URL %s: %s", string(bodyBytes), url, err.Error())
 		return false, err
 	}
+
+	log.Infof("image check for image %s succeeded", image.PullSpec)
 
 	return getImage.IsDone, nil
 }

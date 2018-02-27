@@ -88,6 +88,8 @@ func (scanner *Scanner) requestAndRunScanJob() {
 		return
 	}
 
+	log.Infof("processing scan job %+v", image)
+
 	job := NewScanJob(image.PullSpec, image.Sha, image.HubProjectName, image.HubProjectVersionName, image.HubScanName)
 	err = scanner.scanClient.Scan(*job)
 	errorString := ""
@@ -108,9 +110,6 @@ func (scanner *Scanner) requestScanJob() (*api.ImageSpec, error) {
 	resp, err := scanner.httpClient.Post(nextImageURL, "", bytes.NewBuffer([]byte{}))
 
 	if err != nil {
-		if resp != nil {
-			log.Errorf("wow, something really weird happened -- check your understanding of golang's http library")
-		}
 		recordError("unable to POST get next image")
 		log.Errorf("unable to POST to %s: %s", nextImageURL, err.Error())
 		return nil, err

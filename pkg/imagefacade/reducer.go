@@ -21,15 +21,33 @@ under the License.
 
 package imagefacade
 
+import (
+	"fmt"
+	"reflect"
+	"time"
+)
+
 type reducer struct{}
 
 func newReducer(initialModel *Model, actions <-chan Action) *reducer {
+	stop := time.Now()
 	model := initialModel
 	go func() {
 		for {
 			select {
 			case nextAction := <-actions:
+				// metrics: log message type
+				recordActionType(fmt.Sprintf("%s", reflect.TypeOf(nextAction)))
+
+				// metrics: how long idling since the last action finished processing?
+				start := time.Now()
+				recordReducerActivity(false, start.Sub(stop))
+
 				nextAction.apply(model)
+
+				// metrics: how long did the work take?
+				stop = time.Now()
+				recordReducerActivity(true, stop.Sub(start))
 			}
 		}
 	}()

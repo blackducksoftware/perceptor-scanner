@@ -59,6 +59,7 @@ func (h *HTTPServer) setup() {
 	http.HandleFunc("/pullimage", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "POST":
+			recordHttpRequest("pullimage")
 			body, err := ioutil.ReadAll(r.Body)
 			if err != nil {
 				log.Errorf("unable to read body for pullimage: %s", err.Error())
@@ -68,7 +69,7 @@ func (h *HTTPServer) setup() {
 			var image *common.Image
 			err = json.Unmarshal(body, &image)
 			if err != nil {
-				log.Infof("unable to ummarshal JSON for pullimage: %s", err.Error())
+				log.Errorf("unable to ummarshal JSON for pullimage: %s", err.Error())
 				http.Error(w, err.Error(), 400)
 				return
 			}
@@ -81,14 +82,18 @@ func (h *HTTPServer) setup() {
 				response = api.PullImageResponse{PullSpec: image.PullSpec, IsSuccess: success}
 				wg.Done()
 			}
+
 			h.pullImage <- &pullImage{image, continuation}
-			wg.Done()
+			wg.Wait()
+
 			responseBytes, err := json.Marshal(response)
 			if err != nil {
+				log.Errorf("unable to marshal JSON response for pullimage: %s", err.Error())
 				http.Error(w, err.Error(), 500)
 				return
 			}
 			if success {
+				log.Infof("successfully handled pullimage for %s: %+v", image.PullSpec, response)
 				fmt.Fprint(w, string(responseBytes))
 			} else {
 				http.Error(w, string(responseBytes), 503)
@@ -101,6 +106,7 @@ func (h *HTTPServer) setup() {
 	http.HandleFunc("/checkimage", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "POST":
+			recordHttpRequest("checkimage")
 			body, err := ioutil.ReadAll(r.Body)
 			if err != nil {
 				log.Errorf("unable to read body for getimage: %s", err.Error())
@@ -110,7 +116,7 @@ func (h *HTTPServer) setup() {
 			var image *common.Image
 			err = json.Unmarshal(body, &image)
 			if err != nil {
-				log.Infof("unable to ummarshal JSON for getimage: %s", err.Error())
+				log.Errorf("unable to ummarshal JSON for getimage: %s", err.Error())
 				http.Error(w, err.Error(), 400)
 				return
 			}
@@ -121,13 +127,18 @@ func (h *HTTPServer) setup() {
 				response = api.CheckImageResponse{IsDone: isDone, PullSpec: image.PullSpec}
 				wg.Done()
 			}
+
 			h.getImage <- &getImage{image: image, continuation: continuation}
 			wg.Wait()
+
 			responseBytes, err := json.Marshal(response)
 			if err != nil {
+				log.Errorf("unable to ummarshal JSON for checkimage: %s", err.Error())
 				http.Error(w, err.Error(), 500)
 				return
 			}
+
+			log.Infof("successfully handled checkimage for %s: %+v", image.PullSpec, response)
 			fmt.Fprintf(w, string(responseBytes))
 		default:
 			http.NotFound(w, r)
