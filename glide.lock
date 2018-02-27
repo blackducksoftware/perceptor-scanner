@@ -1,6 +1,12 @@
 hash: 472295100d362a3cb1fa4c6c458a0768f7311a7f9cdbad87f9b12e56dea95955
-updated: 2018-02-15T15:49:39.998900654-05:00
+updated: 2018-02-27T17:21:53.907779039-05:00
 imports:
+- name: github.com/alecthomas/template
+  version: a0175ee3bccc567396460bf5acd36800cb10c49c
+  subpackages:
+  - parse
+- name: github.com/alecthomas/units
+  version: 2efee857e7cfd4f3d0138cc3cbb1b4966962b93a
 - name: github.com/beorn7/perks
   version: 4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9
   subpackages:
@@ -51,6 +57,7 @@ imports:
   subpackages:
   - expfmt
   - internal/bitbucket.org/ww/goautoneg
+  - log
   - model
 - name: github.com/prometheus/procfs
   version: 282c8707aa210456a825798969cc27edda34992a
@@ -81,11 +88,15 @@ imports:
   subpackages:
   - unix
   - windows
+  - windows/registry
+  - windows/svc/eventlog
 - name: golang.org/x/text
   version: 4e4a3210bb54bb31f6ab2cdca2edcc0b50c420c1
   subpackages:
   - transform
   - unicode/norm
+- name: gopkg.in/alecthomas/kingpin.v2
+  version: 947dcec5ba9c011838740e680966fd7087a71d0d
 - name: gopkg.in/yaml.v2
   version: d670f9405373e636a5a2765eea47fac0c9bc91a4
 testImports: []
