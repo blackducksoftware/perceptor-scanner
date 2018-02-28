@@ -24,6 +24,7 @@ package scanner
 import (
 	"fmt"
 	"os/exec"
+	"time"
 
 	"github.com/blackducksoftware/hub-client-go/hubclient"
 	log "github.com/sirupsen/logrus"
@@ -37,17 +38,27 @@ var scanClientTarGzPath = fmt.Sprintf("%s/scanclient.tar.gz", scanClientRootPath
 
 func downloadScanClient(hubHost string, hubUser string, hubPassword string) (*scanClientInfo, error) {
 	// 1. instantiate hub client
-	hubClient, err := hubclient.NewWithSession(baseURL, hubclient.HubClientDebugTimings)
+	hubBaseURL := fmt.Sprintf("https://%s", hubHost)
+	hubClient, err := hubclient.NewWithSession(hubBaseURL, hubclient.HubClientDebugTimings)
 	if err != nil {
 		log.Errorf("unable to instantiate hub client: %s", err.Error())
 		return nil, err
 	}
 
 	// 1a. log in to hub client
-	err = hubClient.Login(hubUser, hubPassword)
-	if err != nil {
+	isLoggedIn := false
+	for i := 0.5; i < 33; i *= 2 {
+		err = hubClient.Login(hubUser, hubPassword)
+		if err == nil {
+			isLoggedIn = true
+			break
+		}
+
 		log.Errorf("unable to log in to hub: %s", err.Error())
-		return nil, err
+		time.Sleep(time.Duration(i*1000) * time.Millisecond)
+	}
+	if !isLoggedIn {
+		return nil, fmt.Errorf("unable to log in to hub")
 	}
 
 	// 2. get hub version

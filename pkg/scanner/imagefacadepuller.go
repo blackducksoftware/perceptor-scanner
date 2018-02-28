@@ -38,7 +38,7 @@ const (
 	imageFacadePort = "3004"
 	pullImagePath   = "pullimage"
 	checkImagePath  = "checkimage"
-	baseURL         = "http://localhost"
+	dockerBaseURL   = "http://localhost"
 )
 
 type imageFacadePuller struct {
@@ -78,7 +78,7 @@ func (ifp *imageFacadePuller) PullImage(image *common.Image) error {
 }
 
 func (ifp *imageFacadePuller) startImagePull(image *common.Image) error {
-	url := fmt.Sprintf("%s:%s/%s", baseURL, imageFacadePort, pullImagePath)
+	url := fmt.Sprintf("%s:%s/%s", dockerBaseURL, imageFacadePort, pullImagePath)
 
 	requestBytes, err := json.Marshal(image)
 	if err != nil {
@@ -107,7 +107,7 @@ func (ifp *imageFacadePuller) startImagePull(image *common.Image) error {
 }
 
 func (ifp *imageFacadePuller) checkImage(image *common.Image) (bool, error) {
-	url := fmt.Sprintf("%s:%s/%s?", baseURL, imageFacadePort, checkImagePath)
+	url := fmt.Sprintf("%s:%s/%s?", dockerBaseURL, imageFacadePort, checkImagePath)
 
 	requestBytes, err := json.Marshal(image)
 	if err != nil {
