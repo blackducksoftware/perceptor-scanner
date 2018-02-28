@@ -25,11 +25,24 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/blackducksoftware/perceptor-scanner/pkg/common"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 var httpResults *prometheus.CounterVec
+var durationsHistogram *prometheus.HistogramVec
+var errorsCounter *prometheus.CounterVec
+
+// helpers
+
+func recordError(errorStage string, errorName string) {
+	errorsCounter.With(prometheus.Labels{"stage": errorStage, "errorName": errorName}).Inc()
+}
+
+func recordDuration(operation string, duration time.Duration) {
+	durationsHistogram.With(prometheus.Labels{"operation": operation}).Observe(duration.Seconds())
+}
+
+// recorders
 
 func recordHttpStats(path string, statusCode int) {
 	httpResults.With(prometheus.Labels{"path": path, "code": fmt.Sprintf("%d", statusCode)}).Inc()
@@ -40,7 +53,7 @@ func recordScanClientDuration(duration time.Duration, isSuccess bool) {
 	if !isSuccess {
 		operation = "scan client error"
 	}
-	common.RecordDuration(operation, duration)
+	recordDuration(operation, duration)
 }
 
 func recordTotalScannerDuration(duration time.Duration, isSuccess bool) {
@@ -48,19 +61,21 @@ func recordTotalScannerDuration(duration time.Duration, isSuccess bool) {
 	if !isSuccess {
 		operation = "scanner total error"
 	}
-	common.RecordDuration(operation, duration)
+	recordDuration(operation, duration)
 }
 
-func recordError(errorName string) {
-	common.RecordError("scan client", errorName)
+func recordScannerError(errorName string) {
+	recordError("scan client", errorName)
 }
 
 func recordCleanUpTarFile(isSuccess bool) {
 	if !isSuccess {
-		recordError("clean up tar file")
+		recordScannerError("clean up tar file")
 	}
 	// TODO should we have a metric for success?
 }
+
+// init
 
 func init() {
 	httpResults = prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -71,5 +86,24 @@ func init() {
 	},
 		[]string{"path", "code"})
 
+	durationsHistogram = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: "perceptor",
+			Subsystem: "scanner",
+			Name:      "timings",
+			Help:      "time durations of scanner operations",
+			Buckets:   prometheus.ExponentialBuckets(0.25, 2, 20),
+		},
+		[]string{"operation"})
+
+	errorsCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "perceptor",
+		Subsystem: "scanner",
+		Name:      "scannerErrors",
+		Help:      "error codes from image scanning",
+	}, []string{"stage", "errorName"})
+
+	prometheus.MustRegister(errorsCounter)
+	prometheus.MustRegister(durationsHistogram)
 	prometheus.MustRegister(httpResults)
 }

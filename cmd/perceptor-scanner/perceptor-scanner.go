@@ -24,6 +24,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/blackducksoftware/perceptor-scanner/pkg/scanner"
 	"github.com/blackducksoftware/perceptor/pkg/api"
@@ -51,6 +52,9 @@ func main() {
 		log.Errorf("Failed to load configuration: %s", err.Error())
 		panic(err)
 	}
+
+	prometheus.Unregister(prometheus.NewProcessCollector(os.Getpid(), ""))
+	prometheus.Unregister(prometheus.NewGoCollector())
 
 	scannerManager, err := scanner.NewScanner(config.HubHost, config.HubUser, config.HubUserPassword)
 	if err != nil {

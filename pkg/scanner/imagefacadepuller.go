@@ -130,7 +130,7 @@ func (ifp *imageFacadePuller) checkImage(image *common.Image) (bool, error) {
 	defer resp.Body.Close()
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		recordError("unable to read response body")
+		recordScannerError("unable to read response body")
 		log.Errorf("unable to read response body from %s: %s", url, err.Error())
 		return false, err
 	}
@@ -138,7 +138,7 @@ func (ifp *imageFacadePuller) checkImage(image *common.Image) (bool, error) {
 	var getImage api.CheckImageResponse
 	err = json.Unmarshal(bodyBytes, &getImage)
 	if err != nil {
-		recordError("unmarshaling JSON body failed")
+		recordScannerError("unmarshaling JSON body failed")
 		log.Errorf("unmarshaling JSON body bytes %s failed for URL %s: %s", string(bodyBytes), url, err.Error())
 		return false, err
 	}
