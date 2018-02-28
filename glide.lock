@@ -1,5 +1,5 @@
 hash: 472295100d362a3cb1fa4c6c458a0768f7311a7f9cdbad87f9b12e56dea95955
-updated: 2018-02-27T17:21:53.907779039-05:00
+updated: 2018-02-28T09:48:51.347617648-05:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -18,7 +18,7 @@ imports:
   subpackages:
   - pkg/api
 - name: github.com/fsnotify/fsnotify
-  version: 629574ca2a5df945712d3079857300b5e4da0236
+  version: c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9
 - name: github.com/golang/protobuf
   version: bbd03ef6da3a115852eaf24c8a1c46aeb39aa175
   subpackages:
@@ -35,13 +35,13 @@ imports:
   - json/scanner
   - json/token
 - name: github.com/magiconair/properties
-  version: c3beff4c2358b44d0493c7dda585e7db7ff28ae6
+  version: 2c9e9502788518c97fe44e8955cd069417ee89df
 - name: github.com/matttproud/golang_protobuf_extensions
   version: c12348ce28de40eed0136aa2b644d0ee0650e56c
   subpackages:
   - pbutil
 - name: github.com/mitchellh/mapstructure
-  version: a4e142e9c047c904fa2f1e144d9a84e6133024bc
+  version: 00c29f56e2386353d58c599509e8dc3801b0d716
 - name: github.com/pelletier/go-toml
   version: acdc4509485b587f5e675510c4f2c63e90ff68a8
 - name: github.com/prometheus/client_golang
@@ -53,14 +53,14 @@ imports:
   subpackages:
   - go
 - name: github.com/prometheus/common
-  version: 89604d197083d4781071d3c65855d24ecfb0a563
+  version: 6fb6fce6f8b75884b92e1889c150403fc0872c5e
   subpackages:
   - expfmt
   - internal/bitbucket.org/ww/goautoneg
   - log
   - model
 - name: github.com/prometheus/procfs
-  version: 282c8707aa210456a825798969cc27edda34992a
+  version: 75f2d6163c7a100bed6e971044ea3de30ee3a678
   subpackages:
   - internal/util
   - nfs
@@ -76,27 +76,27 @@ imports:
 - name: github.com/spf13/jwalterweatherman
   version: 7c0cea34c8ece3fbeb2b27ab9b59511d360fb394
 - name: github.com/spf13/pflag
-  version: 6a877ebacf28c5fc79846f4fcd380a5d9872b997
+  version: ee5fd03fd6acfd43e44aea0b4135958546ed8e73
 - name: github.com/spf13/viper
   version: 25b30aa063fc18e48662b86996252eabdcf2f0c7
 - name: golang.org/x/crypto
-  version: 650f4a345ab4e5b245a3034b110ebc7299e68186
+  version: 8c653846df49742c4c85ec37e5d9f8d3ba657895
   subpackages:
   - ssh/terminal
 - name: golang.org/x/sys
-  version: 37707fdb30a5b38865cfb95e5aab41707daec7fd
+  version: f6cff0780e542efa0c8e864dc8fa522808f6a598
   subpackages:
   - unix
   - windows
   - windows/registry
   - windows/svc/eventlog
 - name: golang.org/x/text
-  version: 4e4a3210bb54bb31f6ab2cdca2edcc0b50c420c1
+  version: 27420a1a391f5504f73155051cd274311bf70883
   subpackages:
   - transform
   - unicode/norm
 - name: gopkg.in/alecthomas/kingpin.v2
   version: 947dcec5ba9c011838740e680966fd7087a71d0d
 - name: gopkg.in/yaml.v2
-  version: d670f9405373e636a5a2765eea47fac0c9bc91a4
+  version: 7f97868eec74b32b0982dd158a51a446d1da7eb5
 testImports: []

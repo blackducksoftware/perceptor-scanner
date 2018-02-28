@@ -19,11 +19,11 @@ func TestLangID(t *testing.T) {
 		id, bcp47, iso3, norm string
 		err                   error
 	}{
-		{id: "", bcp47: "und", iso3: "und", err: errSyntax},
-		{id: "  ", bcp47: "und", iso3: "und", err: errSyntax},
-		{id: "   ", bcp47: "und", iso3: "und", err: errSyntax},
-		{id: "    ", bcp47: "und", iso3: "und", err: errSyntax},
-		{id: "xxx", bcp47: "und", iso3: "und", err: mkErrInvalid([]byte("xxx"))},
+		{id: "", bcp47: "und", iso3: "und", err: ErrSyntax},
+		{id: "  ", bcp47: "und", iso3: "und", err: ErrSyntax},
+		{id: "   ", bcp47: "und", iso3: "und", err: ErrSyntax},
+		{id: "    ", bcp47: "und", iso3: "und", err: ErrSyntax},
+		{id: "xxx", bcp47: "und", iso3: "und", err: NewValueError([]byte("xxx"))},
 		{id: "und", bcp47: "und", iso3: "und"},
 		{id: "aju", bcp47: "aju", iso3: "aju", norm: "jrb"},
 		{id: "jrb", bcp47: "jrb", iso3: "jrb"},
@@ -121,8 +121,8 @@ func TestGrandfathered(t *testing.T) {
 		{"en_us_posix", "en-US-u-va-posix"},
 		{"en-us-posix", "en-US-u-va-posix"},
 	} {
-		got := Raw.Make(tt.in)
-		want := Raw.MustParse(tt.out)
+		got := Make(tt.in)
+		want := MustParse(tt.out)
 		if got != want {
 			t.Errorf("%s: got %q; want %q", tt.in, got, want)
 		}
@@ -370,7 +370,7 @@ func TestGetScriptID(t *testing.T) {
 	idx := tag.Index("0000BbbbDdddEeeeZzzz\xff\xff\xff\xff")
 	tests := []struct {
 		in  string
-		out scriptID
+		out Script
 	}{
 		{"    ", 0},
 		{"      ", 0},
