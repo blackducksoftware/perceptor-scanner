@@ -51,7 +51,7 @@ func init() {
 	httpRequestsCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "perceptor",
 		Subsystem: "imagefacade",
-		Name:      "http_requests",
+		Name:      "http_requests_received",
 		Help:      "HTTP requests received by imagefacade",
 	},
 		[]string{"path"})

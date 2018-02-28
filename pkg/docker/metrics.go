@@ -79,7 +79,7 @@ func init() {
 			Namespace: "perceptor",
 			Subsystem: "imagefacade",
 			Name:      "timings",
-			Help:      "time durations of scanner operations",
+			Help:      "time durations of docker operations",
 			Buckets:   prometheus.ExponentialBuckets(0.25, 2, 20),
 		},
 		[]string{"operation"})
