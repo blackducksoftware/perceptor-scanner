@@ -1,5 +1,5 @@
-hash: 472295100d362a3cb1fa4c6c458a0768f7311a7f9cdbad87f9b12e56dea95955
-updated: 2018-02-28T09:48:51.347617648-05:00
+hash: af03c47cef1eafa2d85fad8eff6e1e74e09c63b0a5c5d2cc2a852bf7a3748c70
+updated: 2018-02-28T14:30:41.180108995-05:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -11,6 +11,13 @@ imports:
   version: 4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9
   subpackages:
   - quantile
+- name: github.com/blackducksoftware/hub-client-go
+  version: 39c39f12ffe9cb59b9194ace19f681b1120cc802
+  repo: git@github.com:blackducksoftware/hub-client-go.git
+  vcs: git
+  subpackages:
+  - hubapi
+  - hubclient
 - name: github.com/blackducksoftware/perceptor
   version: 10e7e1dfe9e9a09c29b9bd52d929efee93fc07e6
   repo: git@github.com:blackducksoftware/perceptor.git
@@ -60,7 +67,7 @@ imports:
   - log
   - model
 - name: github.com/prometheus/procfs
-  version: 75f2d6163c7a100bed6e971044ea3de30ee3a678
+  version: d274e363d5759d1c916232217be421f1cc89c5fe
   subpackages:
   - internal/util
   - nfs
@@ -80,7 +87,7 @@ imports:
 - name: github.com/spf13/viper
   version: 25b30aa063fc18e48662b86996252eabdcf2f0c7
 - name: golang.org/x/crypto
-  version: 8c653846df49742c4c85ec37e5d9f8d3ba657895
+  version: 91a49db82a88618983a78a06c1cbd4e00ab749ab
   subpackages:
   - ssh/terminal
 - name: golang.org/x/sys
