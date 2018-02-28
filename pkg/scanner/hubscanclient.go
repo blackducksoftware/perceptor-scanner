@@ -69,7 +69,7 @@ func (hsc *HubScanClient) Scan(job ScanJob) error {
 	if err != nil {
 		// TODO do we even need to add this metric?  since the errors should already
 		//   have been reported in the docker package
-		// recordError("docker image pull and tar file creation", errorName)
+		// recordScannerError("docker image pull and tar file creation", errorName)
 		log.Errorf("unable to pull docker image %s: %s", job.PullSpec, err.Error())
 		return err
 	}
@@ -107,7 +107,7 @@ func (hsc *HubScanClient) Scan(job ScanJob) error {
 	recordTotalScannerDuration(time.Now().Sub(startTotal), err == nil)
 
 	if err != nil {
-		recordError("scan client failed")
+		recordScannerError("scan client failed")
 		log.Errorf("java scanner failed for image %s with error %s and output:\n%s\n", job.Sha, err.Error(), string(stdoutStderr))
 		return err
 	}

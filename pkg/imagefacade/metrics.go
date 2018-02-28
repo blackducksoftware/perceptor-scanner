@@ -66,7 +66,7 @@ func init() {
 
 	reducerActivityCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "perceptor",
-		Subsystem: "core",
+		Subsystem: "imagefacade",
 		Name:      "reducer_activity",
 		Help:      "activity of the reducer -- how much time it's been idle and active, in seconds",
 	}, []string{"state"})

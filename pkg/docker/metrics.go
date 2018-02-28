@@ -24,23 +24,32 @@ package docker
 import (
 	"time"
 
-	common "github.com/blackducksoftware/perceptor-scanner/pkg/common"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 var tarballSize *prometheus.HistogramVec
+var durationsHistogram *prometheus.HistogramVec
+var errorsCounter *prometheus.CounterVec
+
+// durations
+
+func recordDuration(operation string, duration time.Duration) {
+	durationsHistogram.With(prometheus.Labels{"operation": operation}).Observe(duration.Seconds())
+}
 
 func recordDockerCreateDuration(duration time.Duration) {
-	common.RecordDuration("docker create", duration)
+	recordDuration("docker create", duration)
 }
 
 func recordDockerGetDuration(duration time.Duration) {
-	common.RecordDuration("docker save", duration)
+	recordDuration("docker save", duration)
 }
 
 func recordDockerTotalDuration(duration time.Duration) {
-	common.RecordDuration("docker get image total", duration)
+	recordDuration("docker get image total", duration)
 }
+
+// tar file size and docker errors
 
 func recordTarFileSize(fileSizeMBs int) {
 	tarballSize.WithLabelValues("tarballSize").Observe(float64(fileSizeMBs))
@@ -49,19 +58,40 @@ func recordTarFileSize(fileSizeMBs int) {
 func recordDockerError(errorStage string, errorName string, image Image, err error) {
 	// TODO what use can be made of `image` and `err`?
 	// we might want to group the errors by image sha or something
-	common.RecordError(errorStage, errorName)
+	errorsCounter.With(prometheus.Labels{"stage": errorStage, "errorName": errorName}).Inc()
 }
+
+// init
 
 func init() {
 	tarballSize = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: "perceptor",
-			Subsystem: "scanner",
+			Subsystem: "imagefacade",
 			Name:      "tarballsize",
 			Help:      "tarball file size in MBs",
 			Buckets:   prometheus.ExponentialBuckets(1, 2, 15),
 		},
 		[]string{"tarballSize"})
 
+	durationsHistogram = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: "perceptor",
+			Subsystem: "imagefacade",
+			Name:      "timings",
+			Help:      "time durations of scanner operations",
+			Buckets:   prometheus.ExponentialBuckets(0.25, 2, 20),
+		},
+		[]string{"operation"})
+
+	errorsCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "perceptor",
+		Subsystem: "imagefacade",
+		Name:      "dockerErrors",
+		Help:      "error codes from image pulling from docker",
+	}, []string{"stage", "errorName"})
+
+	prometheus.MustRegister(errorsCounter)
+	prometheus.MustRegister(durationsHistogram)
 	prometheus.MustRegister(tarballSize)
 }

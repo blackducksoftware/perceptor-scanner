@@ -24,8 +24,10 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/blackducksoftware/perceptor-scanner/pkg/imagefacade"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -38,6 +40,9 @@ func main() {
 		log.Errorf("Failed to load configuration: %s", err.Error())
 		panic(err)
 	}
+
+	prometheus.Unregister(prometheus.NewProcessCollector(os.Getpid(), ""))
+	prometheus.Unregister(prometheus.NewGoCollector())
 
 	imageFacade := imagefacade.NewImageFacade(config.DockerUser, config.DockerPassword)
 

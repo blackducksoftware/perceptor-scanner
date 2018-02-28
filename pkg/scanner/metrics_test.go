@@ -29,7 +29,7 @@ import (
 )
 
 func TestMetrics(t *testing.T) {
-	recordError("blar")
+	recordScannerError("blar")
 	recordCleanUpTarFile(false)
 	recordScanClientDuration(time.Now().Sub(time.Now()), true)
 	recordTotalScannerDuration(time.Now().Sub(time.Now()), false)

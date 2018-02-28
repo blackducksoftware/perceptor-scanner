@@ -110,7 +110,7 @@ func (scanner *Scanner) requestScanJob() (*api.ImageSpec, error) {
 	resp, err := scanner.httpClient.Post(nextImageURL, "", bytes.NewBuffer([]byte{}))
 
 	if err != nil {
-		recordError("unable to POST get next image")
+		recordScannerError("unable to POST get next image")
 		log.Errorf("unable to POST to %s: %s", nextImageURL, err.Error())
 		return nil, err
 	}
@@ -126,7 +126,7 @@ func (scanner *Scanner) requestScanJob() (*api.ImageSpec, error) {
 	defer resp.Body.Close()
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		recordError("unable to read response body")
+		recordScannerError("unable to read response body")
 		log.Errorf("unable to read response body from %s: %s", nextImageURL, err.Error())
 		return nil, err
 	}
@@ -134,7 +134,7 @@ func (scanner *Scanner) requestScanJob() (*api.ImageSpec, error) {
 	var nextImage api.NextImage
 	err = json.Unmarshal(bodyBytes, &nextImage)
 	if err != nil {
-		recordError("unmarshaling JSON body failed")
+		recordScannerError("unmarshaling JSON body failed")
 		log.Errorf("unmarshaling JSON body bytes %s failed for URL %s: %s", string(bodyBytes), nextImageURL, err.Error())
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func (scanner *Scanner) finishScan(results api.FinishedScanClientJob) error {
 	finishedScanURL := fmt.Sprintf("%s:%s/%s", api.PerceptorBaseURL, api.PerceptorPort, api.FinishedScanPath)
 	jsonBytes, err := json.Marshal(results)
 	if err != nil {
-		recordError("unable to marshal json for finished job")
+		recordScannerError("unable to marshal json for finished job")
 		log.Errorf("unable to marshal json for finished job: %s", err.Error())
 		return err
 	}
@@ -161,7 +161,7 @@ func (scanner *Scanner) finishScan(results api.FinishedScanClientJob) error {
 	for {
 		resp, err := scanner.httpClient.Post(finishedScanURL, "application/json", bytes.NewBuffer(jsonBytes))
 		if err != nil {
-			recordError("unable to POST finished job")
+			recordScannerError("unable to POST finished job")
 			log.Errorf("unable to POST to %s: %s", finishedScanURL, err.Error())
 			continue
 		}
