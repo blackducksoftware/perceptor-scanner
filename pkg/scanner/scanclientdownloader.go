@@ -23,7 +23,7 @@ package scanner
 
 import (
 	"fmt"
-	"os/exec"
+	"os"
 	"time"
 
 	"github.com/blackducksoftware/hub-client-go/hubclient"
@@ -34,7 +34,7 @@ const (
 	scanClientRootPath = "/tmp/scanner"
 )
 
-var scanClientTarGzPath = fmt.Sprintf("%s/scanclient.tar.gz", scanClientRootPath)
+var scanClientZipPath = fmt.Sprintf("%s/scanclient.zip", scanClientRootPath)
 
 func downloadScanClient(hubHost string, hubUser string, hubPassword string) (*scanClientInfo, error) {
 	// 1. instantiate hub client
@@ -45,7 +45,9 @@ func downloadScanClient(hubHost string, hubUser string, hubPassword string) (*sc
 		return nil, err
 	}
 
-	// 1a. log in to hub client
+	log.Infof("successfully instantiated hub client %s", hubBaseURL)
+
+	// 2. log in to hub client
 	isLoggedIn := false
 	for i := 0.5; i < 33; i *= 2 {
 		err = hubClient.Login(hubUser, hubPassword)
@@ -61,28 +63,37 @@ func downloadScanClient(hubHost string, hubUser string, hubPassword string) (*sc
 		return nil, fmt.Errorf("unable to log in to hub")
 	}
 
-	// 2. get hub version
+	log.Info("successfully logged in to hub")
+
+	// 3. get hub version
 	currentVersion, err := hubClient.CurrentVersion()
 	if err != nil {
 		log.Errorf("unable to get hub version: %s", err.Error())
 		return nil, err
 	}
 
-	// 3. pull down scan client as .tar.gz
-	err = hubClient.DownloadScanClientLinux(scanClientTarGzPath)
+	log.Infof("got hub version: %s", currentVersion.Version)
+
+	// 4. create directory
+	os.Mkdir(scanClientRootPath, 0755)
+
+	// 5. pull down scan client as .zip
+	err = hubClient.DownloadScanClientLinux(scanClientZipPath)
 	if err != nil {
 		log.Errorf("unable to download scan client: %s", err.Error())
 		return nil, err
 	}
 
-	// 4. untar, unzip scan client using os call to tar
-	cmd := exec.Command("tar", "-xvpf", scanClientTarGzPath, "-C", scanClientRootPath)
-	stdoutStderr, err := cmd.CombinedOutput()
+	log.Infof("successfully downloaded scan client to %s", scanClientZipPath)
+
+	// 6. unzip scan client
+	err = unzip(scanClientZipPath, scanClientRootPath)
 	if err != nil {
-		log.Errorf("unable to untar/unzip scan client: %s", stdoutStderr)
+		log.Errorf("unable to unzip %s: %s", scanClientZipPath, err.Error())
 		return nil, err
 	}
+	log.Infof("successfully unzipped from %s to %s", scanClientZipPath, scanClientRootPath)
 
-	// 5. we're done
+	// 7. we're done
 	return &scanClientInfo{hubVersion: currentVersion.Version, scanClientRootPath: scanClientRootPath}, nil
 }
