@@ -30,14 +30,14 @@ import (
 
 type Model struct {
 	State            ModelState
-	Images           map[string]bool
+	Images           map[string]common.ImageStatus
 	pullImageChannel chan *common.Image
 }
 
 func NewModel() *Model {
 	return &Model{
 		State:            ModelStateReady,
-		Images:           map[string]bool{},
+		Images:           map[string]common.ImageStatus{},
 		pullImageChannel: make(chan *common.Image),
 	}
 }
@@ -54,7 +54,7 @@ func (model *Model) pullImage(image *common.Image) error {
 	}
 
 	log.Infof("about to start pulling image %s -- model state %s", image.PullSpec, model.State.String())
-	model.Images[image.PullSpec] = false
+	model.Images[image.PullSpec] = common.ImageStatusInProgress
 	model.State = ModelStatePulling
 	model.pullImageChannel <- image
 	return nil
@@ -63,17 +63,18 @@ func (model *Model) pullImage(image *common.Image) error {
 func (model *Model) finishImagePull(image *common.Image, err error) {
 	if err == nil {
 		log.Infof("successfully finished image pull for %s", image.PullSpec)
+		model.Images[image.PullSpec] = common.ImageStatusDone
 	} else {
 		log.Errorf("finished image pull for %s with error %s", image.PullSpec, err.Error())
+		model.Images[image.PullSpec] = common.ImageStatusError
 	}
-	model.Images[image.PullSpec] = true
 	model.State = ModelStateReady
 }
 
-func (model *Model) isImageDone(image *common.Image) bool {
-	isDone, ok := model.Images[image.PullSpec]
+func (model *Model) imageStatus(image *common.Image) common.ImageStatus {
+	imageStatus, ok := model.Images[image.PullSpec]
 	if !ok {
-		return false
+		return common.ImageStatusUnknown
 	}
-	return isDone
+	return imageStatus
 }

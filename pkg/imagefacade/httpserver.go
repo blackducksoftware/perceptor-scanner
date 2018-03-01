@@ -115,8 +115,8 @@ func (h *HTTPServer) setup() {
 			var response api.CheckImageResponse
 			var wg sync.WaitGroup
 			wg.Add(1)
-			continuation := func(isDone bool) {
-				response = api.CheckImageResponse{IsDone: isDone, PullSpec: image.PullSpec}
+			continuation := func(imageStatus common.ImageStatus) {
+				response = api.CheckImageResponse{ImageStatus: imageStatus, PullSpec: image.PullSpec}
 				wg.Done()
 			}
 

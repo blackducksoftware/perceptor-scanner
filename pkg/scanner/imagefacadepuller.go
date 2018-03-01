@@ -60,21 +60,23 @@ func (ifp *imageFacadePuller) PullImage(image *common.Image) error {
 
 	for {
 		time.Sleep(5 * time.Second)
-		var isDone bool
-		isDone, err = ifp.checkImage(image)
+		var imageStatus common.ImageStatus
+		imageStatus, err = ifp.checkImage(image)
 
 		// TODO add some better error handling
 		if err != nil {
 			log.Errorf("unable to check image %s: %s", image.PullSpec, err.Error())
 		}
 
-		if isDone {
+		if imageStatus == common.ImageStatusDone {
 			log.Infof("finished pulling image %s", image.PullSpec)
-			break
+			return nil
+		}
+
+		if imageStatus == common.ImageStatusError {
+			return fmt.Errorf("unable to pull image %s", image.PullSpec)
 		}
 	}
-
-	return nil
 }
 
 func (ifp *imageFacadePuller) startImagePull(image *common.Image) error {
@@ -106,25 +108,25 @@ func (ifp *imageFacadePuller) startImagePull(image *common.Image) error {
 	return nil
 }
 
-func (ifp *imageFacadePuller) checkImage(image *common.Image) (bool, error) {
+func (ifp *imageFacadePuller) checkImage(image *common.Image) (common.ImageStatus, error) {
 	url := fmt.Sprintf("%s:%s/%s?", dockerBaseURL, imageFacadePort, checkImagePath)
 
 	requestBytes, err := json.Marshal(image)
 	if err != nil {
 		log.Errorf("unable to marshal JSON for %s: %s", image.PullSpec, err.Error())
-		return false, err
+		return common.ImageStatusUnknown, err
 	}
 
 	resp, err := ifp.httpClient.Post(url, "application/json", bytes.NewBuffer(requestBytes))
 	if err != nil {
 		log.Errorf("unable to create request to %s for image %s: %s", url, image.PullSpec, err.Error())
-		return false, err
+		return common.ImageStatusUnknown, err
 	}
 
 	if resp.StatusCode != 200 {
 		err = fmt.Errorf("GET %s failed with status code %d", url, resp.StatusCode)
 		log.Errorf(err.Error())
-		return false, err
+		return common.ImageStatusUnknown, err
 	}
 
 	defer resp.Body.Close()
@@ -132,7 +134,7 @@ func (ifp *imageFacadePuller) checkImage(image *common.Image) (bool, error) {
 	if err != nil {
 		recordScannerError("unable to read response body")
 		log.Errorf("unable to read response body from %s: %s", url, err.Error())
-		return false, err
+		return common.ImageStatusUnknown, err
 	}
 
 	var getImage api.CheckImageResponse
@@ -140,10 +142,10 @@ func (ifp *imageFacadePuller) checkImage(image *common.Image) (bool, error) {
 	if err != nil {
 		recordScannerError("unmarshaling JSON body failed")
 		log.Errorf("unmarshaling JSON body bytes %s failed for URL %s: %s", string(bodyBytes), url, err.Error())
-		return false, err
+		return common.ImageStatusUnknown, err
 	}
 
 	log.Infof("image check for image %s succeeded", image.PullSpec)
 
-	return getImage.IsDone, nil
+	return getImage.ImageStatus, nil
 }
