@@ -34,6 +34,8 @@ const (
 
 func (is ImageStatus) String() string {
 	switch is {
+	case ImageStatusUnknown:
+		return "Unknown"
 	case ImageStatusInProgress:
 		return "InProgress"
 	case ImageStatusDone:
