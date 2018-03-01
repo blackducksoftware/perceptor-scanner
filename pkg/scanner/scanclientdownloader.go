@@ -24,7 +24,6 @@ package scanner
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/blackducksoftware/hub-client-go/hubclient"
 	log "github.com/sirupsen/logrus"
@@ -48,18 +47,9 @@ func downloadScanClient(hubHost string, hubUser string, hubPassword string) (*sc
 	log.Infof("successfully instantiated hub client %s", hubBaseURL)
 
 	// 2. log in to hub client
-	isLoggedIn := false
-	for i := 0.5; i < 33; i *= 2 {
-		err = hubClient.Login(hubUser, hubPassword)
-		if err == nil {
-			isLoggedIn = true
-			break
-		}
-
+	err = hubClient.Login(hubUser, hubPassword)
+	if err != nil {
 		log.Errorf("unable to log in to hub: %s", err.Error())
-		time.Sleep(time.Duration(i*1000) * time.Millisecond)
-	}
-	if !isLoggedIn {
 		return nil, fmt.Errorf("unable to log in to hub")
 	}
 
