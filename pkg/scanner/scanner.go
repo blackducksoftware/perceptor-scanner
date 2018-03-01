@@ -46,10 +46,16 @@ func NewScanner(hubHost string, hubUser string, hubPassword string) (*Scanner, e
 		return nil, err
 	}
 
+	scanClientInfo, err := downloadScanClient(hubHost, hubUser, hubPassword)
+	if err != nil {
+		log.Errorf("unable to download scan client: %s", err.Error())
+		return nil, err
+	}
+
 	log.Infof("instantiating scanner with hub %s, user %s", hubHost, hubUser)
 
 	imagePuller := newImageFacadePuller()
-	scanClient, err := NewHubScanClient(hubHost, hubUser, hubPassword, imagePuller)
+	scanClient, err := NewHubScanClient(hubHost, hubUser, hubPassword, scanClientInfo, imagePuller)
 	if err != nil {
 		log.Errorf("unable to instantiate hub scan client: %s", err.Error())
 		return nil, err

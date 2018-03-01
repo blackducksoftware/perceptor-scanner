@@ -1,5 +1,11 @@
 package: github.com/blackducksoftware/perceptor-scanner
 import:
+- package: github.com/blackducksoftware/hub-client-go
+  repo: git@github.com:blackducksoftware/hub-client-go.git
+  vcs: git
+  subpackages:
+  - hubapi
+  - hubclient
 - package: github.com/blackducksoftware/perceptor
   repo: git@github.com:blackducksoftware/perceptor.git
   vcs: git

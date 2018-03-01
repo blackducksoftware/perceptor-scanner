@@ -32,31 +32,22 @@ import (
 // HubScanClient implements ScanClientInterface using
 // the Black Duck hub and scan client programs.
 type HubScanClient struct {
-	host        string
-	username    string
-	password    string
-	imagePuller ImagePullerInterface
+	host           string
+	username       string
+	password       string
+	scanClientInfo *scanClientInfo
+	imagePuller    ImagePullerInterface
 }
 
-// NewHubScanClient requires login credentials in order to instantiate
-// a HubScanClient.
-func NewHubScanClient(host string, username string, password string, imagePuller ImagePullerInterface) (*HubScanClient, error) {
+// NewHubScanClient requires hub login credentials
+func NewHubScanClient(host string, username string, password string, scanClientInfo *scanClientInfo, imagePuller ImagePullerInterface) (*HubScanClient, error) {
 	hsc := HubScanClient{
-		host:        host,
-		username:    username,
-		password:    password,
-		imagePuller: imagePuller}
+		host:           host,
+		username:       username,
+		password:       password,
+		scanClientInfo: scanClientInfo,
+		imagePuller:    imagePuller}
 	return &hsc, nil
-}
-
-func mapKeys(m map[string]ScanJob) []string {
-	keys := make([]string, len(m))
-	i := 0
-	for k := range m {
-		keys[i] = k
-		i++
-	}
-	return keys
 }
 
 func (hsc *HubScanClient) Scan(job ScanJob) error {
@@ -67,18 +58,13 @@ func (hsc *HubScanClient) Scan(job ScanJob) error {
 	defer cleanUpTarFile(image.DockerTarFilePath())
 
 	if err != nil {
-		// TODO do we even need to add this metric?  since the errors should already
-		//   have been reported in the docker package
-		// recordScannerError("docker image pull and tar file creation", errorName)
+		recordScannerError("docker image pull and tar file creation")
 		log.Errorf("unable to pull docker image %s: %s", job.PullSpec, err.Error())
 		return err
 	}
 
-	// TODO coupla problems here:
-	//   1. hardcoded path
-	//   2. hardcoded version number
-	scanCliImplJarPath := "./dependencies/scan.cli-4.3.0/lib/cache/scan.cli.impl-standalone.jar"
-	scanCliJarPath := "./dependencies/scan.cli-4.3.0/lib/scan.cli-4.3.0-standalone.jar"
+	scanCliImplJarPath := hsc.scanClientInfo.scanCliImplJarPath()
+	scanCliJarPath := hsc.scanClientInfo.scanCliJarPath()
 	path := image.DockerTarFilePath()
 	cmd := exec.Command("java",
 		"-Xms512m",
@@ -89,7 +75,7 @@ func (hsc *HubScanClient) Scan(job ScanJob) error {
 		"-Done-jar.jar.path="+scanCliImplJarPath,
 		"-jar", scanCliJarPath,
 		"--host", hsc.host,
-		"--port", "443", // "--port", "8443", // TODO or should this be 8080 or something else? or should we just leave it off and let it default?
+		"--port", "443", // "--port", "8443",
 		"--scheme", "https", // TODO or should this be http?
 		"--project", job.HubProjectName,
 		"--release", job.HubProjectVersionName,
