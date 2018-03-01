@@ -29,6 +29,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	hubPort   = "443"
+	hubScheme = "https"
+)
+
 // HubScanClient implements ScanClientInterface using
 // the Black Duck hub and scan client programs.
 type HubScanClient struct {
@@ -75,13 +80,13 @@ func (hsc *HubScanClient) Scan(job ScanJob) error {
 		"-Done-jar.jar.path="+scanCliImplJarPath,
 		"-jar", scanCliJarPath,
 		"--host", hsc.host,
-		"--port", "443", // "--port", "8443",
-		"--scheme", "https", // TODO or should this be http?
+		"--port", hubPort,
+		"--scheme", hubScheme,
 		"--project", job.HubProjectName,
 		"--release", job.HubProjectVersionName,
 		"--username", hsc.username,
 		"--name", job.HubScanName,
-		"--insecure", // TODO not sure about this
+		"--insecure",
 		"-v",
 		path)
 
@@ -106,7 +111,7 @@ func (hsc *HubScanClient) Scan(job ScanJob) error {
 // 	cmd := exec.Command(pathToScanner,
 // 		"--project", job.Image.HubProjectName(),
 // 		"--host", hsc.host,
-// 		"--port", "443",
+// 		"--port", hubPort,
 // 		"--insecure",
 // 		"--username", hsc.username,
 // 		job.Image.HumanReadableName())
@@ -119,27 +124,6 @@ func (hsc *HubScanClient) Scan(job ScanJob) error {
 // 		return err
 // 	}
 // 	log.Infof("successfully completed scan.cli.sh: %s", stdoutStderr)
-// 	return nil
-// }
-//
-// func (hsc *HubScanClient) ScanDockerSh(job ScanJob) error {
-// 	pathToScanner := "./dependencies/scan.cli-4.3.0/bin/scan.docker.sh"
-// 	cmd := exec.Command(pathToScanner,
-// 		"--image", job.Image.ShaName(),
-// 		"--name", job.Image.HumanReadableName(),
-// 		"--release", job.Image.HubVersionName(),
-// 		"--project", job.Image.HubProjectName(),
-// 		"--host", hsc.host,
-// 		"--username", hsc.username)
-// 	log.Infof("running command %v for image %s\n", cmd, job.Image.HumanReadableName())
-// 	stdoutStderr, err := cmd.CombinedOutput()
-// 	if err != nil {
-// 		message := fmt.Sprintf("failed to run scan.docker.sh: %s", err.Error())
-// 		log.Error(message)
-// 		log.Errorf("output from scan.docker.sh:\n%v\n", string(stdoutStderr))
-// 		return err
-// 	}
-// 	log.Infof("successfully completed ./scan.docker.sh: %s", stdoutStderr)
 // 	return nil
 // }
 

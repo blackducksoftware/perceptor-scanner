@@ -34,6 +34,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	requestScanJobPause = 20 * time.Second
+)
+
 type Scanner struct {
 	scanClient ScanClientInterface
 	httpClient *http.Client
@@ -76,7 +80,7 @@ func (scanner *Scanner) startRequestingScanJobs() {
 	log.Infof("starting to request scan jobs")
 	go func() {
 		for {
-			time.Sleep(20 * time.Second)
+			time.Sleep(requestScanJobPause)
 			scanner.requestAndRunScanJob()
 		}
 	}()
