@@ -28,7 +28,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/prometheus/common/log"
+	log "github.com/sirupsen/logrus"
 )
 
 // This code is from https://golangcode.com/unzip-files-in-go/ and
