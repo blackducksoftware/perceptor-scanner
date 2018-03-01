@@ -39,16 +39,16 @@ func (p *pullImage) apply(model *Model) {
 
 type getImage struct {
 	image        *common.Image
-	continuation func(isDone bool)
+	continuation func(imageStatus common.ImageStatus)
 }
 
-func newGetImage(image *common.Image, continuation func(isDone bool)) *getImage {
+func newGetImage(image *common.Image, continuation func(imageStatus common.ImageStatus)) *getImage {
 	return &getImage{image: image, continuation: continuation}
 }
 
 func (g *getImage) apply(model *Model) {
-	isDone := model.isImageDone(g.image)
-	go g.continuation(isDone)
+	imageStatus := model.imageStatus(g.image)
+	go g.continuation(imageStatus)
 }
 
 type finishedImagePull struct {

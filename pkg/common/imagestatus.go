@@ -19,11 +19,28 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package api
+package common
 
-import "github.com/blackducksoftware/perceptor-scanner/pkg/common"
+import "fmt"
 
-type CheckImageResponse struct {
-	PullSpec    string
-	ImageStatus common.ImageStatus
+type ImageStatus int
+
+const (
+	ImageStatusUnknown    ImageStatus = iota
+	ImageStatusInProgress ImageStatus = iota
+	ImageStatusDone       ImageStatus = iota
+	ImageStatusError      ImageStatus = iota
+)
+
+func (is ImageStatus) String() string {
+	switch is {
+	case ImageStatusInProgress:
+		return "InProgress"
+	case ImageStatusDone:
+		return "Done"
+	case ImageStatusError:
+		return "Error"
+	default:
+		panic(fmt.Errorf("invalid ImageStatus value: %d", is))
+	}
 }
