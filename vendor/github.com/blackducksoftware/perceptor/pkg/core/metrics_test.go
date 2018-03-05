@@ -22,31 +22,27 @@ under the License.
 package core
 
 import (
+	"fmt"
+	"net/http"
+	"net/url"
 	"testing"
 
 	log "github.com/sirupsen/logrus"
 )
 
 func TestMetrics(t *testing.T) {
-	m := newMetrics()
-	if m == nil {
-		t.Error("expected m to be non-nil")
-	}
-
-	m.addImage(Image{})
-	m.addPod(Pod{})
-	m.allPods([]Pod{})
-	m.deletePod("abcd")
-	m.getNextImage()
-	m.getScanResults()
-	// TODO not good for testing
-	// m.httpError(request, err)
-	// m.httpNotFound(request)
-	m.postFinishedScan()
-	m.updateModel(Model{Images: map[DockerImageSha]*ImageInfo{
-		DockerImageSha("abc"): &ImageInfo{ScanStatus: ScanStatusInQueue, ScanResults: nil},
-	}})
-	m.updatePod(Pod{})
+	recordAddPod()
+	recordAllPods()
+	recordAddImage()
+	recordDeletePod()
+	recordAllImages()
+	recordHTTPError(&http.Request{URL: &url.URL{}}, fmt.Errorf("oops"), 500)
+	recordAllImages()
+	recordGetNextImage()
+	recordHTTPNotFound(&http.Request{URL: &url.URL{}})
+	recordModelMetrics(&ModelMetrics{})
+	recordGetScanResults()
+	recordPostFinishedScan()
 
 	message := "finished test case"
 	t.Log(message)

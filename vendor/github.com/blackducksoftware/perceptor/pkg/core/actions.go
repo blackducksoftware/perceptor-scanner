@@ -22,75 +22,72 @@ under the License.
 package core
 
 import (
+	"encoding/json"
+
+	"github.com/blackducksoftware/perceptor/pkg/api"
 	log "github.com/sirupsen/logrus"
 )
 
 type action interface {
-	apply(model Model) Model
+	apply(model *Model)
 }
 
 type addPod struct {
 	pod Pod
 }
 
-func (a addPod) apply(model Model) Model {
+func (a *addPod) apply(model *Model) {
 	model.AddPod(a.pod)
-	return model
 }
 
 type updatePod struct {
 	pod Pod
 }
 
-func (u updatePod) apply(model Model) Model {
+func (u *updatePod) apply(model *Model) {
 	model.AddPod(u.pod)
-	return model
 }
 
 type deletePod struct {
 	podName string
 }
 
-func (d deletePod) apply(model Model) Model {
+func (d *deletePod) apply(model *Model) {
 	_, ok := model.Pods[d.podName]
 	if !ok {
 		log.Warnf("unable to delete pod %s, pod not found", d.podName)
-		return model
+		return
 	}
 	delete(model.Pods, d.podName)
-	return model
 }
 
 type addImage struct {
 	image Image
 }
 
-func (a addImage) apply(model Model) Model {
+func (a *addImage) apply(model *Model) {
 	model.AddImage(a.image)
-	return model
 }
 
 type allPods struct {
 	pods []Pod
 }
 
-func (a allPods) apply(model Model) Model {
+func (a *allPods) apply(model *Model) {
 	model.Pods = map[string]Pod{}
 	for _, pod := range a.pods {
 		model.AddPod(pod)
 	}
-	return model
 }
 
 type getNextImage struct {
 	continuation func(image *Image)
 }
 
-func (g getNextImage) apply(model Model) Model {
+func (g *getNextImage) apply(model *Model) {
 	log.Infof("looking for next image to scan with concurrency limit of %d, and %d currently in progress", model.ConcurrentScanLimit, model.inProgressScanCount())
 	image := model.getNextImageFromScanQueue()
-	g.continuation(image)
-	return model
+	go g.continuation(image)
 }
 
 type finishScanClient struct {
@@ -98,7 +95,7 @@ type finishScanClient struct {
 	err string
 }
 
-func (f finishScanClient) apply(model Model) Model {
+func (f *finishScanClient) apply(model *Model) {
 	newModel := model
 	log.Infof("finished scan client job action: error was empty? %t, %+v", f.err == "", f.sha)
 	if f.err == "" {
@@ -106,30 +103,28 @@ func (f finishScanClient) apply(model Model) Model {
 	} else {
 		newModel.errorRunningScanClient(f.sha)
 	}
-	return newModel
 }
 
 type getNextImageForHubPolling struct {
 	continuation func(image *Image)
 }
 
-func (g getNextImageForHubPolling) apply(model Model) Model {
+func (g *getNextImageForHubPolling) apply(model *Model) {
 	log.Infof("looking for next image to search for in hub")
 	image := model.getNextImageFromHubCheckQueue()
-	g.continuation(image)
-	return model
+	go g.continuation(image)
 }
 
 type hubCheckResults struct {
 	scan HubImageScan
 }
 
-func (h hubCheckResults) apply(model Model) Model {
+func (h *hubCheckResults) apply(model *Model) {
 	scan := h.scan
 	imageInfo, ok := model.Images[scan.Sha]
 	if !ok {
 		log.Warnf("expected to already have image %s, but did not", string(scan.Sha))
-		return model
+		return
 	}
 
 	imageInfo.ScanResults = scan.Scan
@@ -145,20 +140,18 @@ func (h hubCheckResults) apply(model Model) Model {
 		// since we don't know, we have to put it into the scan queue
 		model.addImageToScanQueue(scan.Sha)
 	}
-
-	return model
 }
 
 type hubScanResults struct {
 	scan HubImageScan
 }
 
-func (h hubScanResults) apply(model Model) Model {
+func (h *hubScanResults) apply(model *Model) {
 	scan := h.scan
 	imageInfo, ok := model.Images[scan.Sha]
 	if !ok {
 		log.Warnf("expected to already have image %s, but did not", string(scan.Sha))
-		return model
+		return
 	}
 
 	imageInfo.ScanResults = scan.Scan
@@ -167,48 +160,140 @@ func (h hubScanResults) apply(model Model) Model {
 	if scan.Scan != nil && scan.Scan.IsDone() {
 		imageInfo.setScanStatus(ScanStatusComplete)
 	}
-
-	return model
 }
 
 type requeueStalledScan struct {
 	sha DockerImageSha
 }
 
-func (r requeueStalledScan) apply(model Model) Model {
+func (r *requeueStalledScan) apply(model *Model) {
 	imageInfo, ok := model.Images[r.sha]
 	if !ok {
-		return model
+		return
 	}
 	if imageInfo.ScanStatus != ScanStatusRunningScanClient {
-		return model
+		return
 	}
 	imageInfo.setScanStatus(ScanStatusError)
 	model.addImageToScanQueue(r.sha)
-	return model
 }
 
 type setConcurrentScanLimit struct {
 	limit int
 }
 
-func (s setConcurrentScanLimit) apply(model Model) Model {
+func (s *setConcurrentScanLimit) apply(model *Model) {
 	limit := s.limit
 	if limit < 0 {
 		log.Errorf("cannot set concurrent scan limit to less than 0 (got %d)", limit)
-		return model
+		return
 	}
 	model.ConcurrentScanLimit = limit
-	return model
 }
 
 type allImages struct {
 	images []Image
 }
 
-func (a allImages) apply(model Model) Model {
+func (a *allImages) apply(model *Model) {
 	for _, image := range a.images {
 		model.AddImage(image)
 	}
-	return model
+}
+
+type getModel struct {
+	continuation func(json string)
+}
+
+func (g *getModel) apply(model *Model) {
+	jsonBytes, err := json.Marshal(model)
+	if err != nil {
+		jsonBytes = []byte{}
+		log.Errorf("unable to serialize model: %s", err.Error())
+	}
+	go g.continuation(string(jsonBytes))
+}
+
+type getScanResults struct {
+	continuation func(results api.ScanResults)
+}
+
+func (g *getScanResults) apply(model *Model) {
+	scanResults := model.scanResults()
+	go g.continuation(scanResults)
+}
+
+type getInProgressHubScans struct {
+	continuation func(images []Image)
+}
+
+func (g *getInProgressHubScans) apply(model *Model) {
+	scans := []Image{}
+	for _, image := range model.inProgressHubScans() {
+		scans = append(scans, image)
+	}
+	go g.continuation(scans)
+}
+
+type getInProgressScanClientScans struct {
+	continuation func(imageInfos []*ImageInfo)
+}
+
+func (g *getInProgressScanClientScans) apply(model *Model) {
+	imageInfos := []*ImageInfo{}
+	for _, imageInfo := range model.inProgressScanClientScans() {
+		// TODO could make a deep copy of imageInfo in case it is being
+		// changed while we're looking at it
+		imageInfos = append(imageInfos, imageInfo)
+	}
+	go g.continuation(imageInfos)
+}
+
+type getMetrics struct {
+	continuation func(metrics *ModelMetrics)
+}
+
+func (g *getMetrics) apply(model *Model) {
+	modelMetrics := model.metrics()
+	go g.continuation(modelMetrics)
+}
+
+type debugGetModel struct {
+	continuation func(model *Model)
+}
+
+func (d *debugGetModel) apply(model *Model) {
+	go d.continuation(model)
+}
+
+type getCompletedScans struct {
+	continuation func(images []*Image)
+}
+
+func (g *getCompletedScans) apply(model *Model) {
+	images := []*Image{}
+	for _, imageInfo := range model.Images {
+		if imageInfo.ScanStatus == ScanStatusComplete {
+			image := imageInfo.image()
+			images = append(images, &image)
+		}
+	}
+	go g.continuation(images)
+}
+
+type hubRecheckResults struct {
+	scan HubImageScan
+}
+
+func (h *hubRecheckResults) apply(model *Model) {
+	scan := h.scan
+	imageInfo, ok := model.Images[scan.Sha]
+	if !ok {
+		log.Warnf("expected to already have image %s, but did not", string(scan.Sha))
+		return
+	}
+
+	if scan.Scan != nil {
+		imageInfo.ScanResults = scan.Scan
+	}
 }
