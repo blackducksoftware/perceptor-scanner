@@ -24,102 +24,26 @@ package core
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type metrics struct {
-	httpHandler http.Handler
+var statusGauge *prometheus.GaugeVec
+var handledHTTPRequest *prometheus.CounterVec
+var reducerActivityCounter *prometheus.CounterVec
+var reducerMessageCounter *prometheus.CounterVec
 
-	latestModel Model
+// prometheus' terminology is so confusing ... a histogram isn't a histogram.  sometimes.
+var statusHistogram *prometheus.GaugeVec
 
-	handledHTTPRequest *prometheus.CounterVec
-	statusGauge        *prometheus.GaugeVec
-	// prometheus' terminology is so confusing ... a histogram isn't a histogram.  sometimes.
-	statusHistogram *prometheus.GaugeVec
-}
-
-func newMetrics() *metrics {
-	m := metrics{}
-	m.setup()
-	m.httpHandler = prometheus.Handler()
-	return &m
-}
-
-// successful http requests received
-
-func (m *metrics) addPod(pod Pod) {
-	m.handledHTTPRequest.With(prometheus.Labels{"path": "pod", "method": "POST", "code": "200"}).Inc()
-}
-
-func (m *metrics) updatePod(pod Pod) {
-	m.handledHTTPRequest.With(prometheus.Labels{"path": "pod", "method": "PUT", "code": "200"}).Inc()
-}
-
-func (m *metrics) deletePod(podName string) {
-	m.handledHTTPRequest.With(prometheus.Labels{"path": "pod", "method": "DELETE", "code": "200"}).Inc()
-}
-
-func (m *metrics) addImage(image Image) {
-	m.handledHTTPRequest.With(prometheus.Labels{"path": "image", "method": "POST", "code": "200"}).Inc()
-}
-
-func (m *metrics) allPods(pods []Pod) {
-	m.handledHTTPRequest.With(prometheus.Labels{"path": "allpods", "method": "PUT", "code": "200"}).Inc()
-}
-
-func (m *metrics) allImages(images []Image) {
-	m.handledHTTPRequest.With(prometheus.Labels{"path": "allimages", "method": "PUT", "code": "200"}).Inc()
-}
-
-func (m *metrics) getNextImage() {
-	m.handledHTTPRequest.With(prometheus.Labels{"path": "nextimage", "method": "POST", "code": "200"}).Inc()
-}
-
-func (m *metrics) postFinishedScan() {
-	m.handledHTTPRequest.With(prometheus.Labels{"path": "finishedscan", "method": "POST", "code": "200"}).Inc()
-}
-
-func (m *metrics) getScanResults() {
-	m.handledHTTPRequest.With(prometheus.Labels{"path": "scanresults", "method": "GET", "code": "200"}).Inc()
-}
-
-// unsuccessful http requests received
-
-func (m *metrics) httpNotFound(request *http.Request) {
-	path := request.URL.Path
-	method := request.Method
-	m.handledHTTPRequest.With(prometheus.Labels{"path": path, "method": method, "code": "404"}).Inc()
-}
-
-func (m *metrics) httpError(request *http.Request, err error) {
-	path := request.URL.Path
-	method := request.Method
-	m.handledHTTPRequest.With(prometheus.Labels{"path": path, "method": method, "code": "500"}).Inc()
-}
-
-// model
-
-func (m *metrics) updateModel(model Model) {
-	m.latestModel = model
-}
-
-// generateStatusMetrics is called periodically -- but NOT every time the model
+// modelMetrics is called periodically -- but NOT every time the model
 // is updated -- in case generating the metrics is computationally expensive.
 // And the metrics don't need to be updated all that often, since they'll only
 // get scraped every now and then by prometheus.
-func (m *metrics) generateStatusMetrics() {
-	model := m.latestModel
-
+func recordModelMetrics(modelMetrics *ModelMetrics) {
 	// log.Info("generating status metrics")
 
-	// number of images in each status
-	statusCounts := make(map[ScanStatus]int)
-	for _, imageResults := range model.Images {
-		statusCounts[imageResults.ScanStatus]++
-	}
 	keys := []ScanStatus{
 		ScanStatusUnknown,
 		ScanStatusInHubCheckQueue,
@@ -130,42 +54,99 @@ func (m *metrics) generateStatusMetrics() {
 		ScanStatusComplete,
 		ScanStatusError}
 	for _, key := range keys {
-		val := statusCounts[key]
+		val := modelMetrics.ScanStatusCounts[key]
 		status := fmt.Sprintf("image_status_%s", key.String())
-		m.statusGauge.With(prometheus.Labels{"name": status}).Set(float64(val))
+		statusGauge.With(prometheus.Labels{"name": status}).Set(float64(val))
 	}
 
-	m.statusGauge.With(prometheus.Labels{"name": "number_of_pods"}).Set(float64(len(model.Pods)))
-	m.statusGauge.With(prometheus.Labels{"name": "number_of_images"}).Set(float64(len(model.Images)))
+	statusGauge.With(prometheus.Labels{"name": "number_of_pods"}).Set(float64(modelMetrics.NumberOfPods))
+	statusGauge.With(prometheus.Labels{"name": "number_of_images"}).Set(float64(modelMetrics.NumberOfImages))
 
 	// number of containers per pod (as a histgram, but not a prometheus histogram ???)
-	containerCounts := make(map[int]int)
-	for _, pod := range model.Pods {
-		containerCounts[len(pod.Containers)]++
-	}
-	for numberOfContainers, numberOfPods := range containerCounts {
+	for numberOfContainers, numberOfPods := range modelMetrics.ContainerCounts {
 		strCount := fmt.Sprintf("%d", numberOfContainers)
-		m.statusHistogram.With(prometheus.Labels{"name": "containers_per_pod", "count": strCount}).Set(float64(numberOfPods))
+		statusHistogram.With(prometheus.Labels{"name": "containers_per_pod", "count": strCount}).Set(float64(numberOfPods))
 	}
 
 	// number of times each image is referenced from a pod's container
-	imageCounts := make(map[Image]int)
-	for _, pod := range model.Pods {
-		for _, cont := range pod.Containers {
-			imageCounts[cont.Image]++
-		}
-	}
-	imageCountHistogram := make(map[int]int)
-	for _, count := range imageCounts {
-		imageCountHistogram[count]++
-	}
-	for numberOfReferences, occurences := range imageCountHistogram {
+	for numberOfReferences, occurences := range modelMetrics.ImageCountHistogram {
 		strCount := fmt.Sprintf("%d", numberOfReferences)
-		m.statusHistogram.With(prometheus.Labels{"name": "references_per_image", "count": strCount}).Set(float64(occurences))
+		statusHistogram.With(prometheus.Labels{"name": "references_per_image", "count": strCount}).Set(float64(occurences))
 	}
 
 	// TODO
 	// number of images without a pod pointing to them
+}
+
+// successful http requests received
+
+func recordAddPod() {
+	handledHTTPRequest.With(prometheus.Labels{"path": "pod", "method": "POST", "code": "200"}).Inc()
+}
+
+func recordUpdatePod() {
+	handledHTTPRequest.With(prometheus.Labels{"path": "pod", "method": "PUT", "code": "200"}).Inc()
+}
+
+func recordDeletePod() {
+	handledHTTPRequest.With(prometheus.Labels{"path": "pod", "method": "DELETE", "code": "200"}).Inc()
+}
+
+func recordAddImage() {
+	handledHTTPRequest.With(prometheus.Labels{"path": "image", "method": "POST", "code": "200"}).Inc()
+}
+
+func recordAllPods() {
+	handledHTTPRequest.With(prometheus.Labels{"path": "allpods", "method": "PUT", "code": "200"}).Inc()
+}
+
+func recordAllImages() {
+	handledHTTPRequest.With(prometheus.Labels{"path": "allimages", "method": "PUT", "code": "200"}).Inc()
+}
+
+func recordGetNextImage() {
+	handledHTTPRequest.With(prometheus.Labels{"path": "nextimage", "method": "POST", "code": "200"}).Inc()
+}
+
+func recordPostFinishedScan() {
+	handledHTTPRequest.With(prometheus.Labels{"path": "finishedscan", "method": "POST", "code": "200"}).Inc()
+}
+
+func recordGetScanResults() {
+	handledHTTPRequest.With(prometheus.Labels{"path": "scanresults", "method": "GET", "code": "200"}).Inc()
+}
+
+// unsuccessful http requests received
+
+func recordHTTPNotFound(request *http.Request) {
+	path := request.URL.Path
+	method := request.Method
+	handledHTTPRequest.With(prometheus.Labels{"path": path, "method": method, "code": "404"}).Inc()
+}
+
+func recordHTTPError(request *http.Request, err error, statusCode int) {
+	path := request.URL.Path
+	method := request.Method
+	statusCodeString := fmt.Sprintf("%d", statusCode)
+	handledHTTPRequest.With(prometheus.Labels{"path": path, "method": method, "code": statusCodeString}).Inc()
+}
+
+// reducer loop
+
+func recordReducerActivity(isActive bool, duration time.Duration) {
+	state := "idle"
+	if isActive {
+		state = "active"
+	}
+	reducerActivityCounter.With(prometheus.Labels{"state": state}).Add(duration.Seconds())
+}
+
+func recordNumberOfMessagesInQueue(messageCount int) {
+	statusGauge.With(prometheus.Labels{"name": "number_of_messages_in_reducer_queue"}).Set(float64(messageCount))
+}
+
+func recordMessageType(message string) {
+	reducerMessageCounter.With(prometheus.Labels{"message": message}).Inc()
 }
 
 // http requests issued
@@ -174,13 +155,22 @@ func (m *metrics) generateStatusMetrics() {
 
 // TODO
 
-// setup
+func init() {
+	statusGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: "perceptor",
+		Subsystem: "core",
+		Name:      "status_gauge",
+		Help:      "a gauge of statuses for perceptor core's current state",
+	}, []string{"name"})
 
-func (m *metrics) setup() {
-	prometheus.Unregister(prometheus.NewProcessCollector(os.Getpid(), ""))
-	prometheus.Unregister(prometheus.NewGoCollector())
+	statusHistogram = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: "perceptor",
+		Subsystem: "core",
+		Name:      "status_histogram",
+		Help:      "a histogram of statuses for perceptor core's current state",
+	}, []string{"name", "count"})
 
-	m.handledHTTPRequest = prometheus.NewCounterVec(prometheus.CounterOpts{
+	handledHTTPRequest = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace:   "perceptor",
 		Subsystem:   "core",
 		Name:        "http_handled_status_codes",
@@ -188,28 +178,23 @@ func (m *metrics) setup() {
 		ConstLabels: map[string]string{},
 	}, []string{"path", "method", "code"})
 
-	m.statusGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	reducerActivityCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "perceptor",
 		Subsystem: "core",
-		Name:      "status_gauge",
-		Help:      "a gauge of statuses for perceptor core's current state",
-	}, []string{"name"})
+		Name:      "reducer_activity",
+		Help:      "activity of the reducer -- how much time it's been idle and active, in seconds",
+	}, []string{"state"})
 
-	m.statusHistogram = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	reducerMessageCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "perceptor",
 		Subsystem: "core",
-		Name:      "status_histogram",
-		Help:      "a histogram of statuses for perceptor core's current state",
-	}, []string{"name", "count"})
+		Name:      "reducer_message",
+		Help:      "count of the message types processed by the reducer",
+	}, []string{"message"})
 
-	prometheus.MustRegister(m.handledHTTPRequest)
-	prometheus.MustRegister(m.statusGauge)
-	prometheus.MustRegister(m.statusHistogram)
-
-	go func() {
-		for {
-			m.generateStatusMetrics()
-			time.Sleep(15 * time.Second)
-		}
-	}()
+	prometheus.MustRegister(handledHTTPRequest)
+	prometheus.MustRegister(statusGauge)
+	prometheus.MustRegister(statusHistogram)
+	prometheus.MustRegister(reducerActivityCounter)
+	prometheus.MustRegister(reducerMessageCounter)
 }

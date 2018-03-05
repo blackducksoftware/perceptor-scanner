@@ -26,9 +26,6 @@ import (
 )
 
 type Responder interface {
-	// state of the program
-	// this is a funky return type because it's so tightly coupled to prometheus
-	GetMetrics(w http.ResponseWriter, r *http.Request)
 	GetModel() string
 
 	// perceiver
@@ -41,7 +38,7 @@ type Responder interface {
 	UpdateAllImages(allImages AllImages)
 
 	// scanner
-	GetNextImage(func(nextImage NextImage))
+	GetNextImage() NextImage
 	PostFinishScan(job FinishedScanClientJob)
 
 	// internal use

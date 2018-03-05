@@ -1,5 +1,5 @@
-hash: af03c47cef1eafa2d85fad8eff6e1e74e09c63b0a5c5d2cc2a852bf7a3748c70
-updated: 2018-02-28T14:30:41.180108995-05:00
+hash: 7b1d55f37005d0412158a1d4108dcf2f6521adb04f07d8e7c1cdce656cb2be4e
+updated: 2018-03-04T12:54:21.732437204-05:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -19,11 +19,14 @@ imports:
   - hubapi
   - hubclient
 - name: github.com/blackducksoftware/perceptor
-  version: 10e7e1dfe9e9a09c29b9bd52d929efee93fc07e6
+  version: af7f88d968e35eea0694989ea9770059ddff746d
   repo: git@github.com:blackducksoftware/perceptor.git
   vcs: git
   subpackages:
   - pkg/api
+  - pkg/core
+  - pkg/hub
+  - pkg/logging
 - name: github.com/fsnotify/fsnotify
   version: c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9
 - name: github.com/golang/protobuf
@@ -50,7 +53,7 @@ imports:
 - name: github.com/mitchellh/mapstructure
   version: 00c29f56e2386353d58c599509e8dc3801b0d716
 - name: github.com/pelletier/go-toml
-  version: acdc4509485b587f5e675510c4f2c63e90ff68a8
+  version: 05bcc0fb0d3e60da4b8dd5bd7e0ea563eb4ca943
 - name: github.com/prometheus/client_golang
   version: 967789050ba94deca04a5e84cce8ad472ce313c1
   subpackages:
@@ -91,14 +94,14 @@ imports:
   subpackages:
   - ssh/terminal
 - name: golang.org/x/sys
-  version: f6cff0780e542efa0c8e864dc8fa522808f6a598
+  version: dd2ff4accc098aceecb86b36eaa7829b2a17b1c9
   subpackages:
   - unix
   - windows
   - windows/registry
   - windows/svc/eventlog
 - name: golang.org/x/text
-  version: 27420a1a391f5504f73155051cd274311bf70883
+  version: b7ef84aaf62aa3e70962625c80a571ae7c17cb40
   subpackages:
   - transform
   - unicode/norm

@@ -38,18 +38,20 @@ const (
 	imageFacadePort = "3004"
 	pullImagePath   = "pullimage"
 	checkImagePath  = "checkimage"
-	dockerBaseURL   = "http://localhost"
 )
 
-type imageFacadePuller struct {
-	httpClient *http.Client
+type ImageFacadePuller struct {
+	ImageFacadeBaseURL string
+	httpClient         *http.Client
 }
 
-func newImageFacadePuller() *imageFacadePuller {
-	return &imageFacadePuller{httpClient: &http.Client{Timeout: 5 * time.Second}}
+func NewImageFacadePuller(imageFacadeBaseURL string) *ImageFacadePuller {
+	return &ImageFacadePuller{
+		httpClient:         &http.Client{Timeout: 5 * time.Second},
+		ImageFacadeBaseURL: imageFacadeBaseURL}
 }
 
-func (ifp *imageFacadePuller) PullImage(image *common.Image) error {
+func (ifp *ImageFacadePuller) PullImage(image *common.Image) error {
 	log.Infof("attempting to pull image %s", image.PullSpec)
 
 	err := ifp.startImagePull(image)
@@ -79,8 +81,8 @@ func (ifp *imageFacadePuller) PullImage(image *common.Image) error {
 	}
 }
 
-func (ifp *imageFacadePuller) startImagePull(image *common.Image) error {
-	url := fmt.Sprintf("%s:%s/%s", dockerBaseURL, imageFacadePort, pullImagePath)
+func (ifp *ImageFacadePuller) startImagePull(image *common.Image) error {
+	url := fmt.Sprintf("%s:%s/%s", ifp.ImageFacadeBaseURL, imageFacadePort, pullImagePath)
 
 	requestBytes, err := json.Marshal(image)
 	if err != nil {
@@ -108,8 +110,8 @@ func (ifp *imageFacadePuller) startImagePull(image *common.Image) error {
 	return nil
 }
 
-func (ifp *imageFacadePuller) checkImage(image *common.Image) (common.ImageStatus, error) {
-	url := fmt.Sprintf("%s:%s/%s?", dockerBaseURL, imageFacadePort, checkImagePath)
+func (ifp *ImageFacadePuller) checkImage(image *common.Image) (common.ImageStatus, error) {
+	url := fmt.Sprintf("%s:%s/%s?", ifp.ImageFacadeBaseURL, imageFacadePort, checkImagePath)
 
 	requestBytes, err := json.Marshal(image)
 	if err != nil {

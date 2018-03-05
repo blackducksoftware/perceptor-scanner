@@ -25,6 +25,7 @@ import (
 	"fmt"
 
 	"github.com/blackducksoftware/perceptor/pkg/api"
+	"github.com/blackducksoftware/perceptor/pkg/hub"
 	"github.com/prometheus/common/log"
 )
 
@@ -54,7 +55,7 @@ func (model *Model) scanResultsForPod(podName string) (int, int, string, error) 
 		return 0, 0, "", fmt.Errorf("could not find pod of name %s in cache", podName)
 	}
 
-	overallStatus := ""
+	overallStatus := hub.PolicyStatusTypeNotInViolation
 	policyViolationCount := 0
 	vulnerabilityCount := 0
 	for _, container := range pod.Containers {
@@ -70,13 +71,12 @@ func (model *Model) scanResultsForPod(podName string) (int, int, string, error) 
 		}
 		policyViolationCount += imageInfo.ScanResults.PolicyViolationCount()
 		vulnerabilityCount += imageInfo.ScanResults.VulnerabilityCount()
-		// TODO what's the right way to combine all the 'OverallStatus' values
-		//   from the individual image scans?
-		if imageInfo.ScanResults.OverallStatus() != "NOT_IN_VIOLATION" {
-			overallStatus = imageInfo.ScanResults.OverallStatus()
+		imageScanOverallStatus := imageInfo.ScanResults.OverallStatus()
+		if imageScanOverallStatus != hub.PolicyStatusTypeNotInViolation {
+			overallStatus = imageScanOverallStatus
 		}
 	}
-	return policyViolationCount, vulnerabilityCount, overallStatus, nil
+	return policyViolationCount, vulnerabilityCount, overallStatus.String(), nil
 }
 
 func (model *Model) scanResults() api.ScanResults {
@@ -125,7 +125,7 @@ func (model *Model) scanResults() api.ScanResults {
 			policyViolations = imageInfo.ScanResults.PolicyViolationCount()
 			vulnerabilities = imageInfo.ScanResults.VulnerabilityCount()
 			componentsURL = imageInfo.ScanResults.ComponentsHref
-			overallStatus = imageInfo.ScanResults.OverallStatus()
+			overallStatus = imageInfo.ScanResults.OverallStatus().String()
 		}
 		image := imageInfo.image()
 		apiImage := api.ScannedImage{
@@ -137,5 +137,5 @@ func (model *Model) scanResults() api.ScanResults {
 			ComponentsURL:    componentsURL}
 		images = append(images, apiImage)
 	}
-	return *api.NewScanResults(model.Config.HubScanClientVersion, model.Config.HubVersion, pods, images)
+	return *api.NewScanResults(model.HubVersion, model.HubVersion, pods, images)
 }
