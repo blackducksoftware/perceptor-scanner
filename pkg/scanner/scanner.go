@@ -36,6 +36,7 @@ import (
 
 const (
 	requestScanJobPause = 20 * time.Second
+	imageFacadeBaseURL  = "http://localhost"
 )
 
 type Scanner struct {
@@ -58,7 +59,7 @@ func NewScanner(hubHost string, hubUser string, hubPassword string) (*Scanner, e
 
 	log.Infof("instantiating scanner with hub %s, user %s", hubHost, hubUser)
 
-	imagePuller := newImageFacadePuller()
+	imagePuller := NewImageFacadePuller(imageFacadeBaseURL)
 	scanClient, err := NewHubScanClient(hubHost, hubUser, hubPassword, scanClientInfo, imagePuller)
 	if err != nil {
 		log.Errorf("unable to instantiate hub scan client: %s", err.Error())
