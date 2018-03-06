@@ -107,6 +107,7 @@ func (ip *ImagePuller) createImageInLocalDocker(image Image) error {
 
 	data := fmt.Sprintf(`{ "username": "%s", "password": "%s" }`, ip.dockerUser, ip.dockerPassword)
 	auth := b64.StdEncoding.EncodeToString([]byte(data))
+	log.Infof("Base 64 encoded auth for docker POST: %s (from user %s, password %s)", auth, ip.dockerUser, ip.dockerPassword)
 	req.Header.Set("X-Registry-Auth", auth)
 
 	resp, err := ip.client.Do(req)
