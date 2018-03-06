@@ -31,8 +31,6 @@ import (
 	"os"
 	"time"
 
-	b64 "encoding/base64"
-
 	log "github.com/sirupsen/logrus"
 )
 
@@ -105,9 +103,7 @@ func (ip *ImagePuller) createImageInLocalDocker(image Image) error {
 
 	// TODO if the image *isn't* from the local registry, then don't do this header stuff
 
-	data := fmt.Sprintf(`{"username":"%s", "password":"%s"}`, ip.dockerUser, ip.dockerPassword)
-	auth := b64.StdEncoding.EncodeToString([]byte(data))
-	req.Header.Set("X-Registry-Auth", auth)
+	req.Header.Set("X-Registry-Auth", encodeAuthHeader(ip.dockerUser, ip.dockerPassword))
 
 	resp, err := ip.client.Do(req)
 	if err != nil {
