@@ -207,8 +207,9 @@ func (pif *PifTester) startPullingImages() {
 func (pif *PifTester) MarshalJSON() ([]byte, error) {
 	str := `
   {
-    "ImageQueue": %s,
-    "ImageMap": %s
+		"ImageQueue": %s,
+		"ImageMap": %s,
+		"ImageErrors": %s
   }
   `
 	queue := []string{}
@@ -219,6 +220,10 @@ func (pif *PifTester) MarshalJSON() ([]byte, error) {
 	for key, val := range pif.ImageMap {
 		iMap[key.PullSpec()] = val
 	}
+	eMap := map[string][]string{}
+	for key, val := range pif.ImageErrors {
+		eMap[key.PullSpec()] = val
+	}
 	q, err := json.Marshal(queue)
 	if err != nil {
 		panic(err)
@@ -227,7 +232,11 @@ func (pif *PifTester) MarshalJSON() ([]byte, error) {
 	if err != nil {
 		panic(err)
 	}
-	jsonString := fmt.Sprintf(str, string(q), string(i))
+	e, err := json.Marshal(eMap)
+	if err != nil {
+		panic(err)
+	}
+	jsonString := fmt.Sprintf(str, string(q), string(i), string(e))
 	return []byte(jsonString), nil
 }
 
