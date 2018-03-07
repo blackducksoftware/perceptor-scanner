@@ -44,7 +44,7 @@ func main() {
 	prometheus.Unregister(prometheus.NewProcessCollector(os.Getpid(), ""))
 	prometheus.Unregister(prometheus.NewGoCollector())
 
-	imageFacade := imagefacade.NewImageFacade(config.DockerUser, config.DockerPassword)
+	imageFacade := imagefacade.NewImageFacade(config.DockerUser, config.DockerPassword, config.CreateImagesOnly)
 
 	log.Infof("successfully instantiated imagefacade -- %+v", imageFacade)
 
@@ -55,8 +55,9 @@ func main() {
 }
 
 type Config struct {
-	DockerUser     string // DockerUser and DockerPassword are openshift specific -- to allow pulling from the openshift docker registry
-	DockerPassword string
+	DockerUser       string // DockerUser and DockerPassword are openshift specific -- to allow pulling from the openshift docker registry
+	DockerPassword   string
+	CreateImagesOnly bool
 }
 
 // GetConfig returns a configuration object to configure Perceptor

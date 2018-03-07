@@ -65,14 +65,14 @@ func NewImagePuller(dockerUser string, dockerPassword string) *ImagePuller {
 func (ip *ImagePuller) PullImage(image Image) error {
 	start := time.Now()
 
-	err := ip.createImageInLocalDocker(image)
+	err := ip.CreateImageInLocalDocker(image)
 	if err != nil {
 		log.Errorf("unable to continue processing image %s: %s", image.DockerPullSpec(), err.Error())
 		return err
 	}
 	log.Infof("Processing image: %s", image.DockerPullSpec())
 
-	err = ip.saveImageToTar(image)
+	err = ip.SaveImageToTar(image)
 	if err != nil {
 		log.Errorf("unable to continue processing image %s: %s", image.DockerPullSpec(), err.Error())
 		return err
@@ -84,13 +84,13 @@ func (ip *ImagePuller) PullImage(image Image) error {
 	return nil
 }
 
-// createImageInLocalDocker could also be implemented using curl:
+// CreateImageInLocalDocker could also be implemented using curl:
 // this example hits ... ? the default registry?  docker hub?
 //   curl --unix-socket /var/run/docker.sock -X POST http://localhost/images/create?fromImage=alpine
 // this example hits the kipp registry:
 //   curl --unix-socket /var/run/docker.sock -X POST http://localhost/images/create\?fromImage\=registry.kipp.blackducksoftware.com%2Fblackducksoftware%2Fhub-jobrunner%3A4.5.0
 //
-func (ip *ImagePuller) createImageInLocalDocker(image Image) error {
+func (ip *ImagePuller) CreateImageInLocalDocker(image Image) error {
 	start := time.Now()
 	imageURL := createURL(image)
 	log.Infof("Attempting to create %s ......", imageURL)
@@ -132,9 +132,9 @@ func (ip *ImagePuller) createImageInLocalDocker(image Image) error {
 	return err
 }
 
-// saveImageToTar: part of what it does is to issue an http request similar to the following:
+// SaveImageToTar: part of what it does is to issue an http request similar to the following:
 //   curl --unix-socket /var/run/docker.sock -X GET http://localhost/images/openshift%2Forigin-docker-registry%3Av3.6.1/get
-func (ip *ImagePuller) saveImageToTar(image Image) error {
+func (ip *ImagePuller) SaveImageToTar(image Image) error {
 	start := time.Now()
 	url := getURL(image)
 	log.Infof("Making docker GET image request: %s", url)
