@@ -62,21 +62,26 @@ func (ifp *ImageFacadePuller) PullImage(image *common.Image) error {
 
 	for {
 		time.Sleep(5 * time.Second)
-		var imageStatus common.ImageStatus
-		imageStatus, err = ifp.checkImage(image)
 
-		// TODO add some better error handling
+		imageStatus, err := ifp.checkImage(image)
 		if err != nil {
 			log.Errorf("unable to check image %s: %s", image.PullSpec, err.Error())
 		}
 
-		if imageStatus == common.ImageStatusDone {
+		switch imageStatus {
+		case common.ImageStatusUnknown:
+			// job got lost somehow -- maybe the container crashed
+			return fmt.Errorf("unable to pull image %s: job was lost", image.PullSpec)
+		case common.ImageStatusInProgress:
+			// just keep on waiting
+			break
+		case common.ImageStatusDone:
 			log.Infof("finished pulling image %s", image.PullSpec)
 			return nil
-		}
-
-		if imageStatus == common.ImageStatusError {
+		case common.ImageStatusError:
 			return fmt.Errorf("unable to pull image %s", image.PullSpec)
+		default:
+			panic(fmt.Errorf("invalid ImageStatus value %d", imageStatus))
 		}
 	}
 }
