@@ -59,7 +59,8 @@ func NewImageFacade(dockerUser string, dockerPassword string, createImagesOnly b
 		server:            server,
 		reducer:           reducer,
 		finishedImagePull: finishedImagePull,
-		imagePuller:       pdocker.NewImagePuller(dockerUser, dockerPassword)}
+		imagePuller:       pdocker.NewImagePuller(dockerUser, dockerPassword),
+		createImagesOnly:  createImagesOnly}
 
 	go func() {
 		for {
