@@ -104,7 +104,7 @@ func (ip *ImagePuller) CreateImageInLocalDocker(image Image) error {
 	// TODO if the image *isn't* from the local registry, then don't do this header stuff
 
 	headerValue := encodeAuthHeader(ip.dockerUser, ip.dockerPassword)
-	log.Infof("X-Registry-Auth value:\n%\n", headerValue)
+	log.Infof("X-Registry-Auth value:\n%s\n", headerValue)
 	req.Header.Set("X-Registry-Auth", headerValue)
 
 	resp, err := ip.client.Do(req)
