@@ -105,9 +105,10 @@ func (ip *ImagePuller) createImageInLocalDocker(image Image) error {
 
 	// TODO if the image *isn't* from the local registry, then don't do this header stuff
 
-	data := fmt.Sprintf(`{"username":"%s", "password":"%s"}`, ip.dockerUser, ip.dockerPassword)
+	data := fmt.Sprintf(`{ "username": "%s", "password": "%s" }`, ip.dockerUser, ip.dockerPassword)
 	auth := b64.StdEncoding.EncodeToString([]byte(data))
-	req.Header.Set("X-Registry-Auth", auth)
+	log.Infof("Base 64 encoded auth for docker POST: %s (from user %s, password %s)", auth, ip.dockerUser, ip.dockerPassword)
+	req.Header.Set("X-Registry-Auth", "eyAidXNlcm5hbWUiOiAiYWRtaW4iLCAicGFzc3dvcmQiOiAiZXlKaGJHY2lPaUpTVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SnBjM01pT2lKcmRXSmxjbTVsZEdWekwzTmxjblpwWTJWaFkyTnZkVzUwSWl3aWEzVmlaWEp1WlhSbGN5NXBieTl6WlhKMmFXTmxZV05qYjNWdWRDOXVZVzFsYzNCaFkyVWlPaUppWkhNdGNHVnlZMlZ3ZEc5eUlpd2lhM1ZpWlhKdVpYUmxjeTVwYnk5elpYSjJhV05sWVdOamIzVnVkQzl6WldOeVpYUXVibUZ0WlNJNkluQmxjbU5sY0hSdmNpMXpZMkZ1Ym1WeUxYTmhMWFJ2YTJWdUxUWm1jM3AwSWl3aWEzVmlaWEp1WlhSbGN5NXBieTl6WlhKMmFXTmxZV05qYjNWdWRDOXpaWEoyYVdObExXRmpZMjkxYm5RdWJtRnRaU0k2SW5CbGNtTmxjSFJ2Y2kxelkyRnVibVZ5TFhOaElpd2lhM1ZpWlhKdVpYUmxjeTVwYnk5elpYSjJhV05sWVdOamIzVnVkQzl6WlhKMmFXTmxMV0ZqWTI5MWJuUXVkV2xrSWpvaU5EVTNOamxqTUdRdE1qRTRNUzB4TVdVNExUZzJaREl0TURZMk4yUTRaV1F3WXpoaElpd2ljM1ZpSWpvaWMzbHpkR1Z0T25ObGNuWnBZMlZoWTJOdmRXNTBPbUprY3kxd1pYSmpaWEIwYjNJNmNHVnlZMlZ3ZEc5eUxYTmpZVzV1WlhJdGMyRWlmUS5qLUY5cjZMQ2FwT2ZSSGlhdXV3UnZjaVFPWDZWZHNZWExmdUFTOVpiMWpUMEVnWGt3RzMxYkNSNXZUbDBTY2hxVlk5Vy00QkpNQ3lqOXcyQW9KcG12UW85eGxrU1d3ZkFwV1hIUmFPTVdMY0taQzlvcVVUcEduWm92QUtBOE54ZXJwZlM2d0FzanAtQm44SEpwZ3h3OUVfeTBrZ2ZOYWxhSWIxLUNQS2NIRjZ2aFBRMzFLNkVEc2ZCRTdGTnlja3JscGc4a2ZsRDlBWEQ0c0JQckk0SE11c1dHUmo4Q05jd0lFZEF2OFRXV3c3amVlVWh4bll0LUhBbWhkQUh0elktenRLNE1YZ1l6ME1ra2pUbHFfcjM1YmV4WC1XTGo2Y1A0NnFBYmY0ZWUzc1hOMWt6LTQ1UHhWaFM1VUhDLV9DOU9KX1lRM19GVm4zbU93Qm9JOGN4NUEiIH0K")
 
 	resp, err := ip.client.Do(req)
 	if err != nil {
