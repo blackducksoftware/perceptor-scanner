@@ -93,7 +93,7 @@ func (ip *ImagePuller) PullImage(image Image) error {
 func (ip *ImagePuller) CreateImageInLocalDocker(image Image) error {
 	start := time.Now()
 	imageURL := createURL(image)
-	log.Infof("Attempting to create %s ......", image.DockerPullSpec())
+	log.Infof("Attempting to create %s ......", imageURL)
 	req, err := http.NewRequest("POST", imageURL, nil)
 	if err != nil {
 		log.Errorf("unable to create POST request for image %s: %s", imageURL, err.Error())
@@ -104,12 +104,12 @@ func (ip *ImagePuller) CreateImageInLocalDocker(image Image) error {
 	// TODO if the image *isn't* from the local registry, then don't do this auth stuff
 
 	headerValue := encodeAuthHeader(ip.dockerUser, ip.dockerPassword)
-	log.Infof("X-Registry-Auth value:\n%s\n", headerValue)
+	// log.Infof("X-Registry-Auth value:\n%s\n", headerValue)
 	req.Header.Add("X-Registry-Auth", headerValue)
 
-	// the -n prevents echo from appending a newline
-	fmt.Printf("XRA=`echo -n \"{ \\\"username\\\": \\\"%s\\\", \\\"password\\\": \\\"%s\\\" }\" | base64 --wrap=0`\n", ip.dockerUser, ip.dockerPassword)
-	fmt.Printf("curl -i --unix-socket /var/run/docker.sock -X POST -d \"\" -H \"X-Registry-Auth: %s\" %s\n", headerValue, imageURL)
+	// // the -n prevents echo from appending a newline
+	// fmt.Printf("XRA=`echo -n \"{ \\\"username\\\": \\\"%s\\\", \\\"password\\\": \\\"%s\\\" }\" | base64 --wrap=0`\n", ip.dockerUser, ip.dockerPassword)
+	// fmt.Printf("curl -i --unix-socket /var/run/docker.sock -X POST -d \"\" -H \"X-Registry-Auth: %s\" %s\n", headerValue, imageURL)
 
 	resp, err := ip.client.Do(req)
 	if err != nil {
