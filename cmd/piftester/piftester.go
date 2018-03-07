@@ -76,6 +76,7 @@ func main() {
 
 type PifTester struct {
 	ImageMap            map[core.Image]bool
+	ImageErrors         map[core.Image][]string
 	ImageQueue          []core.Image
 	imagePuller         *scanner.ImageFacadePuller
 	getNextImageChannel chan func(*core.Image)
@@ -85,6 +86,7 @@ func NewPifTester() *PifTester {
 	responder := core.NewHTTPResponder()
 	pif := &PifTester{
 		ImageMap:            map[core.Image]bool{},
+		ImageErrors:         map[core.Image][]string{},
 		ImageQueue:          []core.Image{},
 		imagePuller:         scanner.NewImageFacadePuller("http://perceptor-imagefacade"),
 		getNextImageChannel: make(chan func(*core.Image)),
@@ -176,6 +178,12 @@ func (pif *PifTester) finishImage(image core.Image, err error) {
 		pif.ImageMap[image] = true
 	} else {
 		// dunno -- record and try again?
+		errors, ok := pif.ImageErrors[image]
+		if !ok {
+			panic(fmt.Errorf("unable to find image %s in ImageErrors", image.PullSpec()))
+		}
+		errors = append(errors, err.Error())
+		pif.ImageErrors[image] = errors
 		pif.ImageQueue = append(pif.ImageQueue, image)
 	}
 }
