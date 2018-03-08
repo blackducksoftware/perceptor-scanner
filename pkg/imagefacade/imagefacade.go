@@ -31,9 +31,10 @@ type ImageFacade struct {
 	reducer           *reducer
 	finishedImagePull chan *finishedImagePull
 	imagePuller       *pdocker.ImagePuller
+	createImagesOnly  bool
 }
 
-func NewImageFacade(dockerUser string, dockerPassword string) *ImageFacade {
+func NewImageFacade(dockerUser string, dockerPassword string, createImagesOnly bool) *ImageFacade {
 	actions := make(chan Action)
 	finishedImagePull := make(chan *finishedImagePull)
 
@@ -58,7 +59,8 @@ func NewImageFacade(dockerUser string, dockerPassword string) *ImageFacade {
 		server:            server,
 		reducer:           reducer,
 		finishedImagePull: finishedImagePull,
-		imagePuller:       pdocker.NewImagePuller(dockerUser, dockerPassword)}
+		imagePuller:       pdocker.NewImagePuller(dockerUser, dockerPassword),
+		createImagesOnly:  createImagesOnly}
 
 	go func() {
 		for {
@@ -73,6 +75,11 @@ func NewImageFacade(dockerUser string, dockerPassword string) *ImageFacade {
 }
 
 func (imf *ImageFacade) pullImage(image *common.Image) {
-	err := imf.imagePuller.PullImage(image)
+	var err error
+	if imf.createImagesOnly {
+		err = imf.imagePuller.CreateImageInLocalDocker(image)
+	} else {
+		err = imf.imagePuller.PullImage(image)
+	}
 	imf.finishedImagePull <- &finishedImagePull{image: image, err: err}
 }

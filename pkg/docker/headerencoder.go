@@ -26,7 +26,18 @@ import (
 	"fmt"
 )
 
+func base64Encode(data string) string {
+	return b64.StdEncoding.EncodeToString([]byte(data))
+}
+
 func encodeAuthHeader(username string, password string) string {
-	data := fmt.Sprintf("{ \"username\": \"%s\", \"password\": \"%s\" }\n", username, password)
-	return b64.URLEncoding.EncodeToString([]byte(data))
+	data := fmt.Sprintf("{ \"username\": \"%s\", \"password\": \"%s\" }", username, password)
+	// fmt.Printf("debug:<\n%s\n>done debug %d\n\n", data, len(data))
+	// bytesIn := []byte(data)
+	// fmt.Printf("bytes in:<\n%#v\n>done bytes in %d\n\n", bytesIn, len(bytesIn))
+	encoded := base64Encode(data)
+	// fmt.Printf("encoded:<\n%s\n>done encoded %d\n\n", encoded, len(encoded))
+	// bytesOut := []byte(encoded)
+	// fmt.Printf("bytes out:<\n%#v\n>done bytes out %d\n\n", bytesOut, len(bytesOut))
+	return encoded
 }
