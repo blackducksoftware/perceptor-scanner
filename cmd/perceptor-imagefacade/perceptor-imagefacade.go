@@ -41,6 +41,8 @@ func main() {
 		panic(err)
 	}
 
+	log.Infof("imagefacade configuration: %+v", config)
+
 	prometheus.Unregister(prometheus.NewProcessCollector(os.Getpid(), ""))
 	prometheus.Unregister(prometheus.NewGoCollector())
 
