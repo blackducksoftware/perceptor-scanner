@@ -19,41 +19,37 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package main
+package scanner
 
 import (
 	"fmt"
-	"net/http"
-	"os"
 
-	"github.com/blackducksoftware/perceptor-scanner/pkg/scanner"
-	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
-func main() {
-	log.Info("started")
+type Config struct {
+	HubHost         string
+	HubUser         string
+	HubUserPassword string
+	Port            int
+	ImageFacadePort int
+	PerceptorPort   int
+}
 
-	config, err := scanner.GetConfig()
+func GetConfig() (*Config, error) {
+	var config *Config
+
+	viper.SetConfigName("perceptor_scanner_conf")
+	viper.AddConfigPath("/etc/perceptor_scanner")
+
+	err := viper.ReadInConfig()
 	if err != nil {
-		log.Errorf("Failed to load configuration: %s", err.Error())
-		panic(err)
+		return nil, fmt.Errorf("failed to read config file: %v", err)
 	}
 
-	prometheus.Unregister(prometheus.NewProcessCollector(os.Getpid(), ""))
-	prometheus.Unregister(prometheus.NewGoCollector())
-
-	scannerManager, err := scanner.NewScanner(config)
+	err = viper.Unmarshal(&config)
 	if err != nil {
-		log.Errorf("unable to instantiate scanner: %s", err.Error())
-		panic(err)
+		return nil, fmt.Errorf("failed to unmarshal config: %v", err)
 	}
-
-	log.Info("successfully instantiated scanner: %s", scannerManager)
-
-	http.Handle("/metrics", prometheus.Handler())
-
-	addr := fmt.Sprintf(":%d", config.Port)
-	http.ListenAndServe(addr, nil)
-	log.Info("Http server started!")
+	return config, nil
 }
