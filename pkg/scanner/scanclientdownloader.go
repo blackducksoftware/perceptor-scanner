@@ -84,9 +84,6 @@ func downloadScanClient(hubHost string, hubUser string, hubPassword string) (*sc
 	}
 	log.Infof("successfully unzipped from %s to %s", scanClientZipPath, scanClientRootPath)
 
-	javaScanClientJrePath := fmt.Sprintf("%s/scan.cli-%s/jre/", scanClientRootPath, currentVersion.Version)
-	os.Setenv("BDS_JAVA_HOME", javaScanClientJrePath)
-
 	// 7. we're done
 	return &scanClientInfo{hubVersion: currentVersion.Version, scanClientRootPath: scanClientRootPath}, nil
 }
