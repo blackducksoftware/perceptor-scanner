@@ -48,8 +48,7 @@ func main() {
 
 	log.Infof("successfully instantiated imagefacade -- %+v", imageFacade)
 
-	port := "3004"
-	addr := fmt.Sprintf(":%s", port) // api.PerceptorImagefacadePort)
+	addr := fmt.Sprintf(":%d", config.Port)
 	http.ListenAndServe(addr, nil)
 	log.Info("Http server started!")
 }
@@ -58,6 +57,7 @@ type Config struct {
 	DockerUser       string // DockerUser and DockerPassword are openshift specific -- to allow pulling from the openshift docker registry
 	DockerPassword   string
 	CreateImagesOnly bool
+	Port             int
 }
 
 // GetConfig returns a configuration object to configure Perceptor

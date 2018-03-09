@@ -27,27 +27,14 @@ import (
 	"os"
 
 	"github.com/blackducksoftware/perceptor-scanner/pkg/scanner"
-	"github.com/blackducksoftware/perceptor/pkg/api"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
-
-// TODO metrics
-// number of images scanned
-// file size
-// pull duration
-// get duration
-// scan client duration
-// number of successes
-// number of failures
-// amount of time (or cycles?) idled
-// number of times asked for a job and didn't get one
 
 func main() {
 	log.Info("started")
 
-	config, err := GetScannerConfig()
+	config, err := scanner.GetConfig()
 	if err != nil {
 		log.Errorf("Failed to load configuration: %s", err.Error())
 		panic(err)
@@ -56,7 +43,7 @@ func main() {
 	prometheus.Unregister(prometheus.NewProcessCollector(os.Getpid(), ""))
 	prometheus.Unregister(prometheus.NewGoCollector())
 
-	scannerManager, err := scanner.NewScanner(config.HubHost, config.HubUser, config.HubUserPassword)
+	scannerManager, err := scanner.NewScanner(config)
 	if err != nil {
 		log.Errorf("unable to instantiate scanner: %s", err.Error())
 		panic(err)
@@ -66,33 +53,7 @@ func main() {
 
 	http.Handle("/metrics", prometheus.Handler())
 
-	addr := fmt.Sprintf(":%s", api.PerceptorScannerPort)
+	addr := fmt.Sprintf(":%d", config.Port)
 	http.ListenAndServe(addr, nil)
 	log.Info("Http server started!")
-}
-
-// ScannerConfig contains all configuration for Perceptor
-type ScannerConfig struct {
-	HubHost         string
-	HubUser         string
-	HubUserPassword string
-}
-
-// GetScannerConfig returns a configuration object to configure Perceptor
-func GetScannerConfig() (*ScannerConfig, error) {
-	var cfg *ScannerConfig
-
-	viper.SetConfigName("perceptor_scanner_conf")
-	viper.AddConfigPath("/etc/perceptor_scanner")
-
-	err := viper.ReadInConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to read config file: %v", err)
-	}
-
-	err = viper.Unmarshal(&cfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal config: %v", err)
-	}
-	return cfg, nil
 }
