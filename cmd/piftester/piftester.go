@@ -33,46 +33,45 @@ import (
 	"github.com/blackducksoftware/perceptor/pkg/api"
 	"github.com/blackducksoftware/perceptor/pkg/core"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 func main() {
 	log.Info("started")
 
-	// config, err := GetConfig()
-	// if err != nil {
-	// 	log.Errorf("Failed to load configuration: %s", err.Error())
-	// 	panic(err)
-	// }
+	config, err := GetConfig()
+	if err != nil {
+		log.Errorf("Failed to load configuration: %s", err.Error())
+		panic(err)
+	}
+
 	pifTester := NewPifTester()
-	http.ListenAndServe(":3005", nil)
+	addr := fmt.Sprintf(":%d", config.Port)
+	http.ListenAndServe(addr, nil)
 	log.Info("Http server started! -- %+v", pifTester)
 }
 
-// // ScannerConfig contains all configuration for Perceptor
-// type ScannerConfig struct {
-// 	HubHost         string
-// 	HubUser         string
-// 	HubUserPassword string
-// }
-//
-// // GetScannerConfig returns a configuration object to configure Perceptor
-// func GetScannerConfig() (*ScannerConfig, error) {
-// 	var cfg *ScannerConfig
-//
-// 	viper.SetConfigName("perceptor_scanner_conf")
-// 	viper.AddConfigPath("/etc/perceptor_scanner")
-//
-// 	err := viper.ReadInConfig()
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to read config file: %v", err)
-// 	}
-//
-// 	err = viper.Unmarshal(&cfg)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to unmarshal config: %v", err)
-// 	}
-// 	return cfg, nil
-// }
+type Config struct {
+	Port int
+}
+
+func GetConfig() (*Config, error) {
+	var config *Config
+
+	viper.SetConfigName("perceptor_scanner_conf")
+	viper.AddConfigPath("/etc/perceptor_scanner")
+
+	err := viper.ReadInConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read config file: %v", err)
+	}
+
+	err = viper.Unmarshal(&config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal config: %v", err)
+	}
+	return config, nil
+}
 
 type PifTester struct {
 	ImageMap            map[core.Image]bool
