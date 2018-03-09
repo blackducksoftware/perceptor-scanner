@@ -59,8 +59,8 @@ type Config struct {
 func GetConfig() (*Config, error) {
 	var config *Config
 
-	viper.SetConfigName("perceptor_scanner_conf")
-	viper.AddConfigPath("/etc/perceptor_scanner")
+	viper.SetConfigName("piftester_conf")
+	viper.AddConfigPath("/etc/piftester")
 
 	err := viper.ReadInConfig()
 	if err != nil {
