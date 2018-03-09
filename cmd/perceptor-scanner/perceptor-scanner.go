@@ -27,22 +27,10 @@ import (
 	"os"
 
 	"github.com/blackducksoftware/perceptor-scanner/pkg/scanner"
-	"github.com/blackducksoftware/perceptor/pkg/api"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
-
-// TODO metrics
-// number of images scanned
-// file size
-// pull duration
-// get duration
-// scan client duration
-// number of successes
-// number of failures
-// amount of time (or cycles?) idled
-// number of times asked for a job and didn't get one
 
 func main() {
 	log.Info("started")
@@ -66,7 +54,7 @@ func main() {
 
 	http.Handle("/metrics", prometheus.Handler())
 
-	addr := fmt.Sprintf(":%s", api.PerceptorScannerPort)
+	addr := fmt.Sprintf(":%d", config.Port)
 	http.ListenAndServe(addr, nil)
 	log.Info("Http server started!")
 }
@@ -76,6 +64,7 @@ type ScannerConfig struct {
 	HubHost         string
 	HubUser         string
 	HubUserPassword string
+	Port            int
 }
 
 // GetScannerConfig returns a configuration object to configure Perceptor
