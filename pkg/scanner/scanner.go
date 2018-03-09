@@ -40,27 +40,28 @@ const (
 )
 
 type Scanner struct {
-	scanClient ScanClientInterface
-	httpClient *http.Client
+	scanClient    ScanClientInterface
+	httpClient    *http.Client
+	perceptorPort int
 }
 
-func NewScanner(hubHost string, hubUser string, hubPassword string) (*Scanner, error) {
-	err := os.Setenv("BD_HUB_PASSWORD", hubPassword)
+func NewScanner(config *Config) (*Scanner, error) {
+	err := os.Setenv("BD_HUB_PASSWORD", config.HubUserPassword)
 	if err != nil {
 		log.Errorf("unable to set BD_HUB_PASSWORD environment variable: %s", err.Error())
 		return nil, err
 	}
 
-	scanClientInfo, err := downloadScanClient(hubHost, hubUser, hubPassword)
+	scanClientInfo, err := downloadScanClient(config.HubHost, config.HubUser, config.HubUserPassword)
 	if err != nil {
 		log.Errorf("unable to download scan client: %s", err.Error())
 		return nil, err
 	}
 
-	log.Infof("instantiating scanner with hub %s, user %s", hubHost, hubUser)
+	log.Infof("instantiating scanner with hub %s, user %s", config.HubHost, config.HubUser)
 
-	imagePuller := NewImageFacadePuller(imageFacadeBaseURL)
-	scanClient, err := NewHubScanClient(hubHost, hubUser, hubPassword, scanClientInfo, imagePuller)
+	imagePuller := NewImageFacadePuller(imageFacadeBaseURL, config.ImageFacadePort)
+	scanClient, err := NewHubScanClient(config.HubHost, config.HubUser, config.HubUserPassword, scanClientInfo, imagePuller)
 	if err != nil {
 		log.Errorf("unable to instantiate hub scan client: %s", err.Error())
 		return nil, err
@@ -69,8 +70,9 @@ func NewScanner(hubHost string, hubUser string, hubPassword string) (*Scanner, e
 	httpClient := &http.Client{Timeout: 5 * time.Second}
 
 	scanner := Scanner{
-		scanClient: scanClient,
-		httpClient: httpClient}
+		scanClient:    scanClient,
+		httpClient:    httpClient,
+		perceptorPort: config.PerceptorPort}
 
 	scanner.startRequestingScanJobs()
 
@@ -117,7 +119,7 @@ func (scanner *Scanner) requestAndRunScanJob() {
 }
 
 func (scanner *Scanner) requestScanJob() (*api.ImageSpec, error) {
-	nextImageURL := fmt.Sprintf("%s:%s/%s", api.PerceptorBaseURL, api.PerceptorPort, api.NextImagePath)
+	nextImageURL := fmt.Sprintf("%s:%d/%s", api.PerceptorBaseURL, scanner.perceptorPort, api.NextImagePath)
 	resp, err := scanner.httpClient.Post(nextImageURL, "", bytes.NewBuffer([]byte{}))
 
 	if err != nil {
@@ -159,7 +161,7 @@ func (scanner *Scanner) requestScanJob() (*api.ImageSpec, error) {
 }
 
 func (scanner *Scanner) finishScan(results api.FinishedScanClientJob) error {
-	finishedScanURL := fmt.Sprintf("%s:%s/%s", api.PerceptorBaseURL, api.PerceptorPort, api.FinishedScanPath)
+	finishedScanURL := fmt.Sprintf("%s:%d/%s", api.PerceptorBaseURL, scanner.perceptorPort, api.FinishedScanPath)
 	jsonBytes, err := json.Marshal(results)
 	if err != nil {
 		recordScannerError("unable to marshal json for finished job")
