@@ -58,7 +58,7 @@ func NewScanner(config *Config) (*Scanner, error) {
 		return nil, err
 	}
 
-	javaScanClientJrePath := fmt.Sprintf("%s/scan.cli-%s/jre/", scanClientInfo.scanClientRootPath, scanClientInfo.hubVersion)
+	javaScanClientJrePath := fmt.Sprintf("%s/scan.cli-%s/jre/bin", scanClientInfo.scanClientRootPath, scanClientInfo.hubVersion)
 	log.Infof("Java Client Path: %s", javaScanClientJrePath)
 	err = os.Setenv("BDS_JAVA_HOME", javaScanClientJrePath)
 
