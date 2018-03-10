@@ -104,7 +104,7 @@ func (ip *ImagePuller) CreateImageInLocalDocker(image Image) error {
 	// TODO if the image *isn't* from the local registry, then don't do this auth stuff
 
 	//headerValue := encodeAuthHeader(ip.dockerUser, ip.dockerPassword)
-	// log.Infof("X-Registry-Auth value:\n%s\n", headerValue)
+	//log.Infof("X-Registry-Auth value:\n%s\n", headerValue)
 	//req.Header.Add("X-Registry-Auth", headerValue)
 
 	// // the -n prevents echo from appending a newline
@@ -112,6 +112,7 @@ func (ip *ImagePuller) CreateImageInLocalDocker(image Image) error {
 	// fmt.Printf("curl -i --unix-socket /var/run/docker.sock -X POST -d \"\" -H \"X-Registry-Auth: %s\" %s\n", headerValue, imageURL)
 
 	resp, err := ip.client.Do(req)
+	log.Errorf("Response: %v", resp)
 	if err != nil {
 		log.Errorf("Create failed for image %s: %s", imageURL, err.Error())
 		recordDockerError(createStage, "POST request failed", image, err)
