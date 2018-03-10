@@ -71,7 +71,6 @@ func (hsc *HubScanClient) Scan(job ScanJob) error {
 	scanCliImplJarPath := hsc.scanClientInfo.scanCliImplJarPath()
 	scanCliJarPath := hsc.scanClientInfo.scanCliJarPath()
 	scanCliJavaPath := hsc.scanClientInfo.scanCliJavaPath()
-	log.Infof("scanCliJavaPath: %s", scanCliJavaPath)
 	path := image.DockerTarFilePath()
 	cmd := exec.Command(scanCliJavaPath+"java",
 		"-Xms512m",
