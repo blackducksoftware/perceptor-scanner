@@ -70,8 +70,10 @@ func (hsc *HubScanClient) Scan(job ScanJob) error {
 
 	scanCliImplJarPath := hsc.scanClientInfo.scanCliImplJarPath()
 	scanCliJarPath := hsc.scanClientInfo.scanCliJarPath()
+	scanCliJavaPath := hsc.scanClientInfo.scanCliJavaPath()
+	log.Infof("scanCliJavaPath: %s", scanCliJavaPath)
 	path := image.DockerTarFilePath()
-	cmd := exec.Command("java",
+	cmd := exec.Command(scanCliJavaPath+"java",
 		"-Xms512m",
 		"-Xmx4096m",
 		"-Dblackduck.scan.cli.benice=true",

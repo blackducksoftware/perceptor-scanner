@@ -39,3 +39,7 @@ func (sci *scanClientInfo) scanCliImplJarPath() string {
 func (sci *scanClientInfo) scanCliJarPath() string {
 	return fmt.Sprintf("%s/scan.cli-%s/lib/scan.cli-%s-standalone.jar", sci.scanClientRootPath, sci.hubVersion, sci.hubVersion)
 }
+
+func (sci *scanClientInfo) scanCliJavaPath() string {
+	return fmt.Sprintf("%s/scan.cli-%s/jre/bin/", sci.scanClientRootPath, sci.hubVersion)
+}

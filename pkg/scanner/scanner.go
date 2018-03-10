@@ -58,15 +58,6 @@ func NewScanner(config *Config) (*Scanner, error) {
 		return nil, err
 	}
 
-	javaScanClientJrePath := fmt.Sprintf("%s/scan.cli-%s/jre/bin", scanClientInfo.scanClientRootPath, scanClientInfo.hubVersion)
-	log.Infof("Java Client Path: %s", javaScanClientJrePath)
-	err = os.Setenv("BDS_JAVA_HOME", javaScanClientJrePath)
-
-	if err != nil {
-		log.Errorf("unable to set BDS_JAVA_HOME environment variable: %s", err.Error())
-		return nil, err
-	}
-
 	log.Infof("instantiating scanner with hub %s, user %s", config.HubHost, config.HubUser)
 
 	imagePuller := NewImageFacadePuller(imageFacadeBaseURL, config.ImageFacadePort)
