@@ -112,7 +112,6 @@ func (ip *ImagePuller) CreateImageInLocalDocker(image Image) error {
 	// fmt.Printf("curl -i --unix-socket /var/run/docker.sock -X POST -d \"\" -H \"X-Registry-Auth: %s\" %s\n", headerValue, imageURL)
 
 	resp, err := ip.client.Do(req)
-
 	if err != nil {
 		log.Errorf("Create failed for image %s: %s", imageURL, err.Error())
 		recordDockerError(createStage, "POST request failed", image, err)
