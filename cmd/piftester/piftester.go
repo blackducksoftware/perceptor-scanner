@@ -45,21 +45,22 @@ func main() {
 		panic(err)
 	}
 
-	pifTester := NewPifTester()
+	pifTester := NewPifTester(config.ImageFacadePort)
 	addr := fmt.Sprintf(":%d", config.Port)
 	http.ListenAndServe(addr, nil)
 	log.Info("Http server started! -- %+v", pifTester)
 }
 
 type Config struct {
-	Port int
+	Port            int
+	ImageFacadePort int
 }
 
 func GetConfig() (*Config, error) {
 	var config *Config
 
-	viper.SetConfigName("perceptor_scanner_conf")
-	viper.AddConfigPath("/etc/perceptor_scanner")
+	viper.SetConfigName("piftester_conf")
+	viper.AddConfigPath("/etc/piftester")
 
 	err := viper.ReadInConfig()
 	if err != nil {
@@ -81,13 +82,13 @@ type PifTester struct {
 	getNextImageChannel chan func(*core.Image)
 }
 
-func NewPifTester() *PifTester {
+func NewPifTester(imageFacadePort int) *PifTester {
 	responder := core.NewHTTPResponder()
 	pif := &PifTester{
 		ImageMap:            map[core.Image]bool{},
 		ImageErrors:         map[core.Image][]string{},
 		ImageQueue:          []core.Image{},
-		imagePuller:         scanner.NewImageFacadePuller("http://perceptor-imagefacade"),
+		imagePuller:         scanner.NewImageFacadePuller("http://perceptor-imagefacade", imageFacadePort),
 		getNextImageChannel: make(chan func(*core.Image)),
 	}
 

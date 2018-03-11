@@ -30,7 +30,7 @@ import (
 )
 
 func TestPifTester(t *testing.T) {
-	pif := NewPifTester()
+	pif := NewPifTester(3114)
 	pif.addImage(core.Image{Name: "abc", Sha: "123"})
 	jsonBytes, err := json.Marshal(pif)
 	if err != nil {
