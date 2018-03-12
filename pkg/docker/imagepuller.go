@@ -112,9 +112,15 @@ func (ip *ImagePuller) CreateImageInLocalDocker(image Image) error {
 		// log.Infof("X-Registry-Auth value:\n%s\n", headerValue)
 		req.Header.Add("X-Registry-Auth", headerValue)
 
+		recordEvent("add auth header")
+		log.Infof("adding auth header for %s", image.DockerPullSpec())
+
 		// // the -n prevents echo from appending a newline
 		// fmt.Printf("XRA=`echo -n \"{ \\\"username\\\": \\\"%s\\\", \\\"password\\\": \\\"%s\\\" }\" | base64 --wrap=0`\n", ip.dockerUser, ip.dockerPassword)
 		// fmt.Printf("curl -i --unix-socket /var/run/docker.sock -X POST -d \"\" -H \"X-Registry-Auth: %s\" %s\n", headerValue, imageURL)
+	} else {
+		recordEvent("omit auth header")
+		log.Infof("omitting auth header for %s", image.DockerPullSpec())
 	}
 
 	resp, err := ip.client.Do(req)
