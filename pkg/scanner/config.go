@@ -54,7 +54,7 @@ func GetConfig() (*Config, error) {
 
 	// Perceptor and ImageFacade have to be reachable.
 	if config.PerceptorPort == 0 || config.ImageFacadePort == 0 {
-		err = fmt.Errorf("Need non zero ports for PerceptorPort(%v) and ImageFacade (%v)", PerceptorPort, ImageFacadePort)
+		err = fmt.Errorf("Need non zero ports for PerceptorPort(%v) and ImageFacadePort (%v)", config.PerceptorPort, config.ImageFacadePort)
 	}
 	return config, err
 }
