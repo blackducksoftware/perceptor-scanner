@@ -52,9 +52,12 @@ func GetConfig() (*Config, error) {
 		return nil, fmt.Errorf("failed to unmarshal config: %v", err)
 	}
 
-	// Perceptor and ImageFacade have to be reachable.
-	if config.PerceptorPort == 0 || config.ImageFacadePort == 0 {
-		err = fmt.Errorf("Need non zero ports for PerceptorPort(%v) and ImageFacadePort (%v)", config.PerceptorPort, config.ImageFacadePort)
+	// Ports must be reachable
+	if config.Port == 0 || config.PerceptorPort == 0 || config.ImageFacadePort == 0 {
+		err = fmt.Errorf("Need non zero numbers for Port (got %d), PerceptorPort (got %d), and ImageFacadePort (got %d)",
+			config.Port,
+			config.PerceptorPort,
+			config.ImageFacadePort)
 	}
 	return config, err
 }
