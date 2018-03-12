@@ -36,7 +36,7 @@ func main() {
 
 	config, err := scanner.GetConfig()
 	if err != nil {
-		log.Errorf("Failed to load configuration: %s", err.Error())
+		log.Errorf("Failed to load configuration: %v", err.Error())
 		panic(err)
 	}
 
@@ -45,15 +45,15 @@ func main() {
 
 	scannerManager, err := scanner.NewScanner(config)
 	if err != nil {
-		log.Errorf("unable to instantiate scanner: %s", err.Error())
+		log.Errorf("unable to instantiate scanner: %v", err.Error())
 		panic(err)
 	}
-
-	log.Info("successfully instantiated scanner: %s", scannerManager)
+	addr := fmt.Sprintf(":%d", config.Port)
+	
+	log.Info("successfully instantiated scanner: ( %v ), now starting on address %v", scannerManager, addr )
 
 	http.Handle("/metrics", prometheus.Handler())
 
-	addr := fmt.Sprintf(":%d", config.Port)
+	log.Info("Starting webserver now. Metrics available on the /metrics endpoint.")
 	http.ListenAndServe(addr, nil)
-	log.Info("Http server started!")
 }
