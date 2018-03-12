@@ -42,19 +42,25 @@ const (
 )
 
 type ImagePuller struct {
-	rootTarballDir string
-	client         *http.Client
-	dockerUser     string
-	dockerPassword string
+	rootTarballDir           string
+	client                   *http.Client
+	dockerUser               string
+	dockerPassword           string
+	internalDockerRegistries []string
 }
 
-func NewImagePuller(dockerUser string, dockerPassword string) *ImagePuller {
+func NewImagePuller(dockerUser string, dockerPassword string, internalDockerRegistries []string) *ImagePuller {
 	fd := func(proto, addr string) (conn net.Conn, err error) {
 		return net.Dial("unix", dockerSocketPath)
 	}
 	tr := &http.Transport{Dial: fd}
 	client := &http.Client{Transport: tr}
-	return &ImagePuller{rootTarballDir: "./tmp", client: client, dockerUser: dockerUser, dockerPassword: dockerPassword}
+	return &ImagePuller{
+		rootTarballDir:           "./tmp",
+		client:                   client,
+		dockerUser:               dockerUser,
+		dockerPassword:           dockerPassword,
+		internalDockerRegistries: internalDockerRegistries}
 }
 
 // PullImage gives us access to a docker image by:
@@ -101,15 +107,21 @@ func (ip *ImagePuller) CreateImageInLocalDocker(image Image) error {
 		return err
 	}
 
-	// TODO if the image *isn't* from the local registry, then don't do this auth stuff
+	if needsAuthHeader(image, ip.internalDockerRegistries) {
+		headerValue := encodeAuthHeader(ip.dockerUser, ip.dockerPassword)
+		// log.Infof("X-Registry-Auth value:\n%s\n", headerValue)
+		req.Header.Add("X-Registry-Auth", headerValue)
 
-	headerValue := encodeAuthHeader(ip.dockerUser, ip.dockerPassword)
-	// log.Infof("X-Registry-Auth value:\n%s\n", headerValue)
-	req.Header.Add("X-Registry-Auth", headerValue)
+		recordEvent("add auth header")
+		log.Infof("adding auth header for %s", image.DockerPullSpec())
 
-	// // the -n prevents echo from appending a newline
-	// fmt.Printf("XRA=`echo -n \"{ \\\"username\\\": \\\"%s\\\", \\\"password\\\": \\\"%s\\\" }\" | base64 --wrap=0`\n", ip.dockerUser, ip.dockerPassword)
-	// fmt.Printf("curl -i --unix-socket /var/run/docker.sock -X POST -d \"\" -H \"X-Registry-Auth: %s\" %s\n", headerValue, imageURL)
+		// // the -n prevents echo from appending a newline
+		// fmt.Printf("XRA=`echo -n \"{ \\\"username\\\": \\\"%s\\\", \\\"password\\\": \\\"%s\\\" }\" | base64 --wrap=0`\n", ip.dockerUser, ip.dockerPassword)
+		// fmt.Printf("curl -i --unix-socket /var/run/docker.sock -X POST -d \"\" -H \"X-Registry-Auth: %s\" %s\n", headerValue, imageURL)
+	} else {
+		recordEvent("omit auth header")
+		log.Infof("omitting auth header for %s", image.DockerPullSpec())
+	}
 
 	resp, err := ip.client.Do(req)
 	if err != nil {
