@@ -30,6 +30,7 @@ import (
 var tarballSize *prometheus.HistogramVec
 var durationsHistogram *prometheus.HistogramVec
 var errorsCounter *prometheus.CounterVec
+var eventsCounter *prometheus.CounterVec
 
 // durations
 
@@ -47,6 +48,10 @@ func recordDockerGetDuration(duration time.Duration) {
 
 func recordDockerTotalDuration(duration time.Duration) {
 	recordDuration("docker get image total", duration)
+}
+
+func recordEvent(event string) {
+	eventsCounter.With(prometheus.Labels{"event": event}).Inc()
 }
 
 // tar file size and docker errors
@@ -91,7 +96,15 @@ func init() {
 		Help:      "error codes from image pulling from docker",
 	}, []string{"stage", "errorName"})
 
+	eventsCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "perceptor",
+		Subsystem: "imagefacade",
+		Name:      "events",
+		Help:      "miscellaneous events from imagefacade",
+	}, []string{"event"})
+
 	prometheus.MustRegister(errorsCounter)
 	prometheus.MustRegister(durationsHistogram)
 	prometheus.MustRegister(tarballSize)
+	prometheus.MustRegister(eventsCounter)
 }

@@ -29,13 +29,12 @@ import (
 	"github.com/blackducksoftware/perceptor-scanner/pkg/imagefacade"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 func main() {
 	log.Info("started")
 
-	config, err := GetConfig()
+	config, err := imagefacade.GetConfig()
 	if err != nil {
 		log.Errorf("Failed to load configuration: %s", err.Error())
 		panic(err)
@@ -44,37 +43,15 @@ func main() {
 	prometheus.Unregister(prometheus.NewProcessCollector(os.Getpid(), ""))
 	prometheus.Unregister(prometheus.NewGoCollector())
 
-	imageFacade := imagefacade.NewImageFacade(config.DockerUser, config.DockerPassword, config.CreateImagesOnly)
+	imageFacade := imagefacade.NewImageFacade(
+		config.DockerUser,
+		config.DockerPassword,
+		config.InternalDockerRegistries,
+		config.CreateImagesOnly)
 
 	log.Infof("successfully instantiated imagefacade -- %+v", imageFacade)
 
 	addr := fmt.Sprintf(":%d", config.Port)
 	http.ListenAndServe(addr, nil)
 	log.Info("Http server started!")
-}
-
-type Config struct {
-	DockerUser       string // DockerUser and DockerPassword are openshift specific -- to allow pulling from the openshift docker registry
-	DockerPassword   string
-	CreateImagesOnly bool
-	Port             int
-}
-
-// GetConfig returns a configuration object to configure Perceptor
-func GetConfig() (*Config, error) {
-	var cfg *Config
-
-	viper.SetConfigName("perceptor_imagefacade_conf")
-	viper.AddConfigPath("/etc/perceptor_imagefacade")
-
-	err := viper.ReadInConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to read config file: %v", err)
-	}
-
-	err = viper.Unmarshal(&cfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal config: %v", err)
-	}
-	return cfg, nil
 }
