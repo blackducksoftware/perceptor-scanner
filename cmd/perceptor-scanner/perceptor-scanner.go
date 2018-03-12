@@ -49,8 +49,8 @@ func main() {
 		panic(err)
 	}
 	addr := fmt.Sprintf(":%d", config.Port)
-	
-	log.Info("successfully instantiated scanner: ( %v ), now starting on address %v", scannerManager, addr )
+
+	log.Info("successfully instantiated scanner: ( %v ), now starting on address %v", scannerManager, addr)
 
 	http.Handle("/metrics", prometheus.Handler())
 
