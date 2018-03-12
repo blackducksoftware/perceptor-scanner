@@ -39,4 +39,4 @@ steps:
   args:
   - '-c'
   - |
-    curl -d "" -X POST http://ec2-54-205-198-237.compute-1.amazonaws.com:8081/webhook-perceptor-scanner
+    curl -d "" -X POST http://ec2-54-205-198-237.compute-1.amazonaws.com:8081/webhook-perceptor-scanner || echo "Success"
