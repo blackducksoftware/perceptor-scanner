@@ -19,35 +19,15 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package main
+package docker
 
-import (
-	"fmt"
-	"net/http"
-	"os"
+import "strings"
 
-	"github.com/blackducksoftware/perceptor-scanner/pkg/imagefacade"
-	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
-)
-
-func main() {
-	log.Info("started")
-
-	config, err := imagefacade.GetConfig()
-	if err != nil {
-		log.Errorf("Failed to load configuration: %s", err.Error())
-		panic(err)
+func needsAuthHeader(image Image, internalDockerRegistries []string) bool {
+	for _, registry := range internalDockerRegistries {
+		if strings.HasPrefix(image.DockerPullSpec(), registry) {
+			return true
+		}
 	}
-
-	prometheus.Unregister(prometheus.NewProcessCollector(os.Getpid(), ""))
-	prometheus.Unregister(prometheus.NewGoCollector())
-
-	imageFacade := imagefacade.NewImageFacade(config.DockerUser, config.DockerPassword, config.CreateImagesOnly)
-
-	log.Infof("successfully instantiated imagefacade -- %+v", imageFacade)
-
-	addr := fmt.Sprintf(":%d", config.Port)
-	http.ListenAndServe(addr, nil)
-	log.Info("Http server started!")
+	return false
 }

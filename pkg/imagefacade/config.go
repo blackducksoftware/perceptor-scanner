@@ -19,35 +19,39 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package main
+package imagefacade
 
 import (
 	"fmt"
-	"net/http"
-	"os"
 
-	"github.com/blackducksoftware/perceptor-scanner/pkg/imagefacade"
-	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
-func main() {
-	log.Info("started")
+type Config struct {
+	// DockerUser and DockerPassword are openshift specific -- to allow pulling from the openshift docker registry
+	DockerUser        string
+	DockerPassword    string
+	PrivateRegistries []string
 
-	config, err := imagefacade.GetConfig()
+	CreateImagesOnly bool
+	Port             int
+}
+
+// GetConfig returns a configuration object to configure Perceptor
+func GetConfig() (*Config, error) {
+	var cfg *Config
+
+	viper.SetConfigName("perceptor_imagefacade_conf")
+	viper.AddConfigPath("/etc/perceptor_imagefacade")
+
+	err := viper.ReadInConfig()
 	if err != nil {
-		log.Errorf("Failed to load configuration: %s", err.Error())
-		panic(err)
+		return nil, fmt.Errorf("failed to read config file: %v", err)
 	}
 
-	prometheus.Unregister(prometheus.NewProcessCollector(os.Getpid(), ""))
-	prometheus.Unregister(prometheus.NewGoCollector())
-
-	imageFacade := imagefacade.NewImageFacade(config.DockerUser, config.DockerPassword, config.CreateImagesOnly)
-
-	log.Infof("successfully instantiated imagefacade -- %+v", imageFacade)
-
-	addr := fmt.Sprintf(":%d", config.Port)
-	http.ListenAndServe(addr, nil)
-	log.Info("Http server started!")
+	err = viper.Unmarshal(&cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal config: %v", err)
+	}
+	return cfg, nil
 }
