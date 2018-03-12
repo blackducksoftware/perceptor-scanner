@@ -43,7 +43,11 @@ func main() {
 	prometheus.Unregister(prometheus.NewProcessCollector(os.Getpid(), ""))
 	prometheus.Unregister(prometheus.NewGoCollector())
 
-	imageFacade := imagefacade.NewImageFacade(config.DockerUser, config.DockerPassword, config.CreateImagesOnly)
+	imageFacade := imagefacade.NewImageFacade(
+		config.DockerUser,
+		config.DockerPassword,
+		config.InternalDockerRegistries,
+		config.CreateImagesOnly)
 
 	log.Infof("successfully instantiated imagefacade -- %+v", imageFacade)
 

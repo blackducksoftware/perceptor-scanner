@@ -28,10 +28,10 @@ import (
 )
 
 type Config struct {
-	// DockerUser and DockerPassword are openshift specific -- to allow pulling from the openshift docker registry
-	DockerUser        string
-	DockerPassword    string
-	PrivateRegistries []string
+	// These are openshift specific, and allow pulling from the openshift docker registry
+	DockerUser               string
+	DockerPassword           string
+	InternalDockerRegistries []string
 
 	CreateImagesOnly bool
 	Port             int
