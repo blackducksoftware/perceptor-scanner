@@ -65,7 +65,7 @@ func downloadScanClient(hubHost string, hubUser string, hubPassword string) (*sc
 	log.Infof("got hub version: %s", currentVersion.Version)
 
 	// 4. create directory
-	err = os.Mkdir(scanClientRootPath, 0755)
+	err = os.MkdirAll(scanClientRootPath, 0755)
 	if err != nil {
 		log.Errorf("unable to make dir %s: %s", scanClientRootPath, err.Error())
 		return nil, err
