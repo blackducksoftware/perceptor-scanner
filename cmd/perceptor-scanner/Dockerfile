@@ -1,4 +1,5 @@
-FROM centos:centos7
+# Build from scratch containers
+FROM scratch
 
 # Bring in other dependencies
 COPY ./perceptor-scanner ./perceptor-scanner
