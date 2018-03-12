@@ -48,12 +48,10 @@ func main() {
 		log.Errorf("unable to instantiate scanner: %v", err.Error())
 		panic(err)
 	}
-	addr := fmt.Sprintf(":%d", config.Port)
-
-	log.Info("successfully instantiated scanner: ( %v ), now starting on address %v", scannerManager, addr)
 
 	http.Handle("/metrics", prometheus.Handler())
 
-	log.Info("Starting webserver now. Metrics available on the /metrics endpoint.")
+	addr := fmt.Sprintf(":%d", config.Port)
+	log.Info("successfully instantiated scanner %+v, serving on port %s", scannerManager, addr)
 	http.ListenAndServe(addr, nil)
 }
