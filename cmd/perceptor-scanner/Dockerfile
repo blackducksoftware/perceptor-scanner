@@ -1,4 +1,4 @@
-FROM centos:centos7
+FROM SCRATCH
 
 # Bring in other dependencies
 COPY ./perceptor-scanner ./perceptor-scanner
