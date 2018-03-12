@@ -1,3 +1,4 @@
+# Build from scratch containers
 FROM scratch
 
 # Bring in other dependencies
