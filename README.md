@@ -10,10 +10,9 @@ Both or either are replacable, so long as the API calls and responses are effect
 
 # Repository structure
 
- - perceptor-scanner pod
-   - perceptor-scanner container
-     - downloads a scanclient from the hub upon startup
-   - perceptor-imagefacade container
+ Perceptor-scanner pod:  Consisting of 2 conatiners:
+ - perceptor-scanner container ~ downloads a scanclient from the hub upon startup
+ - perceptor-imagefacade container ~ handles image data, metadata.
    
 # Getting involved
 
