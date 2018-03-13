@@ -10,7 +10,7 @@ import:
 - package: github.com/blackducksoftware/perceptor
   repo: git@github.com:blackducksoftware/perceptor.git
   vcs: git
-  version: v0.0.11
+  version: v0.0.13
   subpackages:
   - pkg/api
 - package: github.com/prometheus/client_golang
