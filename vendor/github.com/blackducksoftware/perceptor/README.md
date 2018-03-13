@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/blackducksoftware/perceptor.svg?token=NkZXsasksSgnVeY347YQ&branch=master)](https://travis-ci.com/blackducksoftware/perceptor)
+[![Build Status](https://travis-ci.com/blackducksoftware/perceptor.svg?branch=master)](https://travis-ci.com/blackducksoftware/perceptor)
 
 # Perceptor
 
@@ -7,6 +7,9 @@ scans those images using the hub, and informs the user of policy violations, ris
 based on what's currently running in their cluster.
 
 # Perceivers
+
+Perceivers are the canonical extension point to a perceptor based deployment.
+Perceivers are workers that notify perceptor of events, and respond to information that perceptor acquires about those events.  IF you want to build one for your own platform, or customize the way cluster events are processed,  [ go here to learn more about them](https://github.com/blackducksoftware/perceivers).  
 
 Perceivers are responsible for interacting with the cluster manager -- whether kubernetes, openshift,
 docker swarm, or docker compose.  Perceivers watch for pod and image events -- create, update, delete --
@@ -26,6 +29,7 @@ Perceivers:
  - GKE (TODO)
  - compose (TODO)
  - swarm (TODO)
+ 
 
 # Perceptor core
 
@@ -94,6 +98,10 @@ If master is broken:
 Check out the makefiles -- from the root directory, run:
 
     make
+    
+# Continous Integration
+
+We build images, per commit, using cloud build files.  We're open to changing our build artifacts over time, checkout the cloud-build.yaml.  Note that post build hooks are currently disabled due to internal infrastructure changes.
 
 # Running
 
