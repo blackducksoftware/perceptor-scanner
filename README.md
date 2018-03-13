@@ -20,3 +20,9 @@ Both or either are replacable, so long as the API calls and responses are effect
 These repositories represent refactoring of previous work in blackduck's ose-scanner, and the blackduck perceptor prototype release which is in alpha now.  To get involved, create an issue, submit a PR, or directly ping the developers in your issue).
 
 We welcome new contributors !
+
+# See also
+
+Companion repositories: perceptor, perceivers, perceptor-protoform.  
+
+Pardon our dust, this repo is still heavily under construction / migration.
