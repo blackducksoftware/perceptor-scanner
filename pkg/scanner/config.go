@@ -28,12 +28,13 @@ import (
 )
 
 type Config struct {
-	HubHost         string
-	HubUser         string
-	HubUserPassword string
-	Port            int
-	ImageFacadePort int
-	PerceptorPort   int
+	HubHost                 string
+	HubUser                 string
+	HubUserPassword         string
+	HubClientTimeoutSeconds int
+	Port                    int
+	ImageFacadePort         int
+	PerceptorPort           int
 }
 
 func GetConfig() (*Config, error) {

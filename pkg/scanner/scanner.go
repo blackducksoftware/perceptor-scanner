@@ -52,7 +52,11 @@ func NewScanner(config *Config) (*Scanner, error) {
 		return nil, err
 	}
 
-	scanClientInfo, err := downloadScanClient(config.HubHost, config.HubUser, config.HubUserPassword)
+	scanClientInfo, err := downloadScanClient(
+		config.HubHost,
+		config.HubUser,
+		config.HubUserPassword,
+		time.Duration(config.HubClientTimeoutSeconds)*time.Second)
 	if err != nil {
 		log.Errorf("unable to download scan client: %s", err.Error())
 		return nil, err
