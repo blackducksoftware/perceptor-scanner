@@ -1,5 +1,5 @@
-hash: 7b1d55f37005d0412158a1d4108dcf2f6521adb04f07d8e7c1cdce656cb2be4e
-updated: 2018-03-04T12:54:21.732437204-05:00
+hash: cff7cc357fa4de905b1f3e0c56fda09fd1b6f858b164aa2acb02ce3508013ff8
+updated: 2018-03-13T09:05:07.624341143-04:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -12,7 +12,7 @@ imports:
   subpackages:
   - quantile
 - name: github.com/blackducksoftware/hub-client-go
-  version: 39c39f12ffe9cb59b9194ace19f681b1120cc802
+  version: 0a45c9b235d6b5dfe73bcc1e17537eac2b302490
   repo: git@github.com:blackducksoftware/hub-client-go.git
   vcs: git
   subpackages:
