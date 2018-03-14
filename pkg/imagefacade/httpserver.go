@@ -145,6 +145,7 @@ func (h *HTTPServer) setup() {
 		// } else {
 		// 	fmt.Fprint(w, string(statsBytes))
 		// }
+		fmt.Fprint(w, "TODO")
 	})
 	http.Handle("/metrics", prometheus.Handler())
 }
