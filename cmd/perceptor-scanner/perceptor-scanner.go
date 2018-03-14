@@ -52,6 +52,6 @@ func main() {
 	http.Handle("/metrics", prometheus.Handler())
 
 	addr := fmt.Sprintf(":%d", config.Port)
-	log.Info("successfully instantiated scanner %+v, serving on port %s", scannerManager, addr)
+	log.Infof("successfully instantiated scanner %+v, serving on port %s", scannerManager, addr)
 	http.ListenAndServe(addr, nil)
 }

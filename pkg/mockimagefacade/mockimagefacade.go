@@ -73,7 +73,7 @@ func NewMockImagefacade() *MockImagefacade {
 			case continuation := <-responder.GetModelChannel:
 				go continuation(string("{\"status\":\"TODO\"}"))
 
-				// we don't care about these:
+			// we don't care about these:
 			case _ = <-responder.AddImageChannel:
 				break
 			case _ = <-responder.AddPodChannel:
