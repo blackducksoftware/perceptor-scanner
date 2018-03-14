@@ -15,7 +15,12 @@ Both or either are replacable, so long as the API calls and responses are effect
  Perceptor-scanner pod:  Consisting of 2 conatiners:
  - perceptor-scanner container ~ downloads a scanclient from the hub upon startup
  - perceptor-imagefacade container ~ handles image data, metadata.
-   
+
+## Testing
+
+ - PifTester -- ties together real perceivers and the image facade, for image facade testing
+ - ScannerTester -- uses a mock image facade to test the scanner
+
 ## Getting involved
 
 These repositories represent refactoring of previous work in blackduck's ose-scanner, and the blackduck perceptor prototype release which is in alpha now.  To get involved, create an issue, submit a PR, or directly ping the developers in your issue).
