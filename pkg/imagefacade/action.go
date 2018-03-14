@@ -27,28 +27,32 @@ type Action interface {
 	apply(model *Model)
 }
 
-type pullImage struct {
-	image        *common.Image
-	continuation func(err error)
+type PullImage struct {
+	Image        *common.Image
+	Continuation func(err error)
 }
 
-func (p *pullImage) apply(model *Model) {
-	err := model.pullImage(p.image)
-	go p.continuation(err)
+func NewPullImage(image *common.Image, continuation func(err error)) *PullImage {
+	return &PullImage{Image: image, Continuation: continuation}
 }
 
-type getImage struct {
-	image        *common.Image
-	continuation func(imageStatus common.ImageStatus)
+func (p *PullImage) apply(model *Model) {
+	err := model.pullImage(p.Image)
+	go p.Continuation(err)
 }
 
-func newGetImage(image *common.Image, continuation func(imageStatus common.ImageStatus)) *getImage {
-	return &getImage{image: image, continuation: continuation}
+type GetImage struct {
+	Image        *common.Image
+	Continuation func(imageStatus common.ImageStatus)
 }
 
-func (g *getImage) apply(model *Model) {
-	imageStatus := model.imageStatus(g.image)
-	go g.continuation(imageStatus)
+func NewGetImage(image *common.Image, continuation func(imageStatus common.ImageStatus)) *GetImage {
+	return &GetImage{Image: image, Continuation: continuation}
+}
+
+func (g *GetImage) apply(model *Model) {
+	imageStatus := model.imageStatus(g.Image)
+	go g.Continuation(imageStatus)
 }
 
 type finishedImagePull struct {

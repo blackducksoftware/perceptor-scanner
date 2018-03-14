@@ -35,23 +35,23 @@ import (
 )
 
 type HTTPServer struct {
-	pullImage chan *pullImage
-	getImage  chan *getImage
+	pullImage chan *PullImage
+	getImage  chan *GetImage
 }
 
-func newHTTPServer() *HTTPServer {
+func NewHTTPServer() *HTTPServer {
 	server := &HTTPServer{
-		pullImage: make(chan *pullImage),
-		getImage:  make(chan *getImage)}
+		pullImage: make(chan *PullImage),
+		getImage:  make(chan *GetImage)}
 	server.setup()
 	return server
 }
 
-func (h *HTTPServer) PullImageChannel() <-chan *pullImage {
+func (h *HTTPServer) PullImageChannel() <-chan *PullImage {
 	return h.pullImage
 }
 
-func (h *HTTPServer) GetImageChannel() <-chan *getImage {
+func (h *HTTPServer) GetImageChannel() <-chan *GetImage {
 	return h.getImage
 }
 
@@ -81,7 +81,7 @@ func (h *HTTPServer) setup() {
 				wg.Done()
 			}
 
-			h.pullImage <- &pullImage{image, continuation}
+			h.pullImage <- NewPullImage(image, continuation)
 			wg.Wait()
 
 			if pullError == nil {
@@ -120,7 +120,7 @@ func (h *HTTPServer) setup() {
 				wg.Done()
 			}
 
-			h.getImage <- &getImage{image: image, continuation: continuation}
+			h.getImage <- NewGetImage(image, continuation)
 			wg.Wait()
 
 			responseBytes, err := json.Marshal(response)

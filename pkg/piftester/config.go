@@ -19,27 +19,33 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package main
+package piftester
 
 import (
 	"fmt"
-	"net/http"
 
-	piftester "github.com/blackducksoftware/perceptor-scanner/pkg/piftester"
-	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
-func main() {
-	log.Info("started")
+type Config struct {
+	Port            int
+	ImageFacadePort int
+}
 
-	config, err := piftester.GetConfig()
+func GetConfig() (*Config, error) {
+	var config *Config
+
+	viper.SetConfigName("piftester_conf")
+	viper.AddConfigPath("/etc/piftester")
+
+	err := viper.ReadInConfig()
 	if err != nil {
-		log.Errorf("Failed to load configuration: %s", err.Error())
-		panic(err)
+		return nil, fmt.Errorf("failed to read config file: %v", err)
 	}
 
-	pifTester := piftester.NewPifTester(config.ImageFacadePort)
-	addr := fmt.Sprintf(":%d", config.Port)
-	http.ListenAndServe(addr, nil)
-	log.Info("Http server started! -- %+v", pifTester)
+	err = viper.Unmarshal(&config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal config: %v", err)
+	}
+	return config, nil
 }

@@ -51,7 +51,7 @@ func main() {
 
 	log.Infof("successfully instantiated imagefacade -- %+v", imageFacade)
 
+	log.Infof("starting HTTP server on port %d", config.Port)
 	addr := fmt.Sprintf(":%d", config.Port)
 	http.ListenAndServe(addr, nil)
-	log.Info("Http server started!")
 }
