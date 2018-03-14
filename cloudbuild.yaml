@@ -51,7 +51,7 @@ steps:
 # Mock Image Facade
 
 - name: 'gcr.io/cloud-builders/go'
-  args: ['build', '-o', './cmd/scannertester/scannertester', './cmd/scannertester/scannertester.go']
+  args: ['build', '-o', './cmd/mockimagefacade/mockimagefacade', './cmd/mockimagefacade/mockimagefacade.go']
   env:
   - 'PROJECT_ROOT=github.com/blackducksoftware/perceptor-scanner'
   - 'CGO_ENABLED=0'
@@ -59,10 +59,10 @@ steps:
   - 'GOARCH=amd64'
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'gcr.io/$PROJECT_ID/blackducksoftware/scannertester:$BRANCH_NAME', './cmd/scannertester/.']
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/blackducksoftware/mockimagefacade:$BRANCH_NAME', './cmd/mockimagefacade/.']
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'gcr.io/$PROJECT_ID/blackducksoftware/scannertester:$BRANCH_NAME']
+  args: ['push', 'gcr.io/$PROJECT_ID/blackducksoftware/mockimagefacade:$BRANCH_NAME']
 
 # Kipp post build hook
 
