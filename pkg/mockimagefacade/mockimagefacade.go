@@ -27,8 +27,6 @@ import (
 
 	common "github.com/blackducksoftware/perceptor-scanner/pkg/common"
 	imagefacade "github.com/blackducksoftware/perceptor-scanner/pkg/imagefacade"
-	"github.com/blackducksoftware/perceptor/pkg/api"
-	"github.com/blackducksoftware/perceptor/pkg/core"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -39,7 +37,6 @@ type MockImagefacade struct {
 func NewMockImagefacade() *MockImagefacade {
 	server := imagefacade.NewHTTPServer()
 
-	// ImageFacade REST API
 	go func() {
 		for {
 			select {
@@ -59,42 +56,6 @@ func NewMockImagefacade() *MockImagefacade {
 			}
 		}
 	}()
-
-	// Perceptor REST API
-	responder := core.NewHTTPResponder()
-
-	go func() {
-		for {
-			select {
-			case continuation := <-responder.PostNextImageChannel:
-				go continuation(core.NewImage("host/user/project", "somesha"))
-			case scanJob := <-responder.PostFinishScanJobChannel:
-				log.Infof("finished scan job: %+v", scanJob)
-			case continuation := <-responder.GetModelChannel:
-				go continuation(string("{\"status\":\"TODO\"}"))
-
-			// we don't care about these:
-			case _ = <-responder.AddImageChannel:
-				break
-			case _ = <-responder.AddPodChannel:
-				break
-			case _ = <-responder.AllPodsChannel:
-				break
-			case _ = <-responder.AllImagesChannel:
-				break
-			case _ = <-responder.UpdatePodChannel:
-				break
-			case _ = <-responder.DeletePodChannel:
-				break
-			case _ = <-responder.SetConcurrentScanLimitChannel:
-				break
-			case _ = <-responder.GetScanResultsChannel:
-				break
-			}
-		}
-	}()
-
-	api.SetupHTTPServer(responder)
 
 	return &MockImagefacade{server: server}
 }
