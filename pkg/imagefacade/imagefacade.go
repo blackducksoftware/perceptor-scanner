@@ -38,7 +38,7 @@ func NewImageFacade(dockerUser string, dockerPassword string, internalDockerRegi
 	actions := make(chan Action)
 	finishedImagePull := make(chan *finishedImagePull)
 
-	server := newHTTPServer()
+	server := NewHTTPServer()
 	model := NewModel()
 	reducer := newReducer(model, actions)
 

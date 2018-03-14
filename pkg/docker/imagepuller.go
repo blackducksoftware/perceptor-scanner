@@ -42,7 +42,6 @@ const (
 )
 
 type ImagePuller struct {
-	rootTarballDir           string
 	client                   *http.Client
 	dockerUser               string
 	dockerPassword           string
@@ -56,7 +55,6 @@ func NewImagePuller(dockerUser string, dockerPassword string, internalDockerRegi
 	tr := &http.Transport{Dial: fd}
 	client := &http.Client{Transport: tr}
 	return &ImagePuller{
-		rootTarballDir:           "./tmp",
 		client:                   client,
 		dockerUser:               dockerUser,
 		dockerPassword:           dockerPassword,
@@ -174,9 +172,6 @@ func (ip *ImagePuller) SaveImageToTar(image Image) error {
 	}()
 	tarFilePath := image.DockerTarFilePath()
 	log.Infof("Starting to write file contents to tar file %s", tarFilePath)
-
-	// just need to create `./tmp` if it doesn't already exist
-	os.Mkdir(ip.rootTarballDir, 0755)
 
 	f, err := os.OpenFile(tarFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777)
 	if err != nil {
