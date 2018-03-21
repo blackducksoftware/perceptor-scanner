@@ -25,13 +25,13 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/blackducksoftware/perceptor/pkg/core"
+	m "github.com/blackducksoftware/perceptor/pkg/core/model"
 	log "github.com/sirupsen/logrus"
 )
 
 func TestPifTester(t *testing.T) {
 	pif := NewPifTester(3114)
-	pif.addImage(core.Image{Name: "abc", Sha: "123"})
+	pif.addImage(m.Image{Name: "abc", Sha: "123"})
 	jsonBytes, err := json.Marshal(pif)
 	if err != nil {
 		t.Errorf("unable to produce json: %s", err.Error())

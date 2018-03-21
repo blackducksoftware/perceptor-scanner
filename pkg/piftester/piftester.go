@@ -31,25 +31,26 @@ import (
 	"github.com/blackducksoftware/perceptor-scanner/pkg/scanner"
 	"github.com/blackducksoftware/perceptor/pkg/api"
 	"github.com/blackducksoftware/perceptor/pkg/core"
+	m "github.com/blackducksoftware/perceptor/pkg/core/model"
 	"github.com/prometheus/common/log"
 )
 
 type PifTester struct {
-	ImageMap            map[core.Image]bool
-	ImageErrors         map[core.Image][]string
-	ImageQueue          []core.Image
+	ImageMap            map[m.Image]bool
+	ImageErrors         map[m.Image][]string
+	ImageQueue          []m.Image
 	imagePuller         *scanner.ImageFacadePuller
-	getNextImageChannel chan func(*core.Image)
+	getNextImageChannel chan func(*m.Image)
 }
 
 func NewPifTester(imageFacadePort int) *PifTester {
 	responder := core.NewHTTPResponder()
 	pif := &PifTester{
-		ImageMap:            map[core.Image]bool{},
-		ImageErrors:         map[core.Image][]string{},
-		ImageQueue:          []core.Image{},
+		ImageMap:            map[m.Image]bool{},
+		ImageErrors:         map[m.Image][]string{},
+		ImageQueue:          []m.Image{},
 		imagePuller:         scanner.NewImageFacadePuller("http://perceptor-imagefacade", imageFacadePort),
-		getNextImageChannel: make(chan func(*core.Image)),
+		getNextImageChannel: make(chan func(*m.Image)),
 	}
 
 	go func() {
@@ -101,13 +102,13 @@ func NewPifTester(imageFacadePort int) *PifTester {
 	return pif
 }
 
-func (pif *PifTester) addPod(pod core.Pod) {
+func (pif *PifTester) addPod(pod m.Pod) {
 	for _, cont := range pod.Containers {
 		pif.addImage(cont.Image)
 	}
 }
 
-func (pif *PifTester) addImage(image core.Image) {
+func (pif *PifTester) addImage(image m.Image) {
 	_, ok := pif.ImageMap[image]
 	if ok {
 		return
@@ -117,7 +118,7 @@ func (pif *PifTester) addImage(image core.Image) {
 	pif.ImageQueue = append(pif.ImageQueue, image)
 }
 
-func (pif *PifTester) getNextImage() *core.Image {
+func (pif *PifTester) getNextImage() *m.Image {
 	if len(pif.ImageQueue) == 0 {
 		log.Infof("no next image")
 		return nil
@@ -128,7 +129,7 @@ func (pif *PifTester) getNextImage() *core.Image {
 	return &first
 }
 
-func (pif *PifTester) finishImage(image core.Image, err error) {
+func (pif *PifTester) finishImage(image m.Image, err error) {
 	errorString := ""
 	if err != nil {
 		errorString = err.Error()
@@ -152,7 +153,7 @@ func (pif *PifTester) startPullingImages() {
 	for {
 		var wg sync.WaitGroup
 		wg.Add(1)
-		pif.getNextImageChannel <- func(image *core.Image) {
+		pif.getNextImageChannel <- func(image *m.Image) {
 			if image != nil {
 				err := pif.imagePuller.PullImage(&common.Image{PullSpec: image.PullSpec()})
 				pif.finishImage(*image, err)
