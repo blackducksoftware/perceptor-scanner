@@ -27,6 +27,7 @@ import (
 	"net/url"
 	"testing"
 
+	m "github.com/blackducksoftware/perceptor/pkg/core/model"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -40,7 +41,7 @@ func TestMetrics(t *testing.T) {
 	recordAllImages()
 	recordGetNextImage()
 	recordHTTPNotFound(&http.Request{URL: &url.URL{}})
-	recordModelMetrics(&ModelMetrics{})
+	recordModelMetrics(&m.ModelMetrics{})
 	recordGetScanResults()
 	recordPostFinishedScan()
 

@@ -1,5 +1,5 @@
-hash: b108275eb5e5b1fa8ab9fa2f85d4c01ca647067bb29c8c71cadb31a520e00c94
-updated: 2018-03-13T16:04:59.368757296-04:00
+hash: 6c9eaac06147fdec61bd423158c187ffc4ec56a78d9d6d3d308b120d8e27ffd8
+updated: 2018-03-20T16:51:31.260625312-04:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -19,12 +19,14 @@ imports:
   - hubapi
   - hubclient
 - name: github.com/blackducksoftware/perceptor
-  version: b54143a85886b573189bfe1b21d1ece14c2f90f7
+  version: 62f4a1b55dfd37d970470e43747ff430ad72edaf
   repo: git@github.com:blackducksoftware/perceptor.git
   vcs: git
   subpackages:
   - pkg/api
   - pkg/core
+  - pkg/core/actions
+  - pkg/core/model
   - pkg/hub
   - pkg/logging
 - name: github.com/fsnotify/fsnotify
@@ -34,7 +36,7 @@ imports:
   subpackages:
   - proto
 - name: github.com/hashicorp/hcl
-  version: 23c074d0eceb2b8a5bfdbb271ab780cde70f05a8
+  version: f40e974e75af4e271d97ce0fc917af5898ae7bda
   subpackages:
   - hcl/ast
   - hcl/parser
@@ -90,18 +92,18 @@ imports:
 - name: github.com/spf13/viper
   version: 25b30aa063fc18e48662b86996252eabdcf2f0c7
 - name: golang.org/x/crypto
-  version: c4a91bd4f524f10d064139674cf55852e055ad01
+  version: c3a3ad6d03f7a915c0f7e194b7152974bb73d287
   subpackages:
   - ssh/terminal
 - name: golang.org/x/sys
-  version: 8c0ece68c28377f4c326d85b94f8df0dace46f80
+  version: 7ceb54c8418b8f9cdf0177b511d5cbb06e9fae39
   subpackages:
   - unix
   - windows
   - windows/registry
   - windows/svc/eventlog
 - name: golang.org/x/text
-  version: b7ef84aaf62aa3e70962625c80a571ae7c17cb40
+  version: 8c34f848e18c4bd34d02db7f19a0ed1a0a8f5852
   subpackages:
   - transform
   - unicode/norm

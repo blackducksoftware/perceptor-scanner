@@ -114,7 +114,7 @@ func (scanner *Scanner) requestAndRunScanJob() {
 		errorString = err.Error()
 	}
 
-	finishedJob := api.FinishedScanClientJob{Err: errorString, Sha: job.Sha}
+	finishedJob := api.FinishedScanClientJob{Err: errorString, ImageSpec: *image}
 	log.Infof("about to finish job, going to send over %+v", finishedJob)
 	err = scanner.finishScan(finishedJob)
 	if err != nil {
