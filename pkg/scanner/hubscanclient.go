@@ -22,6 +22,7 @@ under the License.
 package scanner
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"time"
@@ -30,7 +31,6 @@ import (
 )
 
 const (
-	hubPort   = "443"
 	hubScheme = "https"
 )
 
@@ -40,16 +40,18 @@ type HubScanClient struct {
 	host           string
 	username       string
 	password       string
+	port           int
 	scanClientInfo *scanClientInfo
 	imagePuller    ImagePullerInterface
 }
 
 // NewHubScanClient requires hub login credentials
-func NewHubScanClient(host string, username string, password string, scanClientInfo *scanClientInfo, imagePuller ImagePullerInterface) (*HubScanClient, error) {
+func NewHubScanClient(host string, username string, password string, port int, scanClientInfo *scanClientInfo, imagePuller ImagePullerInterface) (*HubScanClient, error) {
 	hsc := HubScanClient{
 		host:           host,
 		username:       username,
 		password:       password,
+		port:           port,
 		scanClientInfo: scanClientInfo,
 		imagePuller:    imagePuller}
 	return &hsc, nil
@@ -81,7 +83,7 @@ func (hsc *HubScanClient) Scan(job ScanJob) error {
 		"-Done-jar.jar.path="+scanCliImplJarPath,
 		"-jar", scanCliJarPath,
 		"--host", hsc.host,
-		"--port", hubPort,
+		"--port", fmt.Sprintf("%d", hsc.port),
 		"--scheme", hubScheme,
 		"--project", job.HubProjectName,
 		"--release", job.HubProjectVersionName,

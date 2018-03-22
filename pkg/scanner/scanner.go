@@ -42,6 +42,7 @@ const (
 type Scanner struct {
 	scanClient    ScanClientInterface
 	httpClient    *http.Client
+	perceptorHost string
 	perceptorPort int
 }
 
@@ -65,7 +66,13 @@ func NewScanner(config *Config) (*Scanner, error) {
 	log.Infof("instantiating scanner with hub %s, user %s", config.HubHost, config.HubUser)
 
 	imagePuller := NewImageFacadePuller(imageFacadeBaseURL, config.ImageFacadePort)
-	scanClient, err := NewHubScanClient(config.HubHost, config.HubUser, config.HubUserPassword, scanClientInfo, imagePuller)
+	scanClient, err := NewHubScanClient(
+		config.HubHost,
+		config.HubUser,
+		config.HubUserPassword,
+		config.HubPort,
+		scanClientInfo,
+		imagePuller)
 	if err != nil {
 		log.Errorf("unable to instantiate hub scan client: %s", err.Error())
 		return nil, err
@@ -76,6 +83,7 @@ func NewScanner(config *Config) (*Scanner, error) {
 	scanner := Scanner{
 		scanClient:    scanClient,
 		httpClient:    httpClient,
+		perceptorHost: config.PerceptorHost,
 		perceptorPort: config.PerceptorPort}
 
 	scanner.startRequestingScanJobs()
@@ -123,7 +131,7 @@ func (scanner *Scanner) requestAndRunScanJob() {
 }
 
 func (scanner *Scanner) requestScanJob() (*api.ImageSpec, error) {
-	nextImageURL := fmt.Sprintf("%s:%d/%s", api.PerceptorBaseURL, scanner.perceptorPort, api.NextImagePath)
+	nextImageURL := scanner.buildURL(api.NextImagePath)
 	resp, err := scanner.httpClient.Post(nextImageURL, "", bytes.NewBuffer([]byte{}))
 
 	if err != nil {
@@ -165,7 +173,7 @@ func (scanner *Scanner) requestScanJob() (*api.ImageSpec, error) {
 }
 
 func (scanner *Scanner) finishScan(results api.FinishedScanClientJob) error {
-	finishedScanURL := fmt.Sprintf("%s:%d/%s", api.PerceptorBaseURL, scanner.perceptorPort, api.FinishedScanPath)
+	finishedScanURL := scanner.buildURL(api.FinishedScanPath)
 	jsonBytes, err := json.Marshal(results)
 	if err != nil {
 		recordScannerError("unable to marshal json for finished job")
@@ -194,4 +202,8 @@ func (scanner *Scanner) finishScan(results api.FinishedScanClientJob) error {
 		log.Infof("POST to %s succeeded", finishedScanURL)
 		return nil
 	}
+}
+
+func (scanner *Scanner) buildURL(path string) string {
+	return fmt.Sprintf("http://%s:%d/%s", scanner.perceptorHost, scanner.perceptorPort, path)
 }
