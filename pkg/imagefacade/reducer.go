@@ -25,6 +25,8 @@ import (
 	"fmt"
 	"reflect"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type reducer struct{}
@@ -37,7 +39,9 @@ func newReducer(initialModel *Model, actions <-chan Action) *reducer {
 			select {
 			case nextAction := <-actions:
 				// metrics: log message type
-				recordActionType(fmt.Sprintf("%s", reflect.TypeOf(nextAction)))
+				actionString := fmt.Sprintf("%s", reflect.TypeOf(nextAction))
+				log.Debug("processing action of type %s", actionString)
+				recordActionType(actionString)
 
 				// metrics: how long idling since the last action finished processing?
 				start := time.Now()

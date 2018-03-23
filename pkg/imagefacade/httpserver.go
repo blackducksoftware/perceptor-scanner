@@ -85,7 +85,7 @@ func (h *HTTPServer) setup() {
 			wg.Wait()
 
 			if pullError == nil {
-				log.Infof("successfully handled pullimage for %s", image.PullSpec)
+				log.Debugf("successfully handled pullimage for %s", image.PullSpec)
 				fmt.Fprint(w, "")
 			} else {
 				http.Error(w, pullError.Error(), 503)
@@ -130,7 +130,7 @@ func (h *HTTPServer) setup() {
 				return
 			}
 
-			log.Infof("successfully handled checkimage for %s: %+v", image.PullSpec, response)
+			log.Debugf("successfully handled checkimage for %s: %+v", image.PullSpec, response)
 			fmt.Fprintf(w, string(responseBytes))
 		default:
 			http.NotFound(w, r)
