@@ -19,7 +19,7 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package core
+package actions
 
 import (
 	"encoding/json"
@@ -81,21 +81,21 @@ func assertEqual(t *testing.T, actual interface{}, expected interface{}) {
 	if actual == expected {
 		return
 	}
-	bs1, err := json.Marshal(actual)
+	actualBytes, err := json.Marshal(actual)
 	if err != nil {
 		t.Errorf("json serialization error: %s", err.Error())
 		return
 	}
-	bs2, err := json.Marshal(expected)
+	expectedBytes, err := json.Marshal(expected)
 	if err != nil {
 		t.Errorf("json serialization error: %s", err.Error())
 		return
 	}
-	if string(bs1) == string(bs2) {
+	if string(actualBytes) == string(expectedBytes) {
 		return
 	}
 	// t.Errorf("expected \n%+v, got \n%+v", expected, actual)
-	t.Errorf("expected \n%s, got \n%s", string(bs1), string(bs2))
+	t.Errorf("expected \n%s, got \n%s", string(expectedBytes), string(actualBytes))
 }
 
 func TestActionsImplementInterface(t *testing.T) {
@@ -128,72 +128,3 @@ var testSha = m.DockerImageSha("sha1")
 var testImage = m.Image{Name: "image1", Sha: testSha}
 var testCont = m.Container{Image: testImage}
 var testPod = m.Pod{Namespace: "abc", Name: "def", UID: "fff", Containers: []m.Container{testCont}}
-
-func TestAddPodAction(t *testing.T) {
-	// actual
-	actual := m.NewModel(&m.Config{}, "test version")
-	(&AddPod{testPod}).Apply(actual)
-	// expected (a bit hacky to get the times set up):
-	//  - pod gets added to .Pods
-	//  - all images within pod get added to .Images
-	//  - all new images get added to hub check queue
-	expected := *m.NewModel(&m.Config{}, "test version")
-	expected.Pods[testPod.QualifiedName()] = testPod
-	imageInfo := m.NewImageInfo(testSha, "image1")
-	imageInfo.ScanStatus = m.ScanStatusInHubCheckQueue
-	imageInfo.TimeOfLastStatusChange = actual.Images[testSha].TimeOfLastStatusChange
-	expected.Images[testSha] = imageInfo
-	expected.ImageHubCheckQueue = append(expected.ImageHubCheckQueue, imageInfo.Image())
-	//
-	assertEqual(t, actual, expected)
-}
-
-func TestAddImageAction(t *testing.T) {
-	// actual
-	actual := m.NewModel(&m.Config{ConcurrentScanLimit: 3}, "test version")
-	(&AddImage{testImage}).Apply(actual)
-	// expected (a bit hacky to get the times set up):
-	//  - image gets added to .Images
-	//  - image gets added to hub check queue
-	expected := *m.NewModel(&m.Config{ConcurrentScanLimit: 3}, "test version")
-	imageInfo := m.NewImageInfo(testSha, "image1")
-	imageInfo.ScanStatus = m.ScanStatusInHubCheckQueue
-	imageInfo.TimeOfLastStatusChange = actual.Images[testSha].TimeOfLastStatusChange
-	expected.Images[testSha] = imageInfo
-	expected.ImageHubCheckQueue = append(expected.ImageHubCheckQueue, imageInfo.Image())
-	//
-	assertEqual(t, actual, expected)
-}
-
-// AllPods does remove pre-existing pods
-func TestAllPods(t *testing.T) {
-	actual := createNewModel1()
-	(&AllPods{}).Apply(actual)
-	if len(actual.Pods) != 0 {
-		t.Errorf("expected 0 pods, found %d", len(actual.Pods))
-	}
-}
-
-// AllImages doesn't remove pre-existing images
-func TestAllImages(t *testing.T) {
-	actual := createNewModel1()
-	(&AllImages{}).Apply(actual)
-	if len(actual.Images) != 2 {
-		t.Errorf("expected 2 images, found %d", len(actual.Images))
-	}
-}
-
-func TestGetNextImageForScanningActionNoImageAvailable(t *testing.T) {
-	// actual
-	var nextImage *m.Image
-	actual := m.NewModel(&m.Config{ConcurrentScanLimit: 3}, "test version")
-	(&GetNextImage{func(image *m.Image) {
-		nextImage = image
-	}}).Apply(actual)
-	// expected: front image removed from scan queue, status and time of image changed
-	expected := *m.NewModel(&m.Config{ConcurrentScanLimit: 3}, "test version")
-
-	assertEqual(t, nextImage, nil)
-	log.Infof("%+v, %+v", actual, expected)
-	// assertEqual(t, actual, expected)
-}
