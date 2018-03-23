@@ -24,6 +24,7 @@ package imagefacade
 import (
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -33,8 +34,14 @@ type Config struct {
 	DockerPassword           string
 	InternalDockerRegistries []string
 
+	LogLevel string
+
 	CreateImagesOnly bool
 	Port             int
+}
+
+func (config *Config) GetLogLevel() (log.Level, error) {
+	return log.ParseLevel(config.LogLevel)
 }
 
 // GetConfig returns a configuration object to configure Perceptor

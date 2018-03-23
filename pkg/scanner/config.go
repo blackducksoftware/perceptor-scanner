@@ -24,6 +24,7 @@ package scanner
 import (
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -31,10 +32,20 @@ type Config struct {
 	HubHost                 string
 	HubUser                 string
 	HubUserPassword         string
+	HubPort                 int
 	HubClientTimeoutSeconds int
-	Port                    int
-	ImageFacadePort         int
-	PerceptorPort           int
+
+	LogLevel string
+	Port     int
+
+	ImageFacadePort int
+
+	PerceptorHost string
+	PerceptorPort int
+}
+
+func (config *Config) GetLogLevel() (log.Level, error) {
+	return log.ParseLevel(config.LogLevel)
 }
 
 func GetConfig() (*Config, error) {
@@ -55,9 +66,10 @@ func GetConfig() (*Config, error) {
 
 	// Ports must be reachable
 	if config.Port == 0 || config.PerceptorPort == 0 || config.ImageFacadePort == 0 {
-		err = fmt.Errorf("Need non zero numbers for Port (got %d), PerceptorPort (got %d), and ImageFacadePort (got %d)",
+		err = fmt.Errorf("Need non zero numbers for Port (got %d), PerceptorPort (got %d), HubPort (got %d), and ImageFacadePort (got %d)",
 			config.Port,
 			config.PerceptorPort,
+			config.HubPort,
 			config.ImageFacadePort)
 	}
 	return config, err

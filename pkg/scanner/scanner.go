@@ -42,6 +42,7 @@ const (
 type Scanner struct {
 	scanClient    ScanClientInterface
 	httpClient    *http.Client
+	perceptorHost string
 	perceptorPort int
 }
 
@@ -65,7 +66,13 @@ func NewScanner(config *Config) (*Scanner, error) {
 	log.Infof("instantiating scanner with hub %s, user %s", config.HubHost, config.HubUser)
 
 	imagePuller := NewImageFacadePuller(imageFacadeBaseURL, config.ImageFacadePort)
-	scanClient, err := NewHubScanClient(config.HubHost, config.HubUser, config.HubUserPassword, scanClientInfo, imagePuller)
+	scanClient, err := NewHubScanClient(
+		config.HubHost,
+		config.HubUser,
+		config.HubUserPassword,
+		config.HubPort,
+		scanClientInfo,
+		imagePuller)
 	if err != nil {
 		log.Errorf("unable to instantiate hub scan client: %s", err.Error())
 		return nil, err
@@ -76,6 +83,7 @@ func NewScanner(config *Config) (*Scanner, error) {
 	scanner := Scanner{
 		scanClient:    scanClient,
 		httpClient:    httpClient,
+		perceptorHost: config.PerceptorHost,
 		perceptorPort: config.PerceptorPort}
 
 	scanner.startRequestingScanJobs()
@@ -94,14 +102,14 @@ func (scanner *Scanner) startRequestingScanJobs() {
 }
 
 func (scanner *Scanner) requestAndRunScanJob() {
-	log.Info("requesting scan job")
+	log.Debug("requesting scan job")
 	image, err := scanner.requestScanJob()
 	if err != nil {
 		log.Errorf("unable to request scan job: %s", err.Error())
 		return
 	}
 	if image == nil {
-		log.Info("requested scan job, got nil")
+		log.Debug("requested scan job, got nil")
 		return
 	}
 
@@ -123,7 +131,7 @@ func (scanner *Scanner) requestAndRunScanJob() {
 }
 
 func (scanner *Scanner) requestScanJob() (*api.ImageSpec, error) {
-	nextImageURL := fmt.Sprintf("%s:%d/%s", api.PerceptorBaseURL, scanner.perceptorPort, api.NextImagePath)
+	nextImageURL := scanner.buildURL(api.NextImagePath)
 	resp, err := scanner.httpClient.Post(nextImageURL, "", bytes.NewBuffer([]byte{}))
 
 	if err != nil {
@@ -160,12 +168,12 @@ func (scanner *Scanner) requestScanJob() (*api.ImageSpec, error) {
 	if nextImage.ImageSpec != nil {
 		imageSha = nextImage.ImageSpec.Sha
 	}
-	log.Infof("http POST request to %s succeeded, got image %s", nextImageURL, imageSha)
+	log.Debugf("http POST request to %s succeeded, got image %s", nextImageURL, imageSha)
 	return nextImage.ImageSpec, nil
 }
 
 func (scanner *Scanner) finishScan(results api.FinishedScanClientJob) error {
-	finishedScanURL := fmt.Sprintf("%s:%d/%s", api.PerceptorBaseURL, scanner.perceptorPort, api.FinishedScanPath)
+	finishedScanURL := scanner.buildURL(api.FinishedScanPath)
 	jsonBytes, err := json.Marshal(results)
 	if err != nil {
 		recordScannerError("unable to marshal json for finished job")
@@ -173,7 +181,7 @@ func (scanner *Scanner) finishScan(results api.FinishedScanClientJob) error {
 		return err
 	}
 
-	log.Infof("about to send over json text for finishing a job: %s", string(jsonBytes))
+	log.Debugf("about to send over json text for finishing a job: %s", string(jsonBytes))
 	// TODO change to exponential backoff or something ... but don't loop indefinitely in production
 	for {
 		resp, err := scanner.httpClient.Post(finishedScanURL, "application/json", bytes.NewBuffer(jsonBytes))
@@ -194,4 +202,8 @@ func (scanner *Scanner) finishScan(results api.FinishedScanClientJob) error {
 		log.Infof("POST to %s succeeded", finishedScanURL)
 		return nil
 	}
+}
+
+func (scanner *Scanner) buildURL(path string) string {
+	return fmt.Sprintf("http://%s:%d/%s", scanner.perceptorHost, scanner.perceptorPort, path)
 }
