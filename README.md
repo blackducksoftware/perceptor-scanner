@@ -1,5 +1,3 @@
-# Pardon our dust, this repo is still heavily under construction / migration.
-
 ## Perceptor-scanner
 
 A pod for scanning images by combining the powers of the Hub and Perceptor!
@@ -10,12 +8,12 @@ The perceptor-scanner abstraction includes the image facade and the scanning imp
 
 Both or either are replacable, so long as the API calls and responses are effectively the same.
 
-## Repository structure
+## Intended use
 
- Perceptor-scanner pod:  Consisting of 2 conatiners:
- - perceptor-scanner container ~ downloads a scanclient from the hub upon startup
- - perceptor-imagefacade container ~ handles image data, metadata.
-
+ Perceptor-scanner pod consisting of 2 containers:
+ - perceptor-imagefacade: makes tar files of docker images available for scanning
+ - perceptor-scanner: downloads a scanclient from the hub upon startup, and uses the scan client to scan docker images pulled by the imagefacade
+ 
 ## Testing
 
  - PifTester -- ties together real perceivers and the image facade, for image facade testing
@@ -23,9 +21,11 @@ Both or either are replacable, so long as the API calls and responses are effect
 
 ## Getting involved
 
-These repositories represent refactoring of previous work in blackduck's ose-scanner, and the blackduck perceptor prototype release which is in alpha now.  To get involved, create an issue, submit a PR, or directly ping the developers in your issue).
+These repositories represent refactoring of previous work in blackduck's ose-scanner, and the blackduck perceptor.
 
-We welcome new contributors !
+To get involved, create an issue, submit a PR, or directly ping the developers in your issue.
+
+We welcome new contributors!
 
 ## See also
 
