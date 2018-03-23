@@ -105,7 +105,7 @@ func (hsc *HubScanClient) Scan(job ScanJob) error {
 		log.Errorf("java scanner failed for image %s with error %s and output:\n%s\n", job.Sha, err.Error(), string(stdoutStderr))
 		return err
 	}
-	log.Infof("successfully completed java scanner for image %s: %s", job.Sha, stdoutStderr)
+	log.Debugf("successfully completed java scanner for image %s: %s", job.Sha, stdoutStderr)
 	return err
 }
 

@@ -102,14 +102,14 @@ func (scanner *Scanner) startRequestingScanJobs() {
 }
 
 func (scanner *Scanner) requestAndRunScanJob() {
-	log.Info("requesting scan job")
+	log.Debug("requesting scan job")
 	image, err := scanner.requestScanJob()
 	if err != nil {
 		log.Errorf("unable to request scan job: %s", err.Error())
 		return
 	}
 	if image == nil {
-		log.Info("requested scan job, got nil")
+		log.Debug("requested scan job, got nil")
 		return
 	}
 
@@ -168,7 +168,7 @@ func (scanner *Scanner) requestScanJob() (*api.ImageSpec, error) {
 	if nextImage.ImageSpec != nil {
 		imageSha = nextImage.ImageSpec.Sha
 	}
-	log.Infof("http POST request to %s succeeded, got image %s", nextImageURL, imageSha)
+	log.Debugf("http POST request to %s succeeded, got image %s", nextImageURL, imageSha)
 	return nextImage.ImageSpec, nil
 }
 
@@ -181,7 +181,7 @@ func (scanner *Scanner) finishScan(results api.FinishedScanClientJob) error {
 		return err
 	}
 
-	log.Infof("about to send over json text for finishing a job: %s", string(jsonBytes))
+	log.Debugf("about to send over json text for finishing a job: %s", string(jsonBytes))
 	// TODO change to exponential backoff or something ... but don't loop indefinitely in production
 	for {
 		resp, err := scanner.httpClient.Post(finishedScanURL, "application/json", bytes.NewBuffer(jsonBytes))
