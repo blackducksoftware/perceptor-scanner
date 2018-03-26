@@ -153,7 +153,7 @@ func (ifp *ImageFacadePuller) checkImage(image *common.Image) (common.ImageStatu
 		return common.ImageStatusUnknown, err
 	}
 
-	log.Infof("image check for image %s succeeded", image.PullSpec)
+	log.Debugf("image check for image %s succeeded", image.PullSpec)
 
 	return getImage.ImageStatus, nil
 }
