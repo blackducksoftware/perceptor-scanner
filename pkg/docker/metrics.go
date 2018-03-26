@@ -28,26 +28,24 @@ import (
 )
 
 var tarballSize *prometheus.HistogramVec
-var durationsHistogram *prometheus.HistogramVec
+var dockerCreateDurationHistogram prometheus.Histogram
+var dockerGetDurationHistogram prometheus.Histogram
+var dockerTotalDurationHistogram prometheus.Histogram
 var errorsCounter *prometheus.CounterVec
 var eventsCounter *prometheus.CounterVec
 
 // durations
 
-func recordDuration(operation string, duration time.Duration) {
-	durationsHistogram.With(prometheus.Labels{"operation": operation}).Observe(duration.Seconds())
-}
-
 func recordDockerCreateDuration(duration time.Duration) {
-	recordDuration("docker create", duration)
+	dockerCreateDurationHistogram.Observe(duration.Seconds())
 }
 
 func recordDockerGetDuration(duration time.Duration) {
-	recordDuration("docker save", duration)
+	dockerGetDurationHistogram.Observe(duration.Seconds())
 }
 
 func recordDockerTotalDuration(duration time.Duration) {
-	recordDuration("docker get image total", duration)
+	dockerTotalDurationHistogram.Observe(duration.Seconds())
 }
 
 func recordEvent(event string) {
@@ -79,15 +77,29 @@ func init() {
 		},
 		[]string{"tarballSize"})
 
-	durationsHistogram = prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Namespace: "perceptor",
-			Subsystem: "imagefacade",
-			Name:      "timings",
-			Help:      "time durations of docker operations",
-			Buckets:   prometheus.ExponentialBuckets(0.25, 2, 20),
-		},
-		[]string{"operation"})
+	dockerCreateDurationHistogram = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Namespace: "perceptor",
+		Subsystem: "imagefacade",
+		Name:      "docker_create_duration",
+		Help:      "time durations of docker create operations",
+		Buckets:   prometheus.ExponentialBuckets(0.25, 2, 20),
+	})
+
+	dockerGetDurationHistogram = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Namespace: "perceptor",
+		Subsystem: "imagefacade",
+		Name:      "docker_get_duration",
+		Help:      "time durations of docker get operations",
+		Buckets:   prometheus.ExponentialBuckets(0.25, 2, 20),
+	})
+
+	dockerTotalDurationHistogram = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Namespace: "perceptor",
+		Subsystem: "imagefacade",
+		Name:      "docker_total_duration",
+		Help:      "time durations of docker total operations",
+		Buckets:   prometheus.ExponentialBuckets(0.25, 2, 20),
+	})
 
 	errorsCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "perceptor",
@@ -104,7 +116,9 @@ func init() {
 	}, []string{"event"})
 
 	prometheus.MustRegister(errorsCounter)
-	prometheus.MustRegister(durationsHistogram)
+	prometheus.MustRegister(dockerGetDurationHistogram)
+	prometheus.MustRegister(dockerCreateDurationHistogram)
+	prometheus.MustRegister(dockerTotalDurationHistogram)
 	prometheus.MustRegister(tarballSize)
 	prometheus.MustRegister(eventsCounter)
 }

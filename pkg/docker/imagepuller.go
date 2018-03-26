@@ -143,7 +143,7 @@ func (ip *ImagePuller) CreateImageInLocalDocker(image Image) error {
 	}
 	log.Infof("body of POST response from %s: %s", imageURL, string(bodyBytes))
 
-	recordDockerGetDuration(time.Now().Sub(start))
+	recordDockerCreateDuration(time.Now().Sub(start))
 
 	return err
 }

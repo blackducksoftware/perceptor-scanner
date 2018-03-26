@@ -30,7 +30,9 @@ import (
 
 func TestMetrics(t *testing.T) {
 	recordEvent("ab cd 123")
-	recordDuration("qrs xyz", time.Now().Sub(time.Now()))
+	recordDockerGetDuration(time.Now().Sub(time.Now()))
+	recordDockerCreateDuration(time.Now().Sub(time.Now()))
+	recordDockerTotalDuration(time.Now().Sub(time.Now()))
 	//  recordDockerError("abc", "def", image, err)
 	recordTarFileSize(24)
 
