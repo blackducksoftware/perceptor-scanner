@@ -29,17 +29,14 @@ import (
 )
 
 var httpResults *prometheus.CounterVec
-var durationsHistogram *prometheus.HistogramVec
+var scanClientDurationHistogram *prometheus.HistogramVec
+var totalScannerDurationHistogram *prometheus.HistogramVec
 var errorsCounter *prometheus.CounterVec
 
 // helpers
 
 func recordError(errorStage string, errorName string) {
 	errorsCounter.With(prometheus.Labels{"stage": errorStage, "errorName": errorName}).Inc()
-}
-
-func recordDuration(operation string, duration time.Duration) {
-	durationsHistogram.With(prometheus.Labels{"operation": operation}).Observe(duration.Seconds())
 }
 
 // recorders
@@ -49,19 +46,19 @@ func recordHttpStats(path string, statusCode int) {
 }
 
 func recordScanClientDuration(duration time.Duration, isSuccess bool) {
-	operation := "scan client success"
+	result := "success"
 	if !isSuccess {
-		operation = "scan client error"
+		result = "failure"
 	}
-	recordDuration(operation, duration)
+	scanClientDurationHistogram.With(prometheus.Labels{"result": result}).Observe(duration.Seconds())
 }
 
 func recordTotalScannerDuration(duration time.Duration, isSuccess bool) {
-	operation := "scanner total success"
+	result := "success"
 	if !isSuccess {
-		operation = "scanner total error"
+		result = "failure"
 	}
-	recordDuration(operation, duration)
+	totalScannerDurationHistogram.With(prometheus.Labels{"result": result}).Observe(duration.Seconds())
 }
 
 func recordScannerError(errorName string) {
@@ -83,18 +80,23 @@ func init() {
 		Subsystem: "scanner",
 		Name:      "http_response_status_codes",
 		Help:      "status codes for responses from HTTP requests issued by scanner",
-	},
-		[]string{"path", "code"})
+	}, []string{"path", "code"})
 
-	durationsHistogram = prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Namespace: "perceptor",
-			Subsystem: "scanner",
-			Name:      "timings",
-			Help:      "time durations of scanner operations",
-			Buckets:   prometheus.ExponentialBuckets(0.25, 2, 20),
-		},
-		[]string{"operation"})
+	scanClientDurationHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: "perceptor",
+		Subsystem: "scanner",
+		Name:      "scan_client_duration",
+		Help:      "time duration of running the java scan client",
+		Buckets:   prometheus.ExponentialBuckets(0.25, 2, 20),
+	}, []string{"result"})
+
+	totalScannerDurationHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: "perceptor",
+		Subsystem: "scanner",
+		Name:      "scanner_total_duration",
+		Help:      "total time duration of running the scanner",
+		Buckets:   prometheus.ExponentialBuckets(0.25, 2, 20),
+	}, []string{"result"})
 
 	errorsCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "perceptor",
@@ -104,6 +106,7 @@ func init() {
 	}, []string{"stage", "errorName"})
 
 	prometheus.MustRegister(errorsCounter)
-	prometheus.MustRegister(durationsHistogram)
+	prometheus.MustRegister(scanClientDurationHistogram)
+	prometheus.MustRegister(totalScannerDurationHistogram)
 	prometheus.MustRegister(httpResults)
 }
