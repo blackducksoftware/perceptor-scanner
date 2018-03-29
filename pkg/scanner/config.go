@@ -35,6 +35,8 @@ type Config struct {
 	HubPort                 int
 	HubClientTimeoutSeconds int
 
+	JavaMaxHeapSizeMBs int
+
 	LogLevel string
 	Port     int
 

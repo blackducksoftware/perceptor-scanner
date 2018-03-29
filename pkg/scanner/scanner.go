@@ -71,6 +71,7 @@ func NewScanner(config *Config) (*Scanner, error) {
 		config.HubUser,
 		config.HubUserPassword,
 		config.HubPort,
+		config.JavaMaxHeapSizeMBs,
 		scanClientInfo,
 		imagePuller)
 	if err != nil {
