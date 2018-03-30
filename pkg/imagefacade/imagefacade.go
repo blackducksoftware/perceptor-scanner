@@ -26,6 +26,7 @@ import (
 
 	"github.com/blackducksoftware/perceptor-scanner/pkg/common"
 	pdocker "github.com/blackducksoftware/perceptor-scanner/pkg/docker"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -98,7 +99,7 @@ func (imf *ImageFacade) pullDiskMetrics() {
 		if err == nil {
 			recordDiskMetrics(diskMetrics)
 		} else {
-			// nothing to do
+			log.Errorf("unable to get disk metrics: %s", err.Error())
 		}
 		time.Sleep(diskMetricsPause)
 	}
