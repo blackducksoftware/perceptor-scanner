@@ -95,8 +95,10 @@ func (imf *ImageFacade) pullImage(image *common.Image) {
 
 func (imf *ImageFacade) pullDiskMetrics() {
 	for {
+		log.Debugf("getting disk metrics")
 		diskMetrics, err := getDiskMetrics()
 		if err == nil {
+			log.Debugf("got disk metrics: %+v", diskMetrics)
 			recordDiskMetrics(diskMetrics)
 		} else {
 			log.Errorf("unable to get disk metrics: %s", err.Error())
