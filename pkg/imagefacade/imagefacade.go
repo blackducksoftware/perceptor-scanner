@@ -22,8 +22,15 @@ under the License.
 package imagefacade
 
 import (
+	"time"
+
 	"github.com/blackducksoftware/perceptor-scanner/pkg/common"
 	pdocker "github.com/blackducksoftware/perceptor-scanner/pkg/docker"
+	log "github.com/sirupsen/logrus"
+)
+
+const (
+	diskMetricsPause = 15 * time.Second
 )
 
 type ImageFacade struct {
@@ -71,6 +78,8 @@ func NewImageFacade(dockerUser string, dockerPassword string, internalDockerRegi
 		}
 	}()
 
+	go imageFacade.pullDiskMetrics()
+
 	return imageFacade
 }
 
@@ -82,4 +91,18 @@ func (imf *ImageFacade) pullImage(image *common.Image) {
 		err = imf.imagePuller.PullImage(image)
 	}
 	imf.finishedImagePull <- &finishedImagePull{image: image, err: err}
+}
+
+func (imf *ImageFacade) pullDiskMetrics() {
+	for {
+		log.Debugf("getting disk metrics")
+		diskMetrics, err := getDiskMetrics()
+		if err == nil {
+			log.Debugf("got disk metrics: %+v", diskMetrics)
+			recordDiskMetrics(diskMetrics)
+		} else {
+			log.Errorf("unable to get disk metrics: %s", err.Error())
+		}
+		time.Sleep(diskMetricsPause)
+	}
 }

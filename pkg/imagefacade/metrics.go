@@ -30,6 +30,7 @@ import (
 var httpRequestsCounter *prometheus.CounterVec
 var actionsCounter *prometheus.CounterVec
 var reducerActivityCounter *prometheus.CounterVec
+var diskMetricsGauge *prometheus.GaugeVec
 
 func recordHttpRequest(path string) {
 	httpRequestsCounter.With(prometheus.Labels{"path": path}).Inc()
@@ -47,6 +48,18 @@ func recordReducerActivity(isActive bool, duration time.Duration) {
 	reducerActivityCounter.With(prometheus.Labels{"state": state}).Add(duration.Seconds())
 }
 
+func megabytes(number uint64) float64 {
+	bytesPerMB := uint64(1024 * 1024)
+	return float64(number / bytesPerMB)
+}
+
+func recordDiskMetrics(diskMetrics *DiskMetrics) {
+	diskMetricsGauge.With(prometheus.Labels{"name": "available_MBs"}).Set(megabytes(diskMetrics.AvailableBytes))
+	diskMetricsGauge.With(prometheus.Labels{"name": "free_MBs"}).Set(megabytes(diskMetrics.FreeBytes))
+	diskMetricsGauge.With(prometheus.Labels{"name": "total_MBs"}).Set(megabytes(diskMetrics.TotalBytes))
+	diskMetricsGauge.With(prometheus.Labels{"name": "used_MBs"}).Set(megabytes(diskMetrics.UsedBytes))
+}
+
 func init() {
 	httpRequestsCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "perceptor",
@@ -55,6 +68,7 @@ func init() {
 		Help:      "HTTP requests received by imagefacade",
 	},
 		[]string{"path"})
+	prometheus.MustRegister(httpRequestsCounter)
 
 	actionsCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "perceptor",
@@ -63,6 +77,7 @@ func init() {
 		Help:      "actions processed by imagefacade and applied to the model",
 	},
 		[]string{"action"})
+	prometheus.MustRegister(actionsCounter)
 
 	reducerActivityCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "perceptor",
@@ -70,6 +85,13 @@ func init() {
 		Name:      "reducer_activity",
 		Help:      "activity of the reducer -- how much time it's been idle and active, in seconds",
 	}, []string{"state"})
+	prometheus.MustRegister(reducerActivityCounter)
 
-	prometheus.MustRegister(httpRequestsCounter)
+	diskMetricsGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: "perceptor",
+		Subsystem: "imagefacade",
+		Name:      "disk_metrics",
+		Help:      "usage statistics for disk",
+	}, []string{"name"})
+	prometheus.MustRegister(diskMetricsGauge)
 }
