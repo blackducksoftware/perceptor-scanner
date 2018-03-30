@@ -31,7 +31,7 @@ import (
 type Config struct {
 	HubHost                 string
 	HubUser                 string
-	HubUserPassword         string
+	HubUserPasswordEnvVar   string
 	HubPort                 int
 	HubClientTimeoutSeconds int
 
@@ -52,15 +52,6 @@ func GetConfig() (*Config, error) {
 	var config *Config
 
 	viper.SetConfigName("perceptor_scanner_conf")
-
-	// these need to be set before we read in the config!
-	viper.SetEnvPrefix("PCP")
-	viper.BindEnv("HubUserPassword")
-	if viper.GetString("hubuserpassword") == "" {
-		viper.Debug()
-		panic("No hub database password secret supplied.  Please inject PCP_HUBUSERPASSWORD as a secret and restart!")
-	}
-
 	viper.AddConfigPath("/etc/perceptor_scanner")
 
 	err := viper.ReadInConfig()

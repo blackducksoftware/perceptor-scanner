@@ -47,7 +47,14 @@ type Scanner struct {
 }
 
 func NewScanner(config *Config) (*Scanner, error) {
-	err := os.Setenv("BD_HUB_PASSWORD", config.HubUserPassword)
+	log.Infof("instantiating Scanner with config %+v", config)
+
+	hubPassword := os.Getenv(config.HubUserPasswordEnvVar)
+	if hubPassword == "" {
+		return nil, fmt.Errorf("unable to read hub password")
+	}
+
+	err := os.Setenv("BD_HUB_PASSWORD", hubPassword)
 	if err != nil {
 		log.Errorf("unable to set BD_HUB_PASSWORD environment variable: %s", err.Error())
 		return nil, err
@@ -56,7 +63,7 @@ func NewScanner(config *Config) (*Scanner, error) {
 	scanClientInfo, err := downloadScanClient(
 		config.HubHost,
 		config.HubUser,
-		config.HubUserPassword,
+		hubPassword,
 		time.Duration(config.HubClientTimeoutSeconds)*time.Second)
 	if err != nil {
 		log.Errorf("unable to download scan client: %s", err.Error())
@@ -69,7 +76,6 @@ func NewScanner(config *Config) (*Scanner, error) {
 	scanClient, err := NewHubScanClient(
 		config.HubHost,
 		config.HubUser,
-		config.HubUserPassword,
 		config.HubPort,
 		scanClientInfo,
 		imagePuller)
