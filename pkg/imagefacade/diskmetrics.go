@@ -36,7 +36,7 @@ type DiskMetrics struct {
 
 func getDiskMetrics() (*DiskMetrics, error) {
 	var stat syscall.Statfs_t
-	err := syscall.Statfs("/", &stat)
+	err := syscall.Statfs("/var/images", &stat)
 	if err != nil {
 		log.Errorf("unable to get disk stats: %s", err.Error())
 		return nil, err
