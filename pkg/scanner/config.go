@@ -31,7 +31,7 @@ import (
 type Config struct {
 	HubHost                 string
 	HubUser                 string
-	HubUserPassword         string
+	HubUserPasswordEnvVar   string
 	HubPort                 int
 	HubClientTimeoutSeconds int
 

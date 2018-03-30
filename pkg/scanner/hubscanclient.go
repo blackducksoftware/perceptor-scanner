@@ -39,18 +39,16 @@ const (
 type HubScanClient struct {
 	host           string
 	username       string
-	password       string
 	port           int
 	scanClientInfo *scanClientInfo
 	imagePuller    ImagePullerInterface
 }
 
 // NewHubScanClient requires hub login credentials
-func NewHubScanClient(host string, username string, password string, port int, scanClientInfo *scanClientInfo, imagePuller ImagePullerInterface) (*HubScanClient, error) {
+func NewHubScanClient(host string, username string, port int, scanClientInfo *scanClientInfo, imagePuller ImagePullerInterface) (*HubScanClient, error) {
 	hsc := HubScanClient{
 		host:           host,
 		username:       username,
-		password:       password,
 		port:           port,
 		scanClientInfo: scanClientInfo,
 		imagePuller:    imagePuller}
