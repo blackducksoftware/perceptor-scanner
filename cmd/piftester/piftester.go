@@ -24,8 +24,10 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	piftester "github.com/blackducksoftware/perceptor-scanner/pkg/piftester"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -37,6 +39,16 @@ func main() {
 		log.Errorf("Failed to load configuration: %s", err.Error())
 		panic(err)
 	}
+
+	level, err := config.GetLogLevel()
+	if err != nil {
+		log.Errorf(err.Error())
+		panic(err)
+	}
+	log.SetLevel(level)
+
+	prometheus.Unregister(prometheus.NewProcessCollector(os.Getpid(), ""))
+	prometheus.Unregister(prometheus.NewGoCollector())
 
 	pifTester := piftester.NewPifTester(config.ImageFacadePort)
 	addr := fmt.Sprintf(":%d", config.Port)
