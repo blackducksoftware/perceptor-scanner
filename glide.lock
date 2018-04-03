@@ -1,5 +1,5 @@
-hash: 9d34aa2e0da0c9c1a67125991a4086c2c1e12cbc4ef15138dfd5d2e90bed47a0
-updated: 2018-03-23T14:27:50.906360525-04:00
+hash: 0beee73d026c0b5c8d4b371eed39ebb51e111cb1ba49f5eec813e3c61005f886
+updated: 2018-04-03T10:11:47.858391427-04:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -19,7 +19,7 @@ imports:
   - hubapi
   - hubclient
 - name: github.com/blackducksoftware/perceptor
-  version: 1e7f832d66373a5f7ba86360227a26564c5e2c7b
+  version: 9d840e26a250c72b7da4ef8c08cd013037c49a94
   repo: git@github.com:blackducksoftware/perceptor.git
   vcs: git
   subpackages:
@@ -32,7 +32,7 @@ imports:
 - name: github.com/fsnotify/fsnotify
   version: c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9
 - name: github.com/golang/protobuf
-  version: bbd03ef6da3a115852eaf24c8a1c46aeb39aa175
+  version: e09c5db296004fbe3f74490e84dcd62c3c5ddb1b
   subpackages:
   - proto
 - name: github.com/hashicorp/hcl
@@ -55,7 +55,7 @@ imports:
 - name: github.com/mitchellh/mapstructure
   version: 00c29f56e2386353d58c599509e8dc3801b0d716
 - name: github.com/pelletier/go-toml
-  version: 05bcc0fb0d3e60da4b8dd5bd7e0ea563eb4ca943
+  version: 66540cf1fcd2c3aee6f6787dfa32a6ae9a870f12
 - name: github.com/prometheus/client_golang
   version: 967789050ba94deca04a5e84cce8ad472ce313c1
   subpackages:
@@ -65,7 +65,7 @@ imports:
   subpackages:
   - go
 - name: github.com/prometheus/common
-  version: e4aa40a9169a88835b849a6efb71e05dc04b88f0
+  version: 38c53a9f4bfcd932d1b00bfc65e256a7fba6b37a
   subpackages:
   - expfmt
   - internal/bitbucket.org/ww/goautoneg
@@ -80,7 +80,7 @@ imports:
 - name: github.com/sirupsen/logrus
   version: d682213848ed68c0a260ca37d6dd5ace8423f5ba
 - name: github.com/spf13/afero
-  version: a880a37ed1804d98f64b3b7d58b5e3f8fbf421c4
+  version: 63644898a8da0bc22138abf860edaf5277b6102e
   subpackages:
   - mem
 - name: github.com/spf13/cast
@@ -88,27 +88,27 @@ imports:
 - name: github.com/spf13/jwalterweatherman
   version: 7c0cea34c8ece3fbeb2b27ab9b59511d360fb394
 - name: github.com/spf13/pflag
-  version: ee5fd03fd6acfd43e44aea0b4135958546ed8e73
+  version: 1ce0cc6db4029d97571db82f85092fccedb572ce
 - name: github.com/spf13/viper
   version: 25b30aa063fc18e48662b86996252eabdcf2f0c7
 - name: golang.org/x/crypto
-  version: 88942b9c40a4c9d203b82b3731787b672d6e809b
+  version: 12892e8c234f4fe6f6803f052061de9057903bb2
   subpackages:
   - ssh/terminal
 - name: golang.org/x/sys
-  version: 91ee8cde435411ca3f1cd365e8f20131aed4d0a1
+  version: 378d26f46672a356c46195c28f61bdb4c0a781dd
   subpackages:
   - unix
   - windows
   - windows/registry
   - windows/svc/eventlog
 - name: golang.org/x/text
-  version: ab48842968a66deafa354805a8b031924668e059
+  version: ece95c760240037f89ebcbdd7155ac8cb52e38fa
   subpackages:
   - transform
   - unicode/norm
 - name: gopkg.in/alecthomas/kingpin.v2
   version: 947dcec5ba9c011838740e680966fd7087a71d0d
 - name: gopkg.in/yaml.v2
-  version: 7f97868eec74b32b0982dd158a51a446d1da7eb5
+  version: 5420a8b6744d3b0345ab293f6fcba19c978f1183
 testImports: []

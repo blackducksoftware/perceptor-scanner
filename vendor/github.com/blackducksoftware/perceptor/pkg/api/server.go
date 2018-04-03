@@ -27,15 +27,15 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
 func SetupHTTPServer(responder Responder) {
 	// state of the program
-	http.Handle("/metrics", prometheus.Handler())
 	http.HandleFunc("/model", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
+			header := w.Header()
+			header.Set(http.CanonicalHeaderKey("content-type"), "application/json")
 			fmt.Fprint(w, responder.GetModel())
 		} else {
 			responder.NotFound(w, r)
@@ -151,6 +151,8 @@ func SetupHTTPServer(responder Responder) {
 				responder.Error(w, r, err, 500)
 				return
 			}
+			header := w.Header()
+			header.Set(http.CanonicalHeaderKey("content-type"), "application/json")
 			fmt.Fprint(w, string(jsonBytes))
 		} else {
 			responder.NotFound(w, r)
