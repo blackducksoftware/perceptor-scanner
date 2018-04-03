@@ -31,7 +31,7 @@ import (
 var imagePullCounter *prometheus.CounterVec
 
 func recordImagePullResult(success bool) {
-	log.Debugf("recordImagePullResult %s", success)
+	log.Debugf("recordImagePullResult %t", success)
 	successString := fmt.Sprintf("%t", success)
 	imagePullCounter.With(prometheus.Labels{"success": successString}).Inc()
 }
