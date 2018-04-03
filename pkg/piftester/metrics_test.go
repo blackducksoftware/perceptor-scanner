@@ -19,41 +19,18 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package imagefacade
+package piftester
 
 import (
-	"fmt"
-	"reflect"
-	"time"
+	"testing"
 
 	log "github.com/sirupsen/logrus"
 )
 
-type reducer struct{}
+func TestMetrics(t *testing.T) {
+	recordImagePullResult(true)
 
-func newReducer(initialModel *Model, actions <-chan Action) *reducer {
-	stop := time.Now()
-	model := initialModel
-	go func() {
-		for {
-			select {
-			case nextAction := <-actions:
-				// metrics: log message type
-				actionString := fmt.Sprintf("%s", reflect.TypeOf(nextAction))
-				log.Debugf("processing action of type %s", actionString)
-				recordActionType(actionString)
-
-				// metrics: how long idling since the last action finished processing?
-				start := time.Now()
-				recordReducerActivity(false, start.Sub(stop))
-
-				nextAction.apply(model)
-
-				// metrics: how long did the work take?
-				stop = time.Now()
-				recordReducerActivity(true, stop.Sub(start))
-			}
-		}
-	}()
-	return &reducer{}
+	message := "finished test case"
+	t.Log(message)
+	log.Info(message)
 }

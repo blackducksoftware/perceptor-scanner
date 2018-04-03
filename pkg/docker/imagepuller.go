@@ -141,7 +141,7 @@ func (ip *ImagePuller) CreateImageInLocalDocker(image Image) error {
 		recordDockerError(createStage, "unable to read POST response body", image, err)
 		log.Errorf("unable to read response body for %s: %s", imageURL, err.Error())
 	}
-	log.Debug("body of POST response from %s: %s", imageURL, string(bodyBytes))
+	log.Debugf("body of POST response from %s: %s", imageURL, string(bodyBytes))
 
 	recordDockerCreateDuration(time.Now().Sub(start))
 

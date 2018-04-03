@@ -135,14 +135,16 @@ func (pif *PifTester) finishImage(image m.Image, err error) {
 		errorString = err.Error()
 	}
 	log.Infof("finish image %s with error %s", image.PullSpec(), errorString)
+	recordImagePullResult(err == nil)
 	if err == nil {
 		pif.ImageMap[image] = true
 	} else {
-		// dunno -- record and try again?
 		errors, ok := pif.ImageErrors[image]
+		// no reason it should ever not already be in the map
 		if !ok {
 			panic(fmt.Errorf("unable to find image %s in ImageErrors", image.PullSpec()))
 		}
+		// dunno -- record and try again?
 		errors = append(errors, err.Error())
 		pif.ImageErrors[image] = errors
 		pif.ImageQueue = append(pif.ImageQueue, image)

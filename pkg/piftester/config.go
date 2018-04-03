@@ -24,12 +24,14 @@ package piftester
 import (
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
 type Config struct {
 	Port            int
 	ImageFacadePort int
+	LogLevel        string
 }
 
 func GetConfig() (*Config, error) {
@@ -48,4 +50,8 @@ func GetConfig() (*Config, error) {
 		return nil, fmt.Errorf("failed to unmarshal config: %v", err)
 	}
 	return config, nil
+}
+
+func (config *Config) GetLogLevel() (log.Level, error) {
+	return log.ParseLevel(config.LogLevel)
 }

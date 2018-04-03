@@ -19,41 +19,30 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package imagefacade
+package piftester
 
 import (
 	"fmt"
-	"reflect"
-	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
-type reducer struct{}
+var imagePullCounter *prometheus.CounterVec
 
-func newReducer(initialModel *Model, actions <-chan Action) *reducer {
-	stop := time.Now()
-	model := initialModel
-	go func() {
-		for {
-			select {
-			case nextAction := <-actions:
-				// metrics: log message type
-				actionString := fmt.Sprintf("%s", reflect.TypeOf(nextAction))
-				log.Debugf("processing action of type %s", actionString)
-				recordActionType(actionString)
+func recordImagePullResult(success bool) {
+	log.Debugf("recordImagePullResult %t", success)
+	successString := fmt.Sprintf("%t", success)
+	imagePullCounter.With(prometheus.Labels{"success": successString}).Inc()
+}
 
-				// metrics: how long idling since the last action finished processing?
-				start := time.Now()
-				recordReducerActivity(false, start.Sub(stop))
-
-				nextAction.apply(model)
-
-				// metrics: how long did the work take?
-				stop = time.Now()
-				recordReducerActivity(true, stop.Sub(start))
-			}
-		}
-	}()
-	return &reducer{}
+func init() {
+	imagePullCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "perceptor",
+		Subsystem: "piftester",
+		Name:      "image_pull",
+		Help:      "success/failure of imagefacade pulls as communicated to piftester",
+	},
+		[]string{"success"})
+	prometheus.MustRegister(imagePullCounter)
 }
