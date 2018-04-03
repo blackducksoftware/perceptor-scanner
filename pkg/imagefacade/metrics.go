@@ -22,6 +22,7 @@ under the License.
 package imagefacade
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -31,6 +32,7 @@ var httpRequestsCounter *prometheus.CounterVec
 var actionsCounter *prometheus.CounterVec
 var reducerActivityCounter *prometheus.CounterVec
 var diskMetricsGauge *prometheus.GaugeVec
+var imagePullResultCounter *prometheus.CounterVec
 
 func recordHttpRequest(path string) {
 	httpRequestsCounter.With(prometheus.Labels{"path": path}).Inc()
@@ -58,6 +60,11 @@ func recordDiskMetrics(diskMetrics *DiskMetrics) {
 	diskMetricsGauge.With(prometheus.Labels{"name": "free_MBs"}).Set(megabytes(diskMetrics.FreeBytes))
 	diskMetricsGauge.With(prometheus.Labels{"name": "total_MBs"}).Set(megabytes(diskMetrics.TotalBytes))
 	diskMetricsGauge.With(prometheus.Labels{"name": "used_MBs"}).Set(megabytes(diskMetrics.UsedBytes))
+}
+
+func recordImagePullResult(success bool) {
+	successString := fmt.Sprintf("%t", success)
+	imagePullResultCounter.With(prometheus.Labels{"success": successString}).Inc()
 }
 
 func init() {
@@ -94,4 +101,12 @@ func init() {
 		Help:      "usage statistics for disk",
 	}, []string{"name"})
 	prometheus.MustRegister(diskMetricsGauge)
+
+	imagePullResultCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "perceptor",
+		Subsystem: "imagefacade",
+		Name:      "image_pull_result",
+		Help:      "whether image pull/get succeeded or failed",
+	}, []string{"success"})
+	prometheus.MustRegister(imagePullResultCounter)
 }

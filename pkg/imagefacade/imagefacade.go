@@ -90,6 +90,7 @@ func (imf *ImageFacade) pullImage(image *common.Image) {
 	} else {
 		err = imf.imagePuller.PullImage(image)
 	}
+	recordImagePullResult(err == nil)
 	imf.finishedImagePull <- &finishedImagePull{image: image, err: err}
 }
 
