@@ -50,6 +50,8 @@ func main() {
 	prometheus.Unregister(prometheus.NewProcessCollector(os.Getpid(), ""))
 	prometheus.Unregister(prometheus.NewGoCollector())
 
+	http.Handle("/metrics", prometheus.Handler())
+
 	pifTester := piftester.NewPifTester(config.ImageFacadePort)
 	addr := fmt.Sprintf(":%d", config.Port)
 	http.ListenAndServe(addr, nil)
