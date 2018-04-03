@@ -50,10 +50,7 @@ func main() {
 	prometheus.Unregister(prometheus.NewProcessCollector(os.Getpid(), ""))
 	prometheus.Unregister(prometheus.NewGoCollector())
 
-	// Can't add this line, because metrics are already being registered by the
-	// Perceptor responder.
-	// TODO: use a muxing library that isn't terrible.
-	// http.Handle("/metrics", prometheus.Handler())
+	http.Handle("/metrics", prometheus.Handler())
 
 	pifTester := piftester.NewPifTester(config.ImageFacadePort)
 	addr := fmt.Sprintf(":%d", config.Port)
