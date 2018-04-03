@@ -37,21 +37,23 @@ const (
 // HubScanClient implements ScanClientInterface using
 // the Black Duck hub and scan client programs.
 type HubScanClient struct {
-	host           string
-	username       string
-	port           int
-	scanClientInfo *scanClientInfo
-	imagePuller    ImagePullerInterface
+	host               string
+	username           string
+	port               int
+	scanClientInfo     *scanClientInfo
+	imagePuller        ImagePullerInterface
+	javaMaxHeapSizeMBs int
 }
 
 // NewHubScanClient requires hub login credentials
-func NewHubScanClient(host string, username string, port int, scanClientInfo *scanClientInfo, imagePuller ImagePullerInterface) (*HubScanClient, error) {
+func NewHubScanClient(host string, username string, port int, javaMaxHeapSizeMBs int, scanClientInfo *scanClientInfo, imagePuller ImagePullerInterface) (*HubScanClient, error) {
 	hsc := HubScanClient{
-		host:           host,
-		username:       username,
-		port:           port,
-		scanClientInfo: scanClientInfo,
-		imagePuller:    imagePuller}
+		host:               host,
+		username:           username,
+		port:               port,
+		scanClientInfo:     scanClientInfo,
+		imagePuller:        imagePuller,
+		javaMaxHeapSizeMBs: javaMaxHeapSizeMBs}
 	return &hsc, nil
 }
 
@@ -72,9 +74,10 @@ func (hsc *HubScanClient) Scan(job ScanJob) error {
 	scanCliJarPath := hsc.scanClientInfo.scanCliJarPath()
 	scanCliJavaPath := hsc.scanClientInfo.scanCliJavaPath()
 	path := image.DockerTarFilePath()
+	maxHeapSize := fmt.Sprintf("-Xmx%dm", hsc.javaMaxHeapSizeMBs)
 	cmd := exec.Command(scanCliJavaPath+"java",
 		"-Xms512m",
-		"-Xmx4096m",
+		maxHeapSize,
 		"-Dblackduck.scan.cli.benice=true",
 		"-Dblackduck.scan.skipUpdate=true",
 		"-Done-jar.silent=true",

@@ -40,6 +40,8 @@ type Config struct {
 
 	ImageFacadePort int
 
+	JavaMaxHeapSizeMBs int
+
 	PerceptorHost string
 	PerceptorPort int
 }
