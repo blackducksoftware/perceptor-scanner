@@ -25,11 +25,13 @@ import (
 	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 )
 
 var imagePullCounter *prometheus.CounterVec
 
 func recordImagePullResult(success bool) {
+	log.Debugf("recordImagePullResult %s", success)
 	successString := fmt.Sprintf("%t", success)
 	imagePullCounter.With(prometheus.Labels{"success": successString}).Inc()
 }
