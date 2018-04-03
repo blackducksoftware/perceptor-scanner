@@ -37,23 +37,25 @@ const (
 // HubScanClient implements ScanClientInterface using
 // the Black Duck hub and scan client programs.
 type HubScanClient struct {
-	host               string
-	username           string
-	port               int
-	scanClientInfo     *scanClientInfo
-	imagePuller        ImagePullerInterface
-	javaMaxHeapSizeMBs int
+	host                   string
+	username               string
+	port                   int
+	scanClientInfo         *scanClientInfo
+	imagePuller            ImagePullerInterface
+	javaInitialHeapSizeMBs int
+	javaMaxHeapSizeMBs     int
 }
 
 // NewHubScanClient requires hub login credentials
-func NewHubScanClient(host string, username string, port int, javaMaxHeapSizeMBs int, scanClientInfo *scanClientInfo, imagePuller ImagePullerInterface) (*HubScanClient, error) {
+func NewHubScanClient(host string, username string, port int, javaInitialHeapSizeMBs int, javaMaxHeapSizeMBs int, scanClientInfo *scanClientInfo, imagePuller ImagePullerInterface) (*HubScanClient, error) {
 	hsc := HubScanClient{
-		host:               host,
-		username:           username,
-		port:               port,
-		scanClientInfo:     scanClientInfo,
-		imagePuller:        imagePuller,
-		javaMaxHeapSizeMBs: javaMaxHeapSizeMBs}
+		host:                   host,
+		username:               username,
+		port:                   port,
+		scanClientInfo:         scanClientInfo,
+		imagePuller:            imagePuller,
+		javaInitialHeapSizeMBs: javaInitialHeapSizeMBs,
+		javaMaxHeapSizeMBs:     javaMaxHeapSizeMBs}
 	return &hsc, nil
 }
 
@@ -74,9 +76,10 @@ func (hsc *HubScanClient) Scan(job ScanJob) error {
 	scanCliJarPath := hsc.scanClientInfo.scanCliJarPath()
 	scanCliJavaPath := hsc.scanClientInfo.scanCliJavaPath()
 	path := image.DockerTarFilePath()
+	initialHeapSize := fmt.Sprintf("-Xms%dm", hsc.javaInitialHeapSizeMBs)
 	maxHeapSize := fmt.Sprintf("-Xmx%dm", hsc.javaMaxHeapSizeMBs)
 	cmd := exec.Command(scanCliJavaPath+"java",
-		"-Xms512m",
+		initialHeapSize,
 		maxHeapSize,
 		"-Dblackduck.scan.cli.benice=true",
 		"-Dblackduck.scan.skipUpdate=true",

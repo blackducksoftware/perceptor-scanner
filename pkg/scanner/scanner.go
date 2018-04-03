@@ -77,6 +77,7 @@ func NewScanner(config *Config) (*Scanner, error) {
 		config.HubHost,
 		config.HubUser,
 		config.HubPort,
+		config.JavaInitialHeapSizeMBs,
 		config.JavaMaxHeapSizeMBs,
 		scanClientInfo,
 		imagePuller)
