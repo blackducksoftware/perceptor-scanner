@@ -88,6 +88,7 @@ func (hsc *HubScanClient) Scan(job ScanJob) error {
 		"--username", hsc.username,
 		"--name", job.HubScanName,
 		"--insecure",
+		"--debug",
 		"-v",
 		path)
 
