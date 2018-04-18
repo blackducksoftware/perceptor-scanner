@@ -36,9 +36,9 @@ const (
 
 var scanClientZipPath = fmt.Sprintf("%s/scanclient.zip", scanClientRootPath)
 
-func downloadScanClient(hubHost string, hubUser string, hubPassword string, timeout time.Duration) (*scanClientInfo, error) {
+func downloadScanClient(hubHost string, hubUser string, hubPassword string, hubPort int, timeout time.Duration) (*scanClientInfo, error) {
 	// 1. instantiate hub client
-	hubBaseURL := fmt.Sprintf("https://%s", hubHost)
+	hubBaseURL := fmt.Sprintf("https://%s:%d", hubHost, hubPort)
 	hubClient, err := hubclient.NewWithSession(hubBaseURL, hubclient.HubClientDebugTimings, timeout)
 	if err != nil {
 		log.Errorf("unable to instantiate hub client: %s", err.Error())
