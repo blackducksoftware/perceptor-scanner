@@ -48,11 +48,10 @@ func (config *Config) GetLogLevel() (log.Level, error) {
 	return log.ParseLevel(config.LogLevel)
 }
 
-func GetConfig() (*Config, error) {
+func GetConfig(configPath string) (*Config, error) {
 	var config *Config
 
-	viper.SetConfigName("perceptor_scanner_conf")
-	viper.AddConfigPath("/etc/perceptor_scanner")
+	viper.SetConfigFile(configPath)
 
 	err := viper.ReadInConfig()
 	if err != nil {
