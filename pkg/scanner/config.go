@@ -35,9 +35,9 @@ type Config struct {
 	HubPort                 int
 	HubClientTimeoutSeconds int
 
-	LogLevel string
-	Port     int
-
+	LogLevel        string
+	Port            int
+	ImageFacadeHost string
 	ImageFacadePort int
 
 	PerceptorHost string
