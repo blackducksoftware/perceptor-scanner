@@ -36,7 +36,6 @@ import (
 
 const (
 	requestScanJobPause = 20 * time.Second
-	//imageFacadeBaseURL  = "http://perceptor-imagefacade"
 )
 
 type Scanner struct {
