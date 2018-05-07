@@ -33,8 +33,9 @@ import (
 
 func main() {
 	log.Info("started")
-
-	config, err := scanner.GetConfig()
+	configPath := os.Args[1]
+	fmt.Printf("Config path: %s", configPath)
+	config, err := scanner.GetConfig(configPath)
 	if err != nil {
 		log.Errorf("Failed to load configuration: %v", err.Error())
 		panic(err)
