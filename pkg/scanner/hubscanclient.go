@@ -76,13 +76,14 @@ func (hsc *HubScanClient) Scan(job ScanJob) error {
 	scanCliJavaPath := hsc.scanClientInfo.scanCliJavaPath()
 	path := image.DockerTarFilePath()
 	disableScanGraph := hsc.getDisableScanGraph()
-	cmd := exec.Command(scanCliJavaPath+"java",
+
+	args := []string{
 		"-Xms512m",
 		"-Xmx4096m",
 		"-Dblackduck.scan.cli.benice=true",
 		"-Dblackduck.scan.skipUpdate=true",
 		"-Done-jar.silent=true",
-		"-Done-jar.jar.path="+scanCliImplJarPath,
+		"-Done-jar.jar.path=" + scanCliImplJarPath,
 		disableScanGraph,
 		"-jar", scanCliJarPath,
 		"--host", hsc.host,
@@ -94,7 +95,9 @@ func (hsc *HubScanClient) Scan(job ScanJob) error {
 		"--name", job.HubScanName,
 		"--insecure",
 		"-v",
-		path)
+		path}
+
+	cmd := exec.Command(scanCliJavaPath+"java", args...)
 
 	log.Infof("running command %+v for image %s\n", cmd, job.Sha)
 	startScanClient := time.Now()
