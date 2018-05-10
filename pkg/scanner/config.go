@@ -42,7 +42,7 @@ type Config struct {
 
 	PerceptorHost    string
 	PerceptorPort    int
-	DisableScanGraph string
+	DisableScanGraph bool
 }
 
 func (config *Config) GetLogLevel() (log.Level, error) {
