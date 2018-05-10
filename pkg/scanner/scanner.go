@@ -79,7 +79,9 @@ func NewScanner(config *Config) (*Scanner, error) {
 		config.HubUser,
 		config.HubPort,
 		scanClientInfo,
-		imagePuller)
+		imagePuller,
+		config.DisableScanGraph,
+	)
 	if err != nil {
 		log.Errorf("unable to instantiate hub scan client: %s", err.Error())
 		return nil, err

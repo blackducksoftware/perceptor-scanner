@@ -40,8 +40,9 @@ type Config struct {
 
 	ImageFacadePort int
 
-	PerceptorHost string
-	PerceptorPort int
+	PerceptorHost    string
+	PerceptorPort    int
+	DisableScanGraph string
 }
 
 func (config *Config) GetLogLevel() (log.Level, error) {
