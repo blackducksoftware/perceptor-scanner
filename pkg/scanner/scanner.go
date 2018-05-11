@@ -93,7 +93,6 @@ func NewScanner(config *Config) (*Scanner, error) {
 		perceptorHost: config.PerceptorHost,
 		perceptorPort: config.PerceptorPort}
 
-
 	return &scanner, nil
 }
 
@@ -147,7 +146,7 @@ func (scanner *Scanner) requestScanJob() (*api.ImageSpec, error) {
 		return nil, err
 	}
 
-	recordHttpStats(api.NextImagePath, resp.StatusCode)
+	recordHTTPStats(api.NextImagePath, resp.StatusCode)
 
 	if resp.StatusCode != 200 {
 		err = fmt.Errorf("http POST request to %s failed with status code %d", nextImageURL, resp.StatusCode)
@@ -198,7 +197,7 @@ func (scanner *Scanner) finishScan(results api.FinishedScanClientJob) error {
 			continue
 		}
 
-		recordHttpStats(api.FinishedScanPath, resp.StatusCode)
+		recordHTTPStats(api.FinishedScanPath, resp.StatusCode)
 
 		defer resp.Body.Close()
 		if resp.StatusCode != 200 {

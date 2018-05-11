@@ -34,7 +34,7 @@ var reducerActivityCounter *prometheus.CounterVec
 var diskMetricsGauge *prometheus.GaugeVec
 var imagePullResultCounter *prometheus.CounterVec
 
-func recordHttpRequest(path string) {
+func recordHTTPRequest(path string) {
 	httpRequestsCounter.With(prometheus.Labels{"path": path}).Inc()
 }
 

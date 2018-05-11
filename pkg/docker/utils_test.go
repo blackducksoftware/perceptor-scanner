@@ -45,11 +45,21 @@ func TestNeedsAuthHeader(t *testing.T) {
 		"172.1.1.0:abcd",
 	}
 	testCases := []*testImage{
-		&testImage{pullSpec: "", isPrivateRegistry: false},
-		&testImage{pullSpec: "abc.def:5000/qqq", isPrivateRegistry: true},
-		&testImage{pullSpec: "docker-registry.default.svc:5000/ttt", isPrivateRegistry: true},
-		&testImage{pullSpec: "172.1.1.0:abcd/abc", isPrivateRegistry: true},
-		&testImage{pullSpec: "172.1.1.0:abc/abc", isPrivateRegistry: false},
+		{
+			pullSpec: "", isPrivateRegistry: false,
+		},
+		{
+			pullSpec: "abc.def:5000/qqq", isPrivateRegistry: true,
+		},
+		{
+			pullSpec: "docker-registry.default.svc:5000/ttt", isPrivateRegistry: true,
+		},
+		{
+			pullSpec: "172.1.1.0:abcd/abc", isPrivateRegistry: true,
+		},
+		{
+			pullSpec: "172.1.1.0:abc/abc", isPrivateRegistry: false,
+		},
 	}
 	for _, testCase := range testCases {
 		actual := needsAuthHeader(testCase, internalDockerRegistries)

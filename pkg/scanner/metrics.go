@@ -41,7 +41,7 @@ func recordError(errorStage string, errorName string) {
 
 // recorders
 
-func recordHttpStats(path string, statusCode int) {
+func recordHTTPStats(path string, statusCode int) {
 	httpResults.With(prometheus.Labels{"path": path, "code": fmt.Sprintf("%d", statusCode)}).Inc()
 }
 
