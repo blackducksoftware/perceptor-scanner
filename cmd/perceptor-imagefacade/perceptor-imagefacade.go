@@ -23,42 +23,22 @@ package main
 
 import (
 	"fmt"
-	"net/http"
-	"os"
 
-	"github.com/blackducksoftware/perceptor-scanner/pkg/imagefacade"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/blackducksoftware/perceptor-scanner/cmd/perceptor-imagefacade/app"
+
 	log "github.com/sirupsen/logrus"
 )
 
 func main() {
-	log.Info("started")
+	log.Info("starting imagefacade")
 
-	config, err := imagefacade.GetConfig()
+	// Create the imagefacade
+	imf, err := app.NewPerceptorImageFacade()
 	if err != nil {
-		log.Errorf("Failed to load configuration: %s", err.Error())
-		panic(err)
+		panic(fmt.Errorf("failed to create imagefacade: %v", err))
 	}
 
-	level, err := config.GetLogLevel()
-	if err != nil {
-		log.Errorf(err.Error())
-		panic(err)
-	}
-	log.SetLevel(level)
-
-	prometheus.Unregister(prometheus.NewProcessCollector(os.Getpid(), ""))
-	prometheus.Unregister(prometheus.NewGoCollector())
-
-	imageFacade := imagefacade.NewImageFacade(
-		config.DockerUser,
-		config.DockerPassword,
-		config.InternalDockerRegistries,
-		config.CreateImagesOnly)
-
-	log.Infof("successfully instantiated imagefacade -- %+v", imageFacade)
-
-	log.Infof("starting HTTP server on port %d", config.Port)
-	addr := fmt.Sprintf(":%d", config.Port)
-	http.ListenAndServe(addr, nil)
+	// Run the imagefacade
+	stopCh := make(chan struct{})
+	imf.Run(stopCh)
 }

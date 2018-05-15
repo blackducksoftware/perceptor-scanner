@@ -93,12 +93,12 @@ func NewScanner(config *Config) (*Scanner, error) {
 		perceptorHost: config.PerceptorHost,
 		perceptorPort: config.PerceptorPort}
 
-	scanner.startRequestingScanJobs()
 
 	return &scanner, nil
 }
 
-func (scanner *Scanner) startRequestingScanJobs() {
+// StartRequestingScanJobs will start asking for work
+func (scanner *Scanner) StartRequestingScanJobs() {
 	log.Infof("starting to request scan jobs")
 	go func() {
 		for {
