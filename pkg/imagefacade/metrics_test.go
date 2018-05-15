@@ -31,7 +31,7 @@ import (
 func TestMetrics(t *testing.T) {
 	recordDiskMetrics(&DiskMetrics{})
 	recordActionType("abc")
-	recordHttpRequest("qrs")
+	recordHTTPRequest("qrs")
 	then := time.Now()
 	recordReducerActivity(false, time.Now().Sub(then))
 
