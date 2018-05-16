@@ -32,9 +32,9 @@ import (
 )
 
 func main() {
-	log.Info("started")
+	log.Info("started perceptor-scanner")
 	configPath := os.Args[1]
-	fmt.Printf("Config path: %s", configPath)
+	log.Info("Config path: %s", configPath)
 	config, err := scanner.GetConfig(configPath)
 	if err != nil {
 		log.Errorf("Failed to load configuration: %v", err.Error())

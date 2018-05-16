@@ -32,9 +32,9 @@ import (
 )
 
 func main() {
-	log.Info("started")
+	log.Info("started imagefacade")
 	configPath := os.Args[1]
-	fmt.Printf("Config path: %s", configPath)
+	log.Info("Config path: %s", configPath)
 	config, err := imagefacade.GetConfig(configPath)
 	if err != nil {
 		log.Errorf("Failed to load configuration: %s", err.Error())
