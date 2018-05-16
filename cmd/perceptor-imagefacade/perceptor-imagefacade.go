@@ -23,6 +23,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/blackducksoftware/perceptor-scanner/cmd/perceptor-imagefacade/app"
 
@@ -30,10 +31,12 @@ import (
 )
 
 func main() {
-	log.Info("starting imagefacade")
+	log.Info("started imagefacade")
+	configPath := os.Args[1]
+	log.Info("Config path: %s", configPath)
 
 	// Create the imagefacade
-	imf, err := app.NewPerceptorImageFacade()
+	imf, err := app.NewPerceptorImageFacade(configPath)
 	if err != nil {
 		panic(fmt.Errorf("failed to create imagefacade: %v", err))
 	}
