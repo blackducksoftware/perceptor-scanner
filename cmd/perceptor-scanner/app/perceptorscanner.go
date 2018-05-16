@@ -40,8 +40,8 @@ type PerceptorScanner struct {
 }
 
 // NewPerceptorScanner creates a new PerceptorScanner object
-func NewPerceptorScanner() (*PerceptorScanner, error) {
-	config, err := scanner.GetConfig()
+func NewPerceptorScanner(configPath string) (*PerceptorScanner, error) {
+	config, err := scanner.GetConfig(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to load configuration: %v", err)
 	}

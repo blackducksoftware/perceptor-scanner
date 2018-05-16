@@ -39,8 +39,8 @@ type PerceptorImageFacade struct {
 }
 
 // NewPerceptorImageFacade creates a new PerceptorImageFacade
-func NewPerceptorImageFacade() (*PerceptorImageFacade, error) {
-	config, err := imagefacade.GetConfig()
+func NewPerceptorImageFacade(configPath string) (*PerceptorImageFacade, error) {
+	config, err := imagefacade.GetConfig(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to load configuration: %v", err)
 	}

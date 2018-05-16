@@ -23,6 +23,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/blackducksoftware/perceptor-scanner/cmd/perceptor-scanner/app"
 
@@ -31,9 +32,11 @@ import (
 
 func main() {
 	log.Info("starting perceptor-scanner")
+	configPath := os.Args[1]
+	log.Info("Config path: %s", configPath)
 
 	// Create the scanner
-	scanner, err := app.NewPerceptorScanner()
+	scanner, err := app.NewPerceptorScanner(configPath)
 	if err != nil {
 		panic(fmt.Errorf("failed to create perceptor-scanner: %v", err))
 	}
