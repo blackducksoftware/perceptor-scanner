@@ -19,19 +19,12 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package actions
+package model
 
-import (
-	m "github.com/blackducksoftware/perceptor/pkg/core/model"
-	log "github.com/sirupsen/logrus"
-)
+import "github.com/blackducksoftware/perceptor/pkg/hub"
 
-type GetInitialHubCheckImage struct {
-	Continuation func(image *m.Image)
-}
-
-func (g *GetInitialHubCheckImage) Apply(model *m.Model) {
-	log.Debugf("looking for next image to search for in hub")
-	image := model.GetNextImageFromHubCheckQueue()
-	go g.Continuation(image)
+type ImageScan struct {
+	OverallStatus    hub.PolicyStatusType
+	PolicyViolations int
+	Vulnerabilities  int
 }

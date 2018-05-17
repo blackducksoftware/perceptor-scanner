@@ -19,13 +19,37 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package model
+package api
 
-type Container struct {
-	Image Image
-	Name  string
+import (
+	"github.com/blackducksoftware/perceptor/pkg/hub"
+)
+
+type Model struct {
+	Pods                map[string]*Pod
+	Images              map[string]*ModelImageInfo
+	ImageScanQueue      []string
+	ImageHubCheckQueue  []string
+	ConcurrentScanLimit int
+	Config              *ModelConfig
+	HubVersion          string
 }
 
-func NewContainer(image Image, name string) *Container {
-	return &Container{Image: image, Name: name}
+type ModelConfig struct {
+	HubHost                 string
+	HubUser                 string
+	HubPassword             string
+	HubClientTimeoutSeconds int
+	ConcurrentScanLimit     int
+	UseMockMode             bool
+	Port                    int
+	LogLevel                string
+}
+
+type ModelImageInfo struct {
+	ScanStatus             string
+	TimeOfLastStatusChange string
+	ScanResults            *hub.ImageScan
+	ImageSha               string
+	ImageNames             []string
 }
