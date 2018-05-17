@@ -43,7 +43,7 @@ type HTTPResponder struct {
 	PostNextImageChannel          chan func(*model.Image)
 	PostFinishScanJobChannel      chan *a.FinishScanClient
 	SetConcurrentScanLimitChannel chan int
-	GetModelChannel               chan func(json string)
+	GetModelChannel               chan func(api.Model)
 	GetScanResultsChannel         chan func(scanResults api.ScanResults)
 }
 
@@ -58,25 +58,25 @@ func NewHTTPResponder() *HTTPResponder {
 		PostNextImageChannel:          make(chan func(*model.Image)),
 		PostFinishScanJobChannel:      make(chan *a.FinishScanClient),
 		SetConcurrentScanLimitChannel: make(chan int),
-		GetModelChannel:               make(chan func(json string)),
+		GetModelChannel:               make(chan func(api.Model)),
 		GetScanResultsChannel:         make(chan func(api.ScanResults))}
 }
 
-func (hr *HTTPResponder) GetModel() string {
+func (hr *HTTPResponder) GetModel() api.Model {
 	var wg sync.WaitGroup
 	wg.Add(1)
-	var modelString string
-	hr.GetModelChannel <- func(json string) {
-		modelString = json
+	var model api.Model
+	hr.GetModelChannel <- func(tempModel api.Model) {
+		model = tempModel
 		wg.Done()
 	}
 	wg.Wait()
-	return modelString
+	return model
 }
 
 func (hr *HTTPResponder) AddPod(apiPod api.Pod) {
 	recordAddPod()
-	pod := *model.ApiPodToCorePod(apiPod)
+	pod := *model.APIPodToCorePod(apiPod)
 	hr.AddPodChannel <- pod
 	log.Debugf("handled add pod %s -- %s", pod.UID, pod.QualifiedName())
 }
@@ -89,23 +89,23 @@ func (hr *HTTPResponder) DeletePod(qualifiedName string) {
 
 func (hr *HTTPResponder) UpdatePod(apiPod api.Pod) {
 	recordUpdatePod()
-	pod := *model.ApiPodToCorePod(apiPod)
+	pod := *model.APIPodToCorePod(apiPod)
 	hr.UpdatePodChannel <- pod
 	log.Debugf("handled update pod %s -- %s", pod.UID, pod.QualifiedName())
 }
 
 func (hr *HTTPResponder) AddImage(apiImage api.Image) {
 	recordAddImage()
-	image := *model.ApiImageToCoreImage(apiImage)
+	image := *model.APIImageToCoreImage(apiImage)
 	hr.AddImageChannel <- image
-	log.Debugf("handled add image %s", image.HumanReadableName())
+	log.Debugf("handled add image %s", image.PullSpec())
 }
 
 func (hr *HTTPResponder) UpdateAllPods(allPods api.AllPods) {
 	recordAllPods()
 	pods := []model.Pod{}
 	for _, apiPod := range allPods.Pods {
-		pods = append(pods, *model.ApiPodToCorePod(apiPod))
+		pods = append(pods, *model.APIPodToCorePod(apiPod))
 	}
 	hr.AllPodsChannel <- pods
 	log.Debugf("handled update all pods -- %d pods", len(allPods.Pods))
@@ -115,7 +115,7 @@ func (hr *HTTPResponder) UpdateAllImages(allImages api.AllImages) {
 	recordAllImages()
 	images := []model.Image{}
 	for _, apiImage := range allImages.Images {
-		images = append(images, *model.ApiImageToCoreImage(apiImage))
+		images = append(images, *model.APIImageToCoreImage(apiImage))
 	}
 	hr.AllImagesChannel <- images
 	log.Debugf("handled update all images -- %d images", len(allImages.Images))

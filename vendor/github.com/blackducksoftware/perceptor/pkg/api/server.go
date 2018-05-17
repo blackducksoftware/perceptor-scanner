@@ -34,9 +34,14 @@ func SetupHTTPServer(responder Responder) {
 	// state of the program
 	http.HandleFunc("/model", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
+			jsonBytes, err := json.MarshalIndent(responder.GetModel(), "", "  ")
+			if err != nil {
+				responder.Error(w, r, err, 500)
+				return
+			}
 			header := w.Header()
 			header.Set(http.CanonicalHeaderKey("content-type"), "application/json")
-			fmt.Fprint(w, responder.GetModel())
+			fmt.Fprint(w, string(jsonBytes))
 		} else {
 			responder.NotFound(w, r)
 		}
@@ -146,7 +151,7 @@ func SetupHTTPServer(responder Responder) {
 	http.HandleFunc("/scanresults", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
 			scanResults := responder.GetScanResults()
-			jsonBytes, err := json.Marshal(scanResults)
+			jsonBytes, err := json.MarshalIndent(scanResults, "", "  ")
 			if err != nil {
 				responder.Error(w, r, err, 500)
 				return
@@ -163,10 +168,12 @@ func SetupHTTPServer(responder Responder) {
 	http.HandleFunc("/nextimage", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" {
 			nextImage := responder.GetNextImage()
-			jsonBytes, err := json.Marshal(nextImage)
+			jsonBytes, err := json.MarshalIndent(nextImage, "", "  ")
 			if err != nil {
 				responder.Error(w, r, err, 500)
 			} else {
+				header := w.Header()
+				header.Set(http.CanonicalHeaderKey("content-type"), "application/json")
 				fmt.Fprint(w, string(jsonBytes))
 			}
 		} else {
@@ -183,6 +190,10 @@ func SetupHTTPServer(responder Responder) {
 			}
 			var scanResults FinishedScanClientJob
 			err = json.Unmarshal(body, &scanResults)
+			if err != nil {
+				responder.Error(w, r, err, 400)
+				return
+			}
 			responder.PostFinishScan(scanResults)
 			fmt.Fprint(w, "")
 		} else {
@@ -200,6 +211,10 @@ func SetupHTTPServer(responder Responder) {
 			}
 			var limit SetConcurrentScanLimit
 			err = json.Unmarshal(body, &limit)
+			if err != nil {
+				responder.Error(w, r, err, 400)
+				return
+			}
 			responder.SetConcurrentScanLimit(limit)
 			fmt.Fprint(w, "")
 		} else {

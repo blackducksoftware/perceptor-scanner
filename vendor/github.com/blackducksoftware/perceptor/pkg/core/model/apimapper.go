@@ -19,7 +19,7 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package core
+package model
 
 import (
 	"github.com/blackducksoftware/perceptor/pkg/api"
@@ -28,15 +28,15 @@ import (
 
 // api -> model
 
-func ApiImageToCoreImage(apiImage api.Image) *Image {
+func APIImageToCoreImage(apiImage api.Image) *Image {
 	return NewImage(apiImage.Name, DockerImageSha(apiImage.Sha))
 }
 
 func ApiContainerToCoreContainer(apiContainer api.Container) *Container {
-	return NewContainer(*ApiImageToCoreImage(apiContainer.Image), apiContainer.Name)
+	return NewContainer(*APIImageToCoreImage(apiContainer.Image), apiContainer.Name)
 }
 
-func ApiPodToCorePod(apiPod api.Pod) *Pod {
+func APIPodToCorePod(apiPod api.Pod) *Pod {
 	containers := []Container{}
 	for _, apiContainer := range apiPod.Containers {
 		containers = append(containers, *ApiContainerToCoreContainer(apiContainer))
@@ -46,10 +46,80 @@ func ApiPodToCorePod(apiPod api.Pod) *Pod {
 
 // model -> api
 
-func (model *Model) ScanResults() api.ScanResults {
-	pods := []api.ScannedPod{}
-	images := []api.ScannedImage{}
+func CoreContainerToAPIContainer(coreContainer Container) *api.Container {
+	return &api.Container{
+		Image: api.Image{
+			Name: coreContainer.Image.Name,
+			Sha:  string(coreContainer.Image.Sha),
+		},
+		Name: coreContainer.Name,
+	}
+}
+
+func CorePodToAPIPod(corePod Pod) *api.Pod {
+	containers := []api.Container{}
+	for _, coreContainer := range corePod.Containers {
+		containers = append(containers, *CoreContainerToAPIContainer(coreContainer))
+	}
+	return &api.Pod{
+		Containers: containers,
+		Name:       corePod.Name,
+		Namespace:  corePod.Namespace,
+		UID:        corePod.UID,
+	}
+}
+
+func (model *Model) APIModel() *api.Model {
 	// pods
+	pods := map[string]*api.Pod{}
+	for podName, pod := range model.Pods {
+		pods[podName] = CorePodToAPIPod(pod)
+	}
+	// images
+	images := map[string]*api.ModelImageInfo{}
+	for imageSha, imageInfo := range model.Images {
+		images[string(imageSha)] = &api.ModelImageInfo{
+			ImageNames:             imageInfo.ImageNames,
+			ImageSha:               string(imageInfo.ImageSha),
+			ScanResults:            imageInfo.ScanResults,
+			ScanStatus:             imageInfo.ScanStatus.String(),
+			TimeOfLastStatusChange: imageInfo.TimeOfLastStatusChange.String(),
+		}
+	}
+	// hub check queue
+	hubQueue := []string{}
+	for _, image := range model.ImageHubCheckQueue {
+		hubQueue = append(hubQueue, string(image))
+	}
+	// scan queue
+	scanQueue := []string{}
+	for _, image := range model.ImageScanQueue {
+		scanQueue = append(scanQueue, string(image))
+	}
+	// return value
+	return &api.Model{
+		Pods:   pods,
+		Images: images,
+		Config: &api.ModelConfig{
+			ConcurrentScanLimit:     model.Config.ConcurrentScanLimit,
+			HubHost:                 model.Config.HubHost,
+			HubPassword:             "...redacted...",
+			HubClientTimeoutSeconds: model.Config.HubClientTimeoutSeconds,
+			HubUser:                 model.Config.HubUser,
+			LogLevel:                model.Config.LogLevel,
+			Port:                    model.Config.Port,
+			UseMockMode:             model.Config.UseMockMode,
+		},
+		ConcurrentScanLimit: model.ConcurrentScanLimit,
+		HubVersion:          model.HubVersion,
+		ImageHubCheckQueue:  hubQueue,
+		ImageScanQueue:      scanQueue,
+	}
+}
+
+func (model *Model) ScanResults() api.ScanResults {
+	// pods
+	pods := []api.ScannedPod{}
 	for podName, pod := range model.Pods {
 		podScan, err := model.ScanResultsForPod(podName)
 		if err != nil {
@@ -67,30 +137,27 @@ func (model *Model) ScanResults() api.ScanResults {
 			Vulnerabilities:  podScan.Vulnerabilities,
 			OverallStatus:    podScan.OverallStatus})
 	}
+
 	// images
-	for _, imageInfo := range model.Images {
+	images := []api.ScannedImage{}
+	for sha, imageInfo := range model.Images {
 		if imageInfo.ScanStatus != ScanStatusComplete {
 			continue
 		}
-		componentsURL := ""
-		overallStatus := ""
-		policyViolations := 0
-		vulnerabilities := 0
-		if imageInfo.ScanResults != nil {
-			policyViolations = imageInfo.ScanResults.PolicyViolationCount()
-			vulnerabilities = imageInfo.ScanResults.VulnerabilityCount()
-			componentsURL = imageInfo.ScanResults.ComponentsHref
-			overallStatus = imageInfo.ScanResults.OverallStatus().String()
+		if imageInfo.ScanResults == nil {
+			log.Errorf("model inconsistency: found ScanStatusComplete for image %s, but nil ScanResults (imageInfo %+v)", sha, imageInfo)
+			continue
 		}
 		image := imageInfo.Image()
 		apiImage := api.ScannedImage{
 			Name:             image.HumanReadableName(),
 			Sha:              string(image.Sha),
-			PolicyViolations: policyViolations,
-			Vulnerabilities:  vulnerabilities,
-			OverallStatus:    overallStatus,
-			ComponentsURL:    componentsURL}
+			PolicyViolations: imageInfo.ScanResults.PolicyViolationCount(),
+			Vulnerabilities:  imageInfo.ScanResults.VulnerabilityCount(),
+			OverallStatus:    imageInfo.ScanResults.OverallStatus().String(),
+			ComponentsURL:    imageInfo.ScanResults.ComponentsHref}
 		images = append(images, apiImage)
 	}
+
 	return *api.NewScanResults(model.HubVersion, model.HubVersion, pods, images)
 }
