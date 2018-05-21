@@ -27,12 +27,10 @@
 
 [[constraint]]
   name = "github.com/blackducksoftware/hub-client-go"
-  source = "git@github.com:blackducksoftware/hub-client-go.git"
   version = "0.9.4"
 
 [[constraint]]
   name = "github.com/blackducksoftware/perceptor"
-#  source = "git@github.com:blackducksoftware/perceptor.git"
   branch = "master"
 
 [[constraint]]
