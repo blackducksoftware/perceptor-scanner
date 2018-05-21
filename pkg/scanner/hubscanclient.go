@@ -37,21 +37,24 @@ const (
 // HubScanClient implements ScanClientInterface using
 // the Black Duck hub and scan client programs.
 type HubScanClient struct {
-	host           string
-	username       string
-	port           int
-	scanClientInfo *scanClientInfo
-	imagePuller    ImagePullerInterface
+	host             string
+	username         string
+	port             int
+	scanClientInfo   *scanClientInfo
+	imagePuller      ImagePullerInterface
+	disableScanGraph bool
 }
 
 // NewHubScanClient requires hub login credentials
-func NewHubScanClient(host string, username string, port int, scanClientInfo *scanClientInfo, imagePuller ImagePullerInterface) (*HubScanClient, error) {
+func NewHubScanClient(host string, username string, port int, scanClientInfo *scanClientInfo, imagePuller ImagePullerInterface, disableScanGraph bool) (*HubScanClient, error) {
 	hsc := HubScanClient{
-		host:           host,
-		username:       username,
-		port:           port,
-		scanClientInfo: scanClientInfo,
-		imagePuller:    imagePuller}
+		host:             host,
+		username:         username,
+		port:             port,
+		scanClientInfo:   scanClientInfo,
+		imagePuller:      imagePuller,
+		disableScanGraph: disableScanGraph,
+	}
 	return &hsc, nil
 }
 
@@ -72,13 +75,16 @@ func (hsc *HubScanClient) Scan(job ScanJob) error {
 	scanCliJarPath := hsc.scanClientInfo.scanCliJarPath()
 	scanCliJavaPath := hsc.scanClientInfo.scanCliJavaPath()
 	path := image.DockerTarFilePath()
-	cmd := exec.Command(scanCliJavaPath+"java",
+	disableScanGraph := hsc.getDisableScanGraph()
+
+	args := []string{
 		"-Xms512m",
 		"-Xmx4096m",
 		"-Dblackduck.scan.cli.benice=true",
 		"-Dblackduck.scan.skipUpdate=true",
 		"-Done-jar.silent=true",
-		"-Done-jar.jar.path="+scanCliImplJarPath,
+		"-Done-jar.jar.path=" + scanCliImplJarPath,
+		disableScanGraph,
 		"-jar", scanCliJarPath,
 		"--host", hsc.host,
 		"--port", fmt.Sprintf("%d", hsc.port),
@@ -89,7 +95,9 @@ func (hsc *HubScanClient) Scan(job ScanJob) error {
 		"--name", job.HubScanName,
 		"--insecure",
 		"-v",
-		path)
+		path}
+
+	cmd := exec.Command(scanCliJavaPath+"java", args...)
 
 	log.Infof("running command %+v for image %s\n", cmd, job.Sha)
 	startScanClient := time.Now()
@@ -106,6 +114,14 @@ func (hsc *HubScanClient) Scan(job ScanJob) error {
 	log.Infof("successfully completed java scanner for image %s", job.Sha)
 	log.Debugf("output from image %s: %s", job.Sha, stdoutStderr)
 	return err
+}
+
+func (hsc *HubScanClient) getDisableScanGraph() string {
+	if hsc.disableScanGraph {
+		return "-Dspring.profiles.active=bds-disable-scan-graph"
+	} else {
+		return ""
+	}
 }
 
 // func (hsc *HubScanClient) ScanCliSh(job ScanJob) error {
