@@ -33,7 +33,7 @@ import (
 func main() {
 	log.Info("starting perceptor-scanner")
 	configPath := os.Args[1]
-	log.Info("Config path: %s", configPath)
+	log.Infof("Config path: %s", configPath)
 
 	// Create the scanner
 	scanner, err := app.NewPerceptorScanner(configPath)

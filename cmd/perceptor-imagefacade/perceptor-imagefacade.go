@@ -33,7 +33,7 @@ import (
 func main() {
 	log.Info("started imagefacade")
 	configPath := os.Args[1]
-	log.Info("Config path: %s", configPath)
+	log.Infof("Config path: %s", configPath)
 
 	// Create the imagefacade
 	imf, err := app.NewPerceptorImageFacade(configPath)
