@@ -34,11 +34,10 @@ type Config struct {
 	LogLevel        string
 }
 
-func GetConfig() (*Config, error) {
+func GetConfig(configPath string) (*Config, error) {
 	var config *Config
 
-	viper.SetConfigName("piftester_conf")
-	viper.AddConfigPath("/etc/piftester")
+	viper.SetConfigFile(configPath)
 
 	err := viper.ReadInConfig()
 	if err != nil {

@@ -24,15 +24,18 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	mockimagefacade "github.com/blackducksoftware/perceptor-scanner/pkg/mockimagefacade"
 	log "github.com/sirupsen/logrus"
 )
 
 func main() {
-	log.Info("started")
+	log.Info("starting mockimagefacade")
+	configPath := os.Args[1]
+	log.Infof("Config path: %s", configPath)
 
-	config, err := mockimagefacade.GetConfig()
+	config, err := mockimagefacade.GetConfig(configPath)
 	if err != nil {
 		log.Errorf("Failed to load configuration: %s", err.Error())
 		panic(err)
