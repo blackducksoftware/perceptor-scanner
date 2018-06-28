@@ -31,11 +31,10 @@ type Config struct {
 	Port int
 }
 
-func GetConfig() (*Config, error) {
+func GetConfig(configPath string) (*Config, error) {
 	var config *Config
 
-	viper.SetConfigName("mockimagefacade_conf")
-	viper.AddConfigPath("/etc/mockimagefacade")
+	viper.SetConfigFile(configPath)
 
 	err := viper.ReadInConfig()
 	if err != nil {

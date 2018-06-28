@@ -32,9 +32,11 @@ import (
 )
 
 func main() {
-	log.Info("started")
+	log.Info("starting piftester")
+	configPath := os.Args[1]
+	log.Infof("Config path: %s", configPath)
 
-	config, err := piftester.GetConfig()
+	config, err := piftester.GetConfig(configPath)
 	if err != nil {
 		log.Errorf("Failed to load configuration: %s", err.Error())
 		panic(err)

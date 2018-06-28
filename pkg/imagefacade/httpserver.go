@@ -59,7 +59,7 @@ func (h *HTTPServer) setup() {
 	http.HandleFunc("/pullimage", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "POST":
-			recordHttpRequest("pullimage")
+			recordHTTPRequest("pullimage")
 			body, err := ioutil.ReadAll(r.Body)
 			if err != nil {
 				log.Errorf("unable to read body for pullimage: %s", err.Error())
@@ -98,7 +98,7 @@ func (h *HTTPServer) setup() {
 	http.HandleFunc("/checkimage", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "POST":
-			recordHttpRequest("checkimage")
+			recordHTTPRequest("checkimage")
 			body, err := ioutil.ReadAll(r.Body)
 			if err != nil {
 				log.Errorf("unable to read body for getimage: %s", err.Error())

@@ -49,9 +49,9 @@ type Scanner struct {
 func NewScanner(config *Config) (*Scanner, error) {
 	log.Infof("instantiating Scanner with config %+v", config)
 
-	hubPassword := os.Getenv(config.HubUserPasswordEnvVar)
-	if hubPassword == "" {
-		return nil, fmt.Errorf("unable to read hub password")
+	hubPassword, ok := os.LookupEnv(config.HubUserPasswordEnvVar)
+	if !ok {
+		return nil, fmt.Errorf("unable to get Hub password: environment variable %s not set", config.HubUserPasswordEnvVar)
 	}
 
 	err := os.Setenv("BD_HUB_PASSWORD", hubPassword)
@@ -93,12 +93,11 @@ func NewScanner(config *Config) (*Scanner, error) {
 		perceptorHost: config.PerceptorHost,
 		perceptorPort: config.PerceptorPort}
 
-	scanner.startRequestingScanJobs()
-
 	return &scanner, nil
 }
 
-func (scanner *Scanner) startRequestingScanJobs() {
+// StartRequestingScanJobs will start asking for work
+func (scanner *Scanner) StartRequestingScanJobs() {
 	log.Infof("starting to request scan jobs")
 	go func() {
 		for {
@@ -147,7 +146,7 @@ func (scanner *Scanner) requestScanJob() (*api.ImageSpec, error) {
 		return nil, err
 	}
 
-	recordHttpStats(api.NextImagePath, resp.StatusCode)
+	recordHTTPStats(api.NextImagePath, resp.StatusCode)
 
 	if resp.StatusCode != 200 {
 		err = fmt.Errorf("http POST request to %s failed with status code %d", nextImageURL, resp.StatusCode)
@@ -198,7 +197,7 @@ func (scanner *Scanner) finishScan(results api.FinishedScanClientJob) error {
 			continue
 		}
 
-		recordHttpStats(api.FinishedScanPath, resp.StatusCode)
+		recordHTTPStats(api.FinishedScanPath, resp.StatusCode)
 
 		defer resp.Body.Close()
 		if resp.StatusCode != 200 {

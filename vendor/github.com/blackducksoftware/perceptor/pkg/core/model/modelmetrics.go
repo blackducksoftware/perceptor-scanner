@@ -19,9 +19,9 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package core
+package model
 
-type ModelMetrics struct {
+type Metrics struct {
 	ScanStatusCounts      map[ScanStatus]int
 	NumberOfPods          int
 	NumberOfImages        int

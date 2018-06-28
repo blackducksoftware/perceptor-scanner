@@ -69,11 +69,7 @@ func NewPifTester(imageFacadePort int) *PifTester {
 					pif.addImage(image)
 				}
 			case continuation := <-responder.GetModelChannel:
-				jsonBytes, err := json.Marshal(pif)
-				if err != nil {
-					panic(err)
-				}
-				go continuation(string(jsonBytes))
+				go continuation(pif.APIModel())
 
 			case continuation := <-pif.getNextImageChannel:
 				image := pif.getNextImage()
@@ -105,6 +101,16 @@ func NewPifTester(imageFacadePort int) *PifTester {
 func (pif *PifTester) addPod(pod m.Pod) {
 	for _, cont := range pod.Containers {
 		pif.addImage(cont.Image)
+	}
+}
+
+func (pif *PifTester) APIModel() api.Model {
+	jsonBytes, err := json.MarshalIndent(pif, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	return api.Model{
+		HubVersion: string(jsonBytes),
 	}
 }
 

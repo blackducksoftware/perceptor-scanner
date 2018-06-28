@@ -33,7 +33,7 @@ func TestMetrics(t *testing.T) {
 	recordCleanUpTarFile(false)
 	recordScanClientDuration(time.Now().Sub(time.Now()), true)
 	recordTotalScannerDuration(time.Now().Sub(time.Now()), false)
-	recordHttpStats("getnextimage", 200)
+	recordHTTPStats("getnextimage", 200)
 
 	message := "finished test case"
 	t.Log(message)

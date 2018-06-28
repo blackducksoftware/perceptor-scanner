@@ -23,42 +23,25 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 
-	"github.com/blackducksoftware/perceptor-scanner/pkg/scanner"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/blackducksoftware/perceptor-scanner/cmd/perceptor-scanner/app"
+
 	log "github.com/sirupsen/logrus"
 )
 
 func main() {
-	log.Info("started")
+	log.Info("starting perceptor-scanner")
+	configPath := os.Args[1]
+	log.Infof("Config path: %s", configPath)
 
-	config, err := scanner.GetConfig()
+	// Create the scanner
+	scanner, err := app.NewPerceptorScanner(configPath)
 	if err != nil {
-		log.Errorf("Failed to load configuration: %v", err.Error())
-		panic(err)
+		panic(fmt.Errorf("failed to create perceptor-scanner: %v", err))
 	}
 
-	level, err := config.GetLogLevel()
-	if err != nil {
-		log.Errorf(err.Error())
-		panic(err)
-	}
-	log.SetLevel(level)
-
-	prometheus.Unregister(prometheus.NewProcessCollector(os.Getpid(), ""))
-	prometheus.Unregister(prometheus.NewGoCollector())
-
-	scannerManager, err := scanner.NewScanner(config)
-	if err != nil {
-		log.Errorf("unable to instantiate scanner: %v", err.Error())
-		panic(err)
-	}
-
-	http.Handle("/metrics", prometheus.Handler())
-
-	addr := fmt.Sprintf(":%d", config.Port)
-	log.Infof("successfully instantiated scanner %+v, serving on port %s", scannerManager, addr)
-	http.ListenAndServe(addr, nil)
+	// Run the scanner
+	stopCh := make(chan struct{})
+	scanner.Run(stopCh)
 }

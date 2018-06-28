@@ -45,11 +45,10 @@ func (config *Config) GetLogLevel() (log.Level, error) {
 }
 
 // GetConfig returns a configuration object to configure Perceptor
-func GetConfig() (*Config, error) {
+func GetConfig(configPath string) (*Config, error) {
 	var cfg *Config
 
-	viper.SetConfigName("perceptor_imagefacade_conf")
-	viper.AddConfigPath("/etc/perceptor_imagefacade")
+	viper.SetConfigFile(configPath)
 
 	err := viper.ReadInConfig()
 	if err != nil {
