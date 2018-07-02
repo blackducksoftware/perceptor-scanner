@@ -19,58 +19,44 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package app
+package imagefacade
 
 import (
 	"fmt"
 	"net/http"
 	"os"
 
-	"github.com/blackducksoftware/perceptor-scanner/pkg/imagefacade"
 	"github.com/prometheus/client_golang/prometheus"
 
 	log "github.com/sirupsen/logrus"
 )
 
-// PerceptorImageFacade handles retrieving images to scan
-type PerceptorImageFacade struct {
-	imageFacade *imagefacade.ImageFacade
-	config      *imagefacade.Config
-}
-
-// NewPerceptorImageFacade creates a new PerceptorImageFacade
-func NewPerceptorImageFacade(configPath string) (*PerceptorImageFacade, error) {
-	config, err := imagefacade.GetConfig(configPath)
+func RunImageFacade(configPath string, stop <-chan struct{}) {
+	config, err := GetConfig(configPath)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to load configuration: %v", err)
+		log.Errorf("unable to read config: %s", err.Error())
+		panic(err)
 	}
 
 	level, err := config.GetLogLevel()
 	if err != nil {
-		return nil, fmt.Errorf(err.Error())
+		log.Errorf("unable to set log level: %s", err.Error())
+		panic(err)
 	}
 	log.SetLevel(level)
 
 	prometheus.Unregister(prometheus.NewProcessCollector(os.Getpid(), ""))
 	prometheus.Unregister(prometheus.NewGoCollector())
 
-	imageFacade := imagefacade.NewImageFacade(
-		config.DockerUser,
-		config.DockerPassword,
-		config.InternalDockerRegistries,
-		config.CreateImagesOnly,
-	)
+	imageFacade := NewImageFacade(config.PrivateDockerRegistries, config.CreateImagesOnly)
 
-	return &PerceptorImageFacade{imageFacade: imageFacade, config: config}, nil
-}
+	log.Infof("successfully instantiated imagefacade -- %+v", imageFacade)
 
-// Run starts the PerceptorImageFacade listening for requests
-func (pif *PerceptorImageFacade) Run(stopCh chan struct{}) {
-	log.Infof("successfully instantiated imagefacade -- %+v", pif.imageFacade)
-
-	addr := fmt.Sprintf(":%d", pif.config.Port)
+	addr := fmt.Sprintf(":%d", config.Port)
 	log.Infof("starting HTTP server on %s", addr)
-	http.ListenAndServe(addr, nil)
+	go func() {
+		http.ListenAndServe(addr, nil)
+	}()
 
-	<-stopCh
+	<-stop
 }

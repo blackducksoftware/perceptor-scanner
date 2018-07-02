@@ -26,8 +26,8 @@ import (
 )
 
 type testImage struct {
-	pullSpec          string
-	isPrivateRegistry bool
+	pullSpec     string
+	registryAuth *RegistryAuth
 }
 
 func (ti *testImage) DockerPullSpec() string {
@@ -39,32 +39,32 @@ func (ti *testImage) DockerTarFilePath() string {
 }
 
 func TestNeedsAuthHeader(t *testing.T) {
-	internalDockerRegistries := []string{
-		"abc.def:5000",
-		"docker-registry.default.svc:5000",
-		"172.1.1.0:abcd",
+	internalDockerRegistries := []RegistryAuth{
+		{Url: "abc.def:5000", User: "", Password: ""},
+		{Url: "docker-registry.default.svc:5000", User: "", Password: ""},
+		{Url: "172.1.1.0:abcd", User: "", Password: ""},
 	}
 	testCases := []*testImage{
 		{
-			pullSpec: "", isPrivateRegistry: false,
+			pullSpec: "", registryAuth: nil,
 		},
 		{
-			pullSpec: "abc.def:5000/qqq", isPrivateRegistry: true,
+			pullSpec: "abc.def:5000/qqq", registryAuth: &internalDockerRegistries[0],
 		},
 		{
-			pullSpec: "docker-registry.default.svc:5000/ttt", isPrivateRegistry: true,
+			pullSpec: "docker-registry.default.svc:5000/ttt", registryAuth: &internalDockerRegistries[1],
 		},
 		{
-			pullSpec: "172.1.1.0:abcd/abc", isPrivateRegistry: true,
+			pullSpec: "172.1.1.0:abcd/abc", registryAuth: &internalDockerRegistries[2],
 		},
 		{
-			pullSpec: "172.1.1.0:abc/abc", isPrivateRegistry: false,
+			pullSpec: "172.1.1.0:abc/abc", registryAuth: nil,
 		},
 	}
 	for _, testCase := range testCases {
-		actual := needsAuthHeader(testCase, internalDockerRegistries)
-		if actual != testCase.isPrivateRegistry {
-			t.Errorf("expected %t for %s, got %t", testCase.isPrivateRegistry, testCase.pullSpec, actual)
+		registryAuth := needsAuthHeader(testCase, internalDockerRegistries)
+		if registryAuth != testCase.registryAuth {
+			t.Errorf("expected %+v for %s, got %+v", testCase.registryAuth, testCase.pullSpec, registryAuth)
 		}
 	}
 }

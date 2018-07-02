@@ -21,13 +21,8 @@ under the License.
 
 package docker
 
-import "strings"
-
-func needsAuthHeader(image Image, registries []RegistryAuth) *RegistryAuth {
-	for _, registry := range registries {
-		if strings.HasPrefix(image.DockerPullSpec(), registry.Url) {
-			return &registry
-		}
-	}
-	return nil
+type RegistryAuth struct {
+	Url      string
+	User     string
+	Password string
 }
