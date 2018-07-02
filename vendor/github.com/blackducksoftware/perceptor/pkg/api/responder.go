@@ -25,6 +25,7 @@ import (
 	"net/http"
 )
 
+// Responder .....
 type Responder interface {
 	GetModel() Model
 
@@ -42,7 +43,8 @@ type Responder interface {
 	PostFinishScan(job FinishedScanClientJob)
 
 	// internal use
-	SetConcurrentScanLimit(limit SetConcurrentScanLimit)
+	PostConfig(config *PostConfig)
+	PostCommand(commands *PostCommand)
 
 	// errors
 	NotFound(w http.ResponseWriter, r *http.Request)

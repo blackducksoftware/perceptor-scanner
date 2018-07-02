@@ -26,7 +26,7 @@ package hub
 type ImageScan struct {
 	RiskProfile                      RiskProfile
 	PolicyStatus                     PolicyStatus
-	ScanSummary                      ScanSummary
+	ScanSummaries                    []ScanSummary
 	ComponentsHref                   string
 	CodeLocationCreatedAt            string
 	CodeLocationMappedProjectVersion string
@@ -36,20 +36,42 @@ type ImageScan struct {
 	CodeLocationUpdatedAt            string
 }
 
-// IsDone returns whether the hub imagescan results indicate that the scan is
-// complete.
+// ScanSummaryStatus looks through all the scan summaries and:
+//  - 1+ success: returns success
+//  - 0 success, 1+ inprogress: returns inprogress
+//  - 0 success, 0 inprogress: returns failure
+// TODO: weird corner cases:
+//  - no scan summaries ... ? should that be inprogress, or error?
+//    or should we just assume that we'll always have at least 1?
 func (scan *ImageScan) ScanSummaryStatus() ScanSummaryStatus {
-	return scan.ScanSummary.Status
+	inProgress := false
+	for _, scanSummary := range scan.ScanSummaries {
+		switch scanSummary.Status {
+		case ScanSummaryStatusSuccess:
+			return ScanSummaryStatusSuccess
+		case ScanSummaryStatusInProgress:
+			inProgress = true
+		default:
+			// nothing to do
+		}
+	}
+	if inProgress {
+		return ScanSummaryStatusInProgress
+	}
+	return ScanSummaryStatusFailure
 }
 
+// VulnerabilityCount .....
 func (scan *ImageScan) VulnerabilityCount() int {
 	return scan.RiskProfile.HighRiskVulnerabilityCount()
 }
 
+// PolicyViolationCount .....
 func (scan *ImageScan) PolicyViolationCount() int {
 	return scan.PolicyStatus.ViolationCount()
 }
 
+// OverallStatus .....
 func (scan *ImageScan) OverallStatus() PolicyStatusType {
 	return scan.PolicyStatus.OverallStatus
 }
