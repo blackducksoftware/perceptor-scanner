@@ -33,6 +33,7 @@ var dockerGetDurationHistogram prometheus.Histogram
 var dockerTotalDurationHistogram prometheus.Histogram
 var errorsCounter *prometheus.CounterVec
 var eventsCounter *prometheus.CounterVec
+var layerCounter *prometheus.GaugeVec
 
 // durations
 
@@ -50,6 +51,12 @@ func recordDockerTotalDuration(duration time.Duration) {
 
 func recordEvent(event string) {
 	eventsCounter.With(prometheus.Labels{"event": event}).Inc()
+}
+
+func recordLayerCounts(counts map[string]int) {
+	for sha, count := range counts {
+		layerCounter.With(prometheus.Labels{"layer": sha}).Set(float64(count))
+	}
 }
 
 // tar file size and docker errors
@@ -121,4 +128,12 @@ func init() {
 	prometheus.MustRegister(dockerTotalDurationHistogram)
 	prometheus.MustRegister(tarballSize)
 	prometheus.MustRegister(eventsCounter)
+
+	layerCounter = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: "perceptor",
+		Subsystem: "imagefacade",
+		Name:      "docker_layers",
+		Help:      "a count of the number of times each layer was seen",
+	}, []string{"layer"})
+	prometheus.MustRegister(layerCounter)
 }

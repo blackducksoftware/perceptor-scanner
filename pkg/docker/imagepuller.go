@@ -22,6 +22,7 @@ under the License.
 package docker
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -42,8 +43,10 @@ const (
 )
 
 type ImagePuller struct {
-	client     *http.Client
-	registries []RegistryAuth
+	client      *http.Client
+	registries  []RegistryAuth
+	images      map[string]bool
+	layerCounts map[string]int
 }
 
 func NewImagePuller(registries []RegistryAuth) *ImagePuller {
@@ -53,8 +56,10 @@ func NewImagePuller(registries []RegistryAuth) *ImagePuller {
 	tr := &http.Transport{Dial: fd}
 	client := &http.Client{Transport: tr}
 	return &ImagePuller{
-		client:     client,
-		registries: registries}
+		client:      client,
+		registries:  registries,
+		images:      map[string]bool{},
+		layerCounts: map[string]int{}}
 }
 
 // PullImage gives us access to a docker image by:
@@ -72,6 +77,19 @@ func (ip *ImagePuller) PullImage(image Image) error {
 	}
 	log.Infof("Processing image: %s", image.DockerPullSpec())
 
+	layerShas, err := ip.InspectImage(image)
+	if err != nil {
+		log.Errorf("unable to get shas: %s", err.Error())
+	} else {
+		if !ip.images[image.DockerPullSpec()] {
+			ip.images[image.DockerPullSpec()] = true
+			for _, sha := range layerShas {
+				ip.layerCounts[sha]++
+			}
+			recordLayerCounts(ip.layerCounts)
+		}
+	}
+
 	err = ip.SaveImageToTar(image)
 	if err != nil {
 		log.Errorf("unable to continue processing image %s: %s", image.DockerPullSpec(), err.Error())
@@ -82,6 +100,53 @@ func (ip *ImagePuller) PullImage(image Image) error {
 
 	log.Infof("Ready to scan image %s at path %s", image.DockerPullSpec(), image.DockerTarFilePath())
 	return nil
+}
+
+type dockerJson struct {
+	RootFS struct {
+		Layers []string
+	}
+}
+
+func (ip *ImagePuller) InspectImage(image Image) ([]string, error) {
+	url := inspectURL(image)
+	log.Infof("Making docker GET image json: %s", url)
+	resp, err := ip.client.Get(url)
+	if err != nil {
+		return nil, err
+	} else if resp.StatusCode != http.StatusOK {
+		err = fmt.Errorf("docker GET failed: received status != 200 from %s: %s", url, resp.Status)
+		return nil, err
+	}
+
+	log.Infof("docker GET request for image %s successful", url)
+
+	body := resp.Body
+	defer func() {
+		body.Close()
+	}()
+	defer resp.Body.Close()
+
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
+
+	log.Infof("body: %s", string(bodyBytes))
+
+	var inspect []dockerJson
+
+	err = json.Unmarshal(bodyBytes, &inspect)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(inspect) != 1 {
+		return nil, fmt.Errorf("expected 1 object in array, got %+v", inspect)
+	}
+
+	return inspect[0].RootFS.Layers, nil
 }
 
 // CreateImageInLocalDocker could also be implemented using curl:

@@ -37,6 +37,7 @@ func RunMetricsTests() {
 			recordDockerTotalDuration(time.Now().Sub(time.Now()))
 			//  recordDockerError("abc", "def", image, err)
 			recordTarFileSize(24)
+			recordLayerCounts(map[string]int{"abc": 123})
 		})
 	})
 }

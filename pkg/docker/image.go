@@ -46,3 +46,7 @@ func createURL(image Image) string {
 func getURL(image Image) string {
 	return fmt.Sprintf("http://localhost/v1.24/images/%s/get", urlEncodedName(image))
 }
+
+func inspectURL(image Image) string {
+	return fmt.Sprintf("http://localhost/v1.24/images/%s/json", urlEncodedName(image))
+}
