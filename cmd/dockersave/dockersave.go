@@ -23,6 +23,7 @@ package main
 
 import (
 	"archive/tar"
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -61,7 +62,7 @@ func main() {
 		}
 	}
 	// 2. extract tar
-	processFile(path)
+	processFile(path, "extract-")
 	// 3. run sha over everything
 	hasher := sha256.New()
 	f, err := os.Open(path)
@@ -78,7 +79,7 @@ func main() {
 	fmt.Println(sha)
 }
 
-func processFile(source string) {
+func processFile(source string, name string) {
 	f, err := os.Open(source)
 	if err != nil {
 		panic(err)
@@ -100,12 +101,49 @@ func processFile(source string) {
 
 		log.Infof("got: %+v", header)
 		if strings.Contains(header.Name, ".json") {
-			file, err := os.Create(fmt.Sprintf("poop%d.json", i))
+			file, err := os.Create(fmt.Sprintf("%sfile%d.json", name, i))
 			if err != nil {
 				panic(err)
 			}
 			defer file.Close()
 			if _, err := io.Copy(file, tarReader); err != nil {
+				panic(err)
+			}
+		} else if strings.Contains(header.Name, "layer.tar") {
+			dir := "out/" + header.Name[:len(header.Name)-9]
+			err := os.MkdirAll(dir, 0755)
+			if err != nil {
+				panic(err)
+			}
+			// make a copy of the file
+			out, err := os.Create("out/" + header.Name)
+			if err != nil {
+				panic(err)
+			}
+			defer out.Close()
+			if _, err := io.Copy(out, tarReader); err != nil {
+				panic(err)
+			}
+			// calculate a sha
+			in, err := os.Open("out/" + header.Name)
+			if err != nil {
+				panic(err)
+			}
+			defer in.Close()
+			hasher := sha256.New()
+			// hasher := sha512.New512_224() // TODO which algorithm?
+			if _, err := io.Copy(hasher, in); err != nil {
+				panic(err)
+			}
+			shaBytes := hasher.Sum(nil)
+			sha := hex.EncodeToString(shaBytes)
+			fmt.Printf("sha: %s\n", sha)
+			shaFile, err := os.Create(dir + "sha.txt")
+			if err != nil {
+				panic(err)
+			}
+			defer shaFile.Close()
+			if _, err := io.Copy(shaFile, bytes.NewBufferString(sha)); err != nil {
 				panic(err)
 			}
 		}
