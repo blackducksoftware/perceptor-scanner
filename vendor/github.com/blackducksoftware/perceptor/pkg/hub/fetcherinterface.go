@@ -21,8 +21,15 @@ under the License.
 
 package hub
 
+import "time"
+
+// FetcherInterface .....
 type FetcherInterface interface {
 	Login() error
 	HubVersion() string
 	FetchScanFromImage(image ImageInterface) (*ImageScan, error)
+	SetTimeout(timeout time.Duration)
+	ResetCircuitBreaker()
+	Model() *FetcherModel
+	IsEnabled() <-chan bool
 }

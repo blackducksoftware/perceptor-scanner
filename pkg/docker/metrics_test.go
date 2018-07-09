@@ -22,21 +22,21 @@ under the License.
 package docker
 
 import (
-	"testing"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	. "github.com/onsi/ginkgo"
+	//	. "github.com/onsi/gomega"
 )
 
-func TestMetrics(t *testing.T) {
-	recordEvent("ab cd 123")
-	recordDockerGetDuration(time.Now().Sub(time.Now()))
-	recordDockerCreateDuration(time.Now().Sub(time.Now()))
-	recordDockerTotalDuration(time.Now().Sub(time.Now()))
-	//  recordDockerError("abc", "def", image, err)
-	recordTarFileSize(24)
-
-	message := "finished test case"
-	t.Log(message)
-	log.Info(message)
+func RunMetricsTests() {
+	Describe("Model", func() {
+		It("should handle metrics calls with arbitrary data", func() {
+			recordEvent("ab cd 123")
+			recordDockerGetDuration(time.Now().Sub(time.Now()))
+			recordDockerCreateDuration(time.Now().Sub(time.Now()))
+			recordDockerTotalDuration(time.Now().Sub(time.Now()))
+			//  recordDockerError("abc", "def", image, err)
+			recordTarFileSize(24)
+		})
+	})
 }

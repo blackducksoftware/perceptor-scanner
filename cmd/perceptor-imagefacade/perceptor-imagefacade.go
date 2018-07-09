@@ -22,10 +22,9 @@ under the License.
 package main
 
 import (
-	"fmt"
 	"os"
 
-	"github.com/blackducksoftware/perceptor-scanner/cmd/perceptor-imagefacade/app"
+	imagefacade "github.com/blackducksoftware/perceptor-scanner/pkg/imagefacade"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -35,13 +34,6 @@ func main() {
 	configPath := os.Args[1]
 	log.Infof("Config path: %s", configPath)
 
-	// Create the imagefacade
-	imf, err := app.NewPerceptorImageFacade(configPath)
-	if err != nil {
-		panic(fmt.Errorf("failed to create imagefacade: %v", err))
-	}
-
-	// Run the imagefacade
 	stopCh := make(chan struct{})
-	imf.Run(stopCh)
+	imagefacade.RunImageFacade(configPath, stopCh)
 }

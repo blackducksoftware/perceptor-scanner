@@ -22,12 +22,15 @@ under the License.
 package docker
 
 import (
-	"testing"
+	"fmt"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 type testImage struct {
-	pullSpec          string
-	isPrivateRegistry bool
+	pullSpec     string
+	registryAuth *RegistryAuth
 }
 
 func (ti *testImage) DockerPullSpec() string {
@@ -38,33 +41,36 @@ func (ti *testImage) DockerTarFilePath() string {
 	return "TODO"
 }
 
-func TestNeedsAuthHeader(t *testing.T) {
-	internalDockerRegistries := []string{
-		"abc.def:5000",
-		"docker-registry.default.svc:5000",
-		"172.1.1.0:abcd",
-	}
-	testCases := []*testImage{
-		{
-			pullSpec: "", isPrivateRegistry: false,
-		},
-		{
-			pullSpec: "abc.def:5000/qqq", isPrivateRegistry: true,
-		},
-		{
-			pullSpec: "docker-registry.default.svc:5000/ttt", isPrivateRegistry: true,
-		},
-		{
-			pullSpec: "172.1.1.0:abcd/abc", isPrivateRegistry: true,
-		},
-		{
-			pullSpec: "172.1.1.0:abc/abc", isPrivateRegistry: false,
-		},
-	}
-	for _, testCase := range testCases {
-		actual := needsAuthHeader(testCase, internalDockerRegistries)
-		if actual != testCase.isPrivateRegistry {
-			t.Errorf("expected %t for %s, got %t", testCase.isPrivateRegistry, testCase.pullSpec, actual)
+func RunUtilsTests() {
+	Describe("needsAuthHeader", func() {
+		internalDockerRegistries := []RegistryAuth{
+			{Url: "abc.def:5000", User: "", Password: ""},
+			{Url: "docker-registry.default.svc:5000", User: "", Password: ""},
+			{Url: "172.1.1.0:abcd", User: "", Password: ""},
 		}
-	}
+		testCases := []*testImage{
+			{
+				pullSpec: "", registryAuth: nil,
+			},
+			{
+				pullSpec: "abc.def:5000/qqq", registryAuth: &internalDockerRegistries[0],
+			},
+			{
+				pullSpec: "docker-registry.default.svc:5000/ttt", registryAuth: &internalDockerRegistries[1],
+			},
+			{
+				pullSpec: "172.1.1.0:abcd/abc", registryAuth: &internalDockerRegistries[2],
+			},
+			{
+				pullSpec: "172.1.1.0:abc/abc", registryAuth: nil,
+			},
+		}
+		for _, testCase := range testCases {
+			c := testCase
+			It(fmt.Sprintf("should determine whether %s needs an auth header", c.pullSpec), func() {
+				registryAuth := needsAuthHeader(c, internalDockerRegistries)
+				Expect(registryAuth).To(Equal(c.registryAuth))
+			})
+		}
+	})
 }

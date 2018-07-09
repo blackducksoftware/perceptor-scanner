@@ -10,7 +10,7 @@ script: cd
 # are allowed to fail on Go tip.
 go:
   - 1.9
-  - master 
+  - master
 
 # Skip the install step. Don't `go get` dependencies. Only build with the
 # code in vendor/
@@ -23,10 +23,10 @@ matrix:
   # Don't wait for tip tests to finish. Mark the test run green if the
   # tests pass on the stable versions of Go.
   fast_finish: true
-  
+
 before_script:
 - hack/verify-gofmt.sh
-- hack/verify-golint.sh
+#- hack/verify-golint.sh
 - hack/verify-govet.sh
 
 script: go build ./... && go test ./...

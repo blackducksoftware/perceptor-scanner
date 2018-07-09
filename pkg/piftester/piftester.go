@@ -84,9 +84,11 @@ func NewPifTester(imageFacadePort int) *PifTester {
 				break
 			case _ = <-responder.PostFinishScanJobChannel:
 				break
-			case _ = <-responder.SetConcurrentScanLimitChannel:
+			case _ = <-responder.PostConfigChannel:
 				break
 			case _ = <-responder.GetScanResultsChannel:
+				break
+			case _ = <-responder.ResetCircuitBreakerChannel:
 				break
 			}
 		}

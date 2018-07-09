@@ -22,7 +22,8 @@ under the License.
 package docker
 
 import (
-	"testing"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var expected1 = `eyAidXNlcm5hbWUiOiAiYWRtaW4iLCAicGFzc3dvcmQiOiAiZXlKaGJHY2lPaUpTVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SnBjM01pT2lKcmRXSmxjbTVsZEdWekwzTmxjblpwWTJWaFkyTnZkVzUwSWl3aWEzVmlaWEp1WlhSbGN5NXBieTl6WlhKMmFXTmxZV05qYjNWdWRDOXVZVzFsYzNCaFkyVWlPaUppWkhNdGNHVnlZMlZ3ZEc5eUlpd2lhM1ZpWlhKdVpYUmxjeTVwYnk5elpYSjJhV05sWVdOamIzVnVkQzl6WldOeVpYUXVibUZ0WlNJNkluQmxjbU5sY0hSdmNpMXpZMkZ1Ym1WeUxYTmhMWFJ2YTJWdUxUWm1jM3AwSWl3aWEzVmlaWEp1WlhSbGN5NXBieTl6WlhKMmFXTmxZV05qYjNWdWRDOXpaWEoyYVdObExXRmpZMjkxYm5RdWJtRnRaU0k2SW5CbGNtTmxjSFJ2Y2kxelkyRnVibVZ5TFhOaElpd2lhM1ZpWlhKdVpYUmxjeTVwYnk5elpYSjJhV05sWVdOamIzVnVkQzl6WlhKMmFXTmxMV0ZqWTI5MWJuUXVkV2xrSWpvaU5EVTNOamxqTUdRdE1qRTRNUzB4TVdVNExUZzJaREl0TURZMk4yUTRaV1F3WXpoaElpd2ljM1ZpSWpvaWMzbHpkR1Z0T25ObGNuWnBZMlZoWTJOdmRXNTBPbUprY3kxd1pYSmpaWEIwYjNJNmNHVnlZMlZ3ZEc5eUxYTmpZVzV1WlhJdGMyRWlmUS5qLUY5cjZMQ2FwT2ZSSGlhdXV3UnZjaVFPWDZWZHNZWExmdUFTOVpiMWpUMEVnWGt3RzMxYkNSNXZUbDBTY2hxVlk5Vy00QkpNQ3lqOXcyQW9KcG12UW85eGxrU1d3ZkFwV1hIUmFPTVdMY0taQzlvcVVUcEduWm92QUtBOE54ZXJwZlM2d0FzanAtQm44SEpwZ3h3OUVfeTBrZ2ZOYWxhSWIxLUNQS2NIRjZ2aFBRMzFLNkVEc2ZCRTdGTnlja3JscGc4a2ZsRDlBWEQ0c0JQckk0SE11c1dHUmo4Q05jd0lFZEF2OFRXV3c3amVlVWh4bll0LUhBbWhkQUh0elktenRLNE1YZ1l6ME1ra2pUbHFfcjM1YmV4WC1XTGo2Y1A0NnFBYmY0ZWUzc1hOMWt6LTQ1UHhWaFM1VUhDLV9DOU9KX1lRM19GVm4zbU93Qm9JOGN4NUEiIH0=`
@@ -41,43 +42,38 @@ var expected2 = "eyAidXNlcm5hbWUiOiAiYWRtaW4iLCAicGFzc3dvcmQiOiAiYWJjMTIzZGVmNDU
 
 var expected3 = "eyAidXNlcm5hbWUiOiAiYWRtaW4iLCAicGFzc3dvcmQiOiAiYWJjMTIzZGVmNDU2c2RmamhzYWZka2xoYXNka2ZqbGhhc2xramhma2xhc2hma2phc2h2bnNkdnN2a2pzYWRoZmtzaGZrc2hmMzI0NjIzODk0NjIzOGtqc2RqZmtoc2tqZmhrYXNoZmtsYXNoZmthc2hma2poQUhEU0ZIREtKRkhEU0tKRkhEU0tGWUVSS0pIRFNGS0pESFNGS0hTREYiIH0="
 
-func TestEncoder(t *testing.T) {
-	username := "admin"
-	header := encodeAuthHeader(username, password1)
-	if header != expected1 {
-		t.Errorf("\ngot \n%s\nexpected \n%s", header, expected1)
-	}
-}
-
-func TestEncoderShortPassword(t *testing.T) {
-	header := encodeAuthHeader("admin", password2)
-	if header != expected2 {
-		t.Errorf("got %s, expected %s", header, expected2)
-	}
-}
-
-func TestEncoderMediumPassword(t *testing.T) {
-	header := encodeAuthHeader("admin", password3)
-	if header != expected3 {
-		t.Errorf("got %s, expected %s", header, expected3)
-	}
-}
-
 var data4 = `{ "username": "admin", "password": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJiZHMtcGVyY2VwdG9yIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6InBlcmNlcHRvci1zY2FubmVyLXNhLXRva2VuLWZtOWs4Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6InBlcmNlcHRvci1zY2FubmVyLXNhIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQudWlkIjoiN2VmOTNjNzktMjI0MC0xMWU4LWI1NTgtMDZlZGE4YzUwOGZhIiwic3ViIjoic3lzdGVtOnNlcnZpY2VhY2NvdW50OmJkcy1wZXJjZXB0b3I6cGVyY2VwdG9yLXNjYW5uZXItc2EifQ.Nh6ah_FIHSU2zd502dq-_gvEakf1OfdIN6TmarFHz5C05CSjPEfi4R96gjBDWkuynFFDyxFiddWbI9YjHR_HylS9kfelUP5s6fVjHywaNrKKgfmB9LzkU67LUochkIruLIyzVbbDV0NMwOaE4M1VV__ejn3TwJpyb0Q3l9dMcZDcbiENYxfRtNNQ4N_ccR51XkGOR0ySOneOZwCHgVE4mliDYtpPGenKtMd6dXMmE4sGfzAtxqqnSShGhbDp1BvjFxy9ZkbWjhUIRSXupJ4A4J4xtrS0lag4ngeRNNOlMa4HNjpgyjT5ZKnnSAqJS6McoBz-P3qOZTy13qkLRHv4BA" }`
 var password4 = `eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJiZHMtcGVyY2VwdG9yIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6InBlcmNlcHRvci1zY2FubmVyLXNhLXRva2VuLWZtOWs4Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6InBlcmNlcHRvci1zY2FubmVyLXNhIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQudWlkIjoiN2VmOTNjNzktMjI0MC0xMWU4LWI1NTgtMDZlZGE4YzUwOGZhIiwic3ViIjoic3lzdGVtOnNlcnZpY2VhY2NvdW50OmJkcy1wZXJjZXB0b3I6cGVyY2VwdG9yLXNjYW5uZXItc2EifQ.Nh6ah_FIHSU2zd502dq-_gvEakf1OfdIN6TmarFHz5C05CSjPEfi4R96gjBDWkuynFFDyxFiddWbI9YjHR_HylS9kfelUP5s6fVjHywaNrKKgfmB9LzkU67LUochkIruLIyzVbbDV0NMwOaE4M1VV__ejn3TwJpyb0Q3l9dMcZDcbiENYxfRtNNQ4N_ccR51XkGOR0ySOneOZwCHgVE4mliDYtpPGenKtMd6dXMmE4sGfzAtxqqnSShGhbDp1BvjFxy9ZkbWjhUIRSXupJ4A4J4xtrS0lag4ngeRNNOlMa4HNjpgyjT5ZKnnSAqJS6McoBz-P3qOZTy13qkLRHv4BA`
 
 var expected4 = `eyAidXNlcm5hbWUiOiAiYWRtaW4iLCAicGFzc3dvcmQiOiAiZXlKaGJHY2lPaUpTVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SnBjM01pT2lKcmRXSmxjbTVsZEdWekwzTmxjblpwWTJWaFkyTnZkVzUwSWl3aWEzVmlaWEp1WlhSbGN5NXBieTl6WlhKMmFXTmxZV05qYjNWdWRDOXVZVzFsYzNCaFkyVWlPaUppWkhNdGNHVnlZMlZ3ZEc5eUlpd2lhM1ZpWlhKdVpYUmxjeTVwYnk5elpYSjJhV05sWVdOamIzVnVkQzl6WldOeVpYUXVibUZ0WlNJNkluQmxjbU5sY0hSdmNpMXpZMkZ1Ym1WeUxYTmhMWFJ2YTJWdUxXWnRPV3M0SWl3aWEzVmlaWEp1WlhSbGN5NXBieTl6WlhKMmFXTmxZV05qYjNWdWRDOXpaWEoyYVdObExXRmpZMjkxYm5RdWJtRnRaU0k2SW5CbGNtTmxjSFJ2Y2kxelkyRnVibVZ5TFhOaElpd2lhM1ZpWlhKdVpYUmxjeTVwYnk5elpYSjJhV05sWVdOamIzVnVkQzl6WlhKMmFXTmxMV0ZqWTI5MWJuUXVkV2xrSWpvaU4yVm1PVE5qTnprdE1qSTBNQzB4TVdVNExXSTFOVGd0TURabFpHRTRZelV3T0daaElpd2ljM1ZpSWpvaWMzbHpkR1Z0T25ObGNuWnBZMlZoWTJOdmRXNTBPbUprY3kxd1pYSmpaWEIwYjNJNmNHVnlZMlZ3ZEc5eUxYTmpZVzV1WlhJdGMyRWlmUS5OaDZhaF9GSUhTVTJ6ZDUwMmRxLV9ndkVha2YxT2ZkSU42VG1hckZIejVDMDVDU2pQRWZpNFI5NmdqQkRXa3V5bkZGRHl4RmlkZFdiSTlZakhSX0h5bFM5a2ZlbFVQNXM2ZlZqSHl3YU5yS0tnZm1COUx6a1U2N0xVb2Noa0lydUxJeXpWYmJEVjBOTXdPYUU0TTFWVl9fZWpuM1R3SnB5YjBRM2w5ZE1jWkRjYmlFTll4ZlJ0Tk5RNE5fY2NSNTFYa0dPUjB5U09uZU9ad0NIZ1ZFNG1saURZdHBQR2VuS3RNZDZkWE1tRTRzR2Z6QXR4cXFuU1NoR2hiRHAxQnZqRnh5OVprYldqaFVJUlNYdXBKNEE0SjR4dHJTMGxhZzRuZ2VSTk5PbE1hNEhOanBneWpUNVpLbm5TQXFKUzZNY29Cei1QM3FPWlR5MTNxa0xSSHY0QkEiIH0=`
 
-func TestEncoderLongPassword4(t *testing.T) {
-	header := encodeAuthHeader("admin", password4)
-	if header != expected4 {
-		t.Errorf("got\n%s\nexpected\n%s\n", header, expected4)
-	}
+func RunHeaderEncoderTests() {
+	Describe("header encoder", func() {
+		It("should encode username, password1", func() {
+			username := "admin"
+			header := encodeAuthHeader(username, password1)
+			Expect(header).To(Equal(expected1))
+		})
 
-	header2 := base64Encode(data4)
-	if header2 != expected4 {
-		t.Errorf("got\n%s\nexpected\n%s", header2, expected4)
-	}
+		It("should encode a short password", func() {
+			header := encodeAuthHeader("admin", password2)
+			Expect(header).To(Equal(expected2))
+		})
+
+		It("should encode a medium password", func() {
+			header := encodeAuthHeader("admin", password3)
+			Expect(header).To(Equal(expected3))
+		})
+
+		It("should encode longer password", func() {
+			header := encodeAuthHeader("admin", password4)
+			Expect(header).To(Equal(expected4))
+
+			header2 := base64Encode(data4)
+			Expect(header2).To(Equal(expected4))
+		})
+
+	})
 }
 
 // func TestDockerEncoder(t *testing.T) {
