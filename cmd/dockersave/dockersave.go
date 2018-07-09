@@ -26,8 +26,10 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"strings"
 
@@ -50,6 +52,7 @@ func (i *image) DockerTarFilePath() string {
 }
 
 func main() {
+	log.SetLevel(log.DebugLevel)
 	ip := docker.NewImagePuller([]docker.RegistryAuth{})
 	// 1. export image
 	path := os.Args[1]
@@ -62,7 +65,10 @@ func main() {
 		}
 	}
 	// 2. extract tar
-	processFile(path, "extract-")
+	//processFile(path, "extract-")
+	untarLocation := "extract"
+	extractTarFile(path, untarLocation)
+	processExtractedTar(untarLocation)
 	// 3. run sha over everything
 	hasher := sha256.New()
 	f, err := os.Open(path)
@@ -77,6 +83,96 @@ func main() {
 	sha := hex.EncodeToString(shaBytes)
 	os.Stdout.WriteString(sha + "\n")
 	fmt.Println(sha)
+}
+
+func extractTarFile(source string, dir string) {
+	log.Debugf("extract %s", source)
+	f, err := os.Open(source)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	tarReader := tar.NewReader(f)
+
+	for i := 0; ; i++ {
+		header, err := tarReader.Next()
+
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			panic(err)
+		}
+
+		// log.Infof("got: %+v", header)
+		if header.Typeflag == tar.TypeDir {
+			log.Debugf("dir %s", header.Name)
+			err := os.MkdirAll(fmt.Sprintf("%s/%s", dir, header.Name), 0755)
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			log.Debugf("file %s", header.Name)
+			file, err := os.Create(fmt.Sprintf("%s/%s", dir, header.Name))
+			if err != nil {
+				panic(err)
+			}
+			defer file.Close()
+			if _, err := io.Copy(file, tarReader); err != nil {
+				panic(err)
+			}
+		}
+	}
+}
+
+type manifestImage struct {
+	Config string
+	Layers []string
+}
+
+func processExtractedTar(dir string) {
+	// 1. read manifest.json
+	bytes, err := ioutil.ReadFile(fmt.Sprintf("%s/manifest.json", dir))
+	if err != nil {
+		panic(err)
+	}
+	var images []manifestImage
+	err = json.Unmarshal(bytes, &images)
+	if err != nil {
+		panic(err)
+	}
+	log.Debugf("parsed json: %+v", images)
+	// 2. verify that there's only 1 image
+	if len(images) != 1 {
+		panic(fmt.Errorf("expected 1 image, found %d", len(images)))
+	}
+	// 3. go through json[0].Layers and calculate shas from files
+	shas := map[string]string{} // map of sha to filename
+	for _, layerId := range images[0].Layers {
+		layerFileName := dir + "/" + layerId
+		layerFile, err := os.Open(layerFileName)
+		if err != nil {
+			panic(err)
+		}
+		defer layerFile.Close()
+		hasher := sha256.New()
+		// hasher := sha512.New512_224() // TODO which algorithm?
+		if _, err := io.Copy(hasher, layerFile); err != nil {
+			panic(err)
+		}
+		shaBytes := hasher.Sum(nil)
+		sha := hex.EncodeToString(shaBytes)
+		log.Infof("sha for %s: %s\n", layerFileName, sha)
+		shas[sha] = layerFileName
+	}
+	shaBytes, err := json.MarshalIndent(shas, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("%s\n", string(shaBytes))
+	// 4. scan files
 }
 
 func processFile(source string, name string) {
