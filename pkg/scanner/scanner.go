@@ -60,7 +60,9 @@ func NewScanner(config *Config) (*Scanner, error) {
 		return nil, err
 	}
 
-	scanClientInfo, err := downloadScanClient(
+	cliRootPath := "/tmp/scanner"
+	scanClientInfo, err := DownloadScanClient(
+		cliRootPath,
 		config.HubHost,
 		config.HubUser,
 		hubPassword,

@@ -32,8 +32,11 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/blackducksoftware/perceptor-scanner/pkg/common"
 	"github.com/blackducksoftware/perceptor-scanner/pkg/docker"
+	scanner "github.com/blackducksoftware/perceptor-scanner/pkg/scanner"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -132,6 +135,12 @@ type manifestImage struct {
 	Layers []string
 }
 
+type mockImagePuller struct{}
+
+func (mip *mockImagePuller) PullImage(image *common.Image) error {
+	return nil
+}
+
 func processExtractedTar(dir string) {
 	// 1. read manifest.json
 	bytes, err := ioutil.ReadFile(fmt.Sprintf("%s/manifest.json", dir))
@@ -173,6 +182,30 @@ func processExtractedTar(dir string) {
 	}
 	fmt.Printf("%s\n", string(shaBytes))
 	// 4. scan files
+	cliRootPath := "./scanner"
+	hubHost := ""
+	hubUser := ""
+	hubPassword := ""
+	port := 443
+	scanClientInfo, err := scanner.DownloadScanClient(cliRootPath, hubHost, hubUser, hubPassword, port, 120*time.Second)
+	if err != nil {
+		panic(err)
+	}
+	err = os.Setenv("BD_HUB_PASSWORD", hubPassword)
+	if err != nil {
+		panic(err)
+	}
+	scanClient, err := scanner.NewHubScanClient(hubHost, hubUser, port, scanClientInfo, &mockImagePuller{})
+	if err != nil {
+		panic(err)
+	}
+	for sha, layerFilename := range shas {
+		job := scanner.NewScanJob("um? not needed?", "um???", sha, layerFilename, sha)
+		err := scanClient.Scan(*job)
+		if err != nil {
+			panic(err)
+		}
+	}
 }
 
 func processFile(source string, name string) {

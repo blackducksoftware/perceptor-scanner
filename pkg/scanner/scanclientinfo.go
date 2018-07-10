@@ -28,6 +28,10 @@ type scanClientInfo struct {
 	scanClientRootPath string
 }
 
+func (sci *scanClientInfo) scanCliZipPath() string {
+	return fmt.Sprintf("%s/scanclient.zip", sci.scanClientRootPath)
+}
+
 func (sci *scanClientInfo) scanCliShPath() string {
 	return fmt.Sprintf("%s/scan.cli-%s/bin/scan.cli.sh", sci.scanClientRootPath, sci.hubVersion)
 }
