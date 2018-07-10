@@ -122,6 +122,7 @@ func (sm *ScannerManager) requestAndRunScanJob() {
 	err = sm.scanner.ScanLayersInDockerSaveTarFile(apiImage)
 	errorString := ""
 	if err != nil {
+		log.Errorf("scan error: %s", err.Error())
 		errorString = err.Error()
 	}
 
