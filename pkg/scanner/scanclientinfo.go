@@ -23,27 +23,31 @@ package scanner
 
 import "fmt"
 
-type scanClientInfo struct {
-	hubVersion         string
-	scanClientRootPath string
+type ScanClientInfo struct {
+	HubVersion         string
+	ScanClientRootPath string
 }
 
-func (sci *scanClientInfo) scanCliZipPath() string {
-	return fmt.Sprintf("%s/scanclient.zip", sci.scanClientRootPath)
+func (sci *ScanClientInfo) scanCliZipPath() string {
+	return fmt.Sprintf("%s/scanclient.zip", sci.ScanClientRootPath)
 }
 
-func (sci *scanClientInfo) scanCliShPath() string {
-	return fmt.Sprintf("%s/scan.cli-%s/bin/scan.cli.sh", sci.scanClientRootPath, sci.hubVersion)
+func (sci *ScanClientInfo) scanCliShPath() string {
+	return fmt.Sprintf("%s/scan.cli-%s/bin/scan.cli.sh", sci.ScanClientRootPath, sci.HubVersion)
 }
 
-func (sci *scanClientInfo) scanCliImplJarPath() string {
-	return fmt.Sprintf("%s/scan.cli-%s/lib/cache/scan.cli.impl-standalone.jar", sci.scanClientRootPath, sci.hubVersion)
+func (sci *ScanClientInfo) scanCliImplJarPath() string {
+	return fmt.Sprintf("%s/scan.cli-%s/lib/cache/scan.cli.impl-standalone.jar", sci.ScanClientRootPath, sci.HubVersion)
 }
 
-func (sci *scanClientInfo) scanCliJarPath() string {
-	return fmt.Sprintf("%s/scan.cli-%s/lib/scan.cli-%s-standalone.jar", sci.scanClientRootPath, sci.hubVersion, sci.hubVersion)
+func (sci *ScanClientInfo) scanCliJarPath() string {
+	return fmt.Sprintf("%s/scan.cli-%s/lib/scan.cli-%s-standalone.jar", sci.ScanClientRootPath, sci.HubVersion, sci.HubVersion)
 }
 
-func (sci *scanClientInfo) scanCliJavaPath() string {
-	return fmt.Sprintf("%s/scan.cli-%s/jre/bin/", sci.scanClientRootPath, sci.hubVersion)
+func (sci *ScanClientInfo) scanCliJavaPath() string {
+	return fmt.Sprintf("%s/scan.cli-%s/jre/bin/", sci.ScanClientRootPath, sci.HubVersion)
+}
+
+func (sci *ScanClientInfo) MacScanCliJavaPath() string {
+	return fmt.Sprintf("%s/scan.cli-%s/jre/Contents/Home/bin/", sci.ScanClientRootPath, sci.HubVersion)
 }

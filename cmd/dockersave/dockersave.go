@@ -32,9 +32,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
-	"time"
 
-	"github.com/blackducksoftware/perceptor-scanner/pkg/common"
 	"github.com/blackducksoftware/perceptor-scanner/pkg/docker"
 	scanner "github.com/blackducksoftware/perceptor-scanner/pkg/scanner"
 
@@ -135,12 +133,6 @@ type manifestImage struct {
 	Layers []string
 }
 
-type mockImagePuller struct{}
-
-func (mip *mockImagePuller) PullImage(image *common.Image) error {
-	return nil
-}
-
 func processExtractedTar(dir string) {
 	// 1. read manifest.json
 	bytes, err := ioutil.ReadFile(fmt.Sprintf("%s/manifest.json", dir))
@@ -165,12 +157,13 @@ func processExtractedTar(dir string) {
 		if err != nil {
 			panic(err)
 		}
-		defer layerFile.Close()
+		// defer layerFile.Close()
 		hasher := sha256.New()
 		// hasher := sha512.New512_224() // TODO which algorithm?
 		if _, err := io.Copy(hasher, layerFile); err != nil {
 			panic(err)
 		}
+		layerFile.Close()
 		shaBytes := hasher.Sum(nil)
 		sha := hex.EncodeToString(shaBytes)
 		log.Infof("sha for %s: %s\n", layerFileName, sha)
@@ -182,26 +175,25 @@ func processExtractedTar(dir string) {
 	}
 	fmt.Printf("%s\n", string(shaBytes))
 	// 4. scan files
-	cliRootPath := "./scanner"
-	hubHost := ""
-	hubUser := ""
-	hubPassword := ""
+	//	cliRootPath := "./scanner"
+	hubHost := "104.154.164.39"
+	hubUser := "sysadmin"
+	hubPassword := "duck"
 	port := 443
-	scanClientInfo, err := scanner.DownloadScanClient(cliRootPath, hubHost, hubUser, hubPassword, port, 120*time.Second)
-	if err != nil {
-		panic(err)
+	cliInfo := &scanner.ScanClientInfo{
+		HubVersion:         "4.7.0",
+		ScanClientRootPath: "/Users/mfenwick/projects/go-workspace/src/github.com/blackducksoftware/perceptor-scanner/cmd/dockersave/scanner",
 	}
-	err = os.Setenv("BD_HUB_PASSWORD", hubPassword)
-	if err != nil {
-		panic(err)
-	}
-	scanClient, err := scanner.NewHubScanClient(hubHost, hubUser, port, scanClientInfo, &mockImagePuller{})
+	// cliInfo, err := scanner.DownloadScanClient(cliRootPath, hubHost, hubUser, hubPassword, port, 120*time.Second)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	scanClient, err := scanner.NewHubScanClient2(hubHost, hubUser, hubPassword, port, cliInfo)
 	if err != nil {
 		panic(err)
 	}
 	for sha, layerFilename := range shas {
-		job := scanner.NewScanJob("um? not needed?", "um???", sha, layerFilename, sha)
-		err := scanClient.Scan(*job)
+		err := scanClient.Scan(layerFilename, sha, sha, sha)
 		if err != nil {
 			panic(err)
 		}

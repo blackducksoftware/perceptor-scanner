@@ -30,7 +30,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func DownloadScanClient(cliRootPath string, hubHost string, hubUser string, hubPassword string, hubPort int, timeout time.Duration) (*scanClientInfo, error) {
+func DownloadScanClient(cliRootPath string, hubHost string, hubUser string, hubPassword string, hubPort int, timeout time.Duration) (*ScanClientInfo, error) {
 	// 1. instantiate hub client
 	hubBaseURL := fmt.Sprintf("https://%s:%d", hubHost, hubPort)
 	hubClient, err := hubclient.NewWithSession(hubBaseURL, hubclient.HubClientDebugTimings, timeout)
@@ -59,12 +59,12 @@ func DownloadScanClient(cliRootPath string, hubHost string, hubUser string, hubP
 
 	log.Infof("got hub version: %s", currentVersion.Version)
 
-	cliInfo := &scanClientInfo{hubVersion: currentVersion.Version, scanClientRootPath: cliRootPath}
+	cliInfo := &ScanClientInfo{HubVersion: currentVersion.Version, ScanClientRootPath: cliRootPath}
 
 	// 4. create directory
-	err = os.MkdirAll(cliInfo.scanClientRootPath, 0755)
+	err = os.MkdirAll(cliInfo.ScanClientRootPath, 0755)
 	if err != nil {
-		log.Errorf("unable to make dir %s: %s", cliInfo.scanClientRootPath, err.Error())
+		log.Errorf("unable to make dir %s: %s", cliInfo.ScanClientRootPath, err.Error())
 		return nil, err
 	}
 
@@ -78,12 +78,12 @@ func DownloadScanClient(cliRootPath string, hubHost string, hubUser string, hubP
 	log.Infof("successfully downloaded scan client to %s", cliInfo.scanCliZipPath())
 
 	// 6. unzip scan client
-	err = unzip(cliInfo.scanCliZipPath(), cliInfo.scanClientRootPath)
+	err = unzip(cliInfo.scanCliZipPath(), cliInfo.ScanClientRootPath)
 	if err != nil {
 		log.Errorf("unable to unzip %s: %s", cliInfo.scanCliZipPath(), err.Error())
 		return nil, err
 	}
-	log.Infof("successfully unzipped from %s to %s", cliInfo.scanCliZipPath(), cliInfo.scanClientRootPath)
+	log.Infof("successfully unzipped from %s to %s", cliInfo.scanCliZipPath(), cliInfo.ScanClientRootPath)
 
 	// 7. we're done
 	return cliInfo, nil

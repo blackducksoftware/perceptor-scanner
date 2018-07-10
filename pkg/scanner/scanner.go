@@ -30,6 +30,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/blackducksoftware/perceptor-scanner/pkg/common"
 	"github.com/blackducksoftware/perceptor/pkg/api"
 	log "github.com/sirupsen/logrus"
 )
@@ -41,6 +42,7 @@ const (
 
 type Scanner struct {
 	scanClient    ScanClientInterface
+	imagePuller   ImagePullerInterface
 	httpClient    *http.Client
 	perceptorHost string
 	perceptorPort int
@@ -52,12 +54,6 @@ func NewScanner(config *Config) (*Scanner, error) {
 	hubPassword, ok := os.LookupEnv(config.HubUserPasswordEnvVar)
 	if !ok {
 		return nil, fmt.Errorf("unable to get Hub password: environment variable %s not set", config.HubUserPasswordEnvVar)
-	}
-
-	err := os.Setenv("BD_HUB_PASSWORD", hubPassword)
-	if err != nil {
-		log.Errorf("unable to set BD_HUB_PASSWORD environment variable: %s", err.Error())
-		return nil, err
 	}
 
 	cliRootPath := "/tmp/scanner"
@@ -79,9 +75,9 @@ func NewScanner(config *Config) (*Scanner, error) {
 	scanClient, err := NewHubScanClient(
 		config.HubHost,
 		config.HubUser,
+		hubPassword,
 		config.HubPort,
-		scanClientInfo,
-		imagePuller)
+		scanClientInfo)
 	if err != nil {
 		log.Errorf("unable to instantiate hub scan client: %s", err.Error())
 		return nil, err
@@ -91,6 +87,7 @@ func NewScanner(config *Config) (*Scanner, error) {
 
 	scanner := Scanner{
 		scanClient:    scanClient,
+		imagePuller:   imagePuller,
 		httpClient:    httpClient,
 		perceptorHost: config.PerceptorHost,
 		perceptorPort: config.PerceptorPort}
@@ -111,30 +108,47 @@ func (scanner *Scanner) StartRequestingScanJobs() {
 
 func (scanner *Scanner) requestAndRunScanJob() {
 	log.Debug("requesting scan job")
-	image, err := scanner.requestScanJob()
+	apiImage, err := scanner.requestScanJob()
 	if err != nil {
 		log.Errorf("unable to request scan job: %s", err.Error())
 		return
 	}
-	if image == nil {
+	if apiImage == nil {
 		log.Debug("requested scan job, got nil")
 		return
 	}
 
-	log.Infof("processing scan job %+v", image)
+	log.Infof("processing scan job %+v", apiImage)
 
-	job := NewScanJob(image.PullSpec, image.Sha, image.HubProjectName, image.HubProjectVersionName, image.HubScanName)
-	err = scanner.scanClient.Scan(*job)
+	image := &common.Image{PullSpec: apiImage.PullSpec}
+	err = scanner.imagePuller.PullImage(image)
 	errorString := ""
-	if err != nil {
+	if err == nil {
+		err = scanner.scanClient.Scan(image.DockerTarFilePath(), apiImage.HubProjectName, apiImage.HubProjectVersionName, apiImage.HubScanName)
+		if err != nil {
+			errorString = err.Error()
+		}
+	} else {
 		errorString = err.Error()
 	}
 
-	finishedJob := api.FinishedScanClientJob{Err: errorString, ImageSpec: *image}
+	cleanUpTarFile(image.DockerTarFilePath())
+
+	finishedJob := api.FinishedScanClientJob{Err: errorString, ImageSpec: *apiImage}
 	log.Infof("about to finish job, going to send over %+v", finishedJob)
 	err = scanner.finishScan(finishedJob)
 	if err != nil {
 		log.Errorf("unable to finish scan job: %s", err.Error())
+	}
+}
+
+func cleanUpTarFile(path string) {
+	err := os.Remove(path)
+	recordCleanUpTarFile(err == nil)
+	if err != nil {
+		log.Errorf("unable to remove file %s: %s", path, err.Error())
+	} else {
+		log.Infof("successfully cleaned up file %s", path)
 	}
 }
 
