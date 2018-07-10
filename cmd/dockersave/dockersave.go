@@ -188,7 +188,7 @@ func processExtractedTar(dir string) {
 	// if err != nil {
 	// 	panic(err)
 	// }
-	scanClient, err := scanner.NewHubScanClient2(hubHost, hubUser, hubPassword, port, cliInfo)
+	scanClient, err := scanner.NewHubScanClient(hubHost, hubUser, hubPassword, port, cliInfo)
 	if err != nil {
 		panic(err)
 	}
