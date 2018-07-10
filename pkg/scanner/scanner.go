@@ -40,7 +40,7 @@ const (
 	imageFacadeBaseURL  = "http://localhost"
 )
 
-type Scanner struct {
+type ScannerManager struct {
 	scanClient    ScanClientInterface
 	imagePuller   ImagePullerInterface
 	httpClient    *http.Client
@@ -48,8 +48,8 @@ type Scanner struct {
 	perceptorPort int
 }
 
-func NewScanner(config *Config) (*Scanner, error) {
-	log.Infof("instantiating Scanner with config %+v", config)
+func NewScannerManager(config *Config) (*ScannerManager, error) {
+	log.Infof("instantiating ScannerManager with config %+v", config)
 
 	hubPassword, ok := os.LookupEnv(config.HubUserPasswordEnvVar)
 	if !ok {
@@ -85,7 +85,7 @@ func NewScanner(config *Config) (*Scanner, error) {
 
 	httpClient := &http.Client{Timeout: 5 * time.Second}
 
-	scanner := Scanner{
+	scanner := ScannerManager{
 		scanClient:    scanClient,
 		imagePuller:   imagePuller,
 		httpClient:    httpClient,
@@ -96,7 +96,7 @@ func NewScanner(config *Config) (*Scanner, error) {
 }
 
 // StartRequestingScanJobs will start asking for work
-func (scanner *Scanner) StartRequestingScanJobs() {
+func (scanner *ScannerManager) StartRequestingScanJobs() {
 	log.Infof("starting to request scan jobs")
 	go func() {
 		for {
@@ -106,7 +106,7 @@ func (scanner *Scanner) StartRequestingScanJobs() {
 	}()
 }
 
-func (scanner *Scanner) requestAndRunScanJob() {
+func (scanner *ScannerManager) requestAndRunScanJob() {
 	log.Debug("requesting scan job")
 	apiImage, err := scanner.requestScanJob()
 	if err != nil {
@@ -152,7 +152,7 @@ func cleanUpTarFile(path string) {
 	}
 }
 
-func (scanner *Scanner) requestScanJob() (*api.ImageSpec, error) {
+func (scanner *ScannerManager) requestScanJob() (*api.ImageSpec, error) {
 	nextImageURL := scanner.buildURL(api.NextImagePath)
 	resp, err := scanner.httpClient.Post(nextImageURL, "", bytes.NewBuffer([]byte{}))
 
@@ -194,7 +194,7 @@ func (scanner *Scanner) requestScanJob() (*api.ImageSpec, error) {
 	return nextImage.ImageSpec, nil
 }
 
-func (scanner *Scanner) finishScan(results api.FinishedScanClientJob) error {
+func (scanner *ScannerManager) finishScan(results api.FinishedScanClientJob) error {
 	finishedScanURL := scanner.buildURL(api.FinishedScanPath)
 	jsonBytes, err := json.Marshal(results)
 	if err != nil {
@@ -226,6 +226,6 @@ func (scanner *Scanner) finishScan(results api.FinishedScanClientJob) error {
 	}
 }
 
-func (scanner *Scanner) buildURL(path string) string {
+func (scanner *ScannerManager) buildURL(path string) string {
 	return fmt.Sprintf("http://%s:%d/%s", scanner.perceptorHost, scanner.perceptorPort, path)
 }
