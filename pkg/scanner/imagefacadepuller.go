@@ -31,7 +31,7 @@ import (
 
 	"github.com/blackducksoftware/perceptor-scanner/pkg/api"
 	"github.com/blackducksoftware/perceptor-scanner/pkg/common"
-	"github.com/prometheus/common/log"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
