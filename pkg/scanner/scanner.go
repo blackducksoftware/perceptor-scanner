@@ -22,210 +22,177 @@ under the License.
 package scanner
 
 import (
-	"bytes"
+	"archive/tar"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
-	"net/http"
 	"os"
-	"time"
+	"strings"
 
 	"github.com/blackducksoftware/perceptor-scanner/pkg/common"
 	"github.com/blackducksoftware/perceptor/pkg/api"
-	log "github.com/sirupsen/logrus"
+	"github.com/prometheus/common/log"
 )
 
-const (
-	requestScanJobPause = 20 * time.Second
-	imageFacadeBaseURL  = "http://localhost"
-)
+// TODO eventually, this will need to check whether layers have been scanned
+// before scanning them.  But for now, let's just scan everything.
 
-type ScannerManager struct {
-	scanClient    ScanClientInterface
-	imagePuller   ImagePullerInterface
-	httpClient    *http.Client
-	perceptorHost string
-	perceptorPort int
+// Scanner ......
+type Scanner struct {
+	imagePuller ImagePullerInterface
+	scanClient  ScanClientInterface
 }
 
-func NewScannerManager(config *Config) (*ScannerManager, error) {
-	log.Infof("instantiating ScannerManager with config %+v", config)
-
-	hubPassword, ok := os.LookupEnv(config.HubUserPasswordEnvVar)
-	if !ok {
-		return nil, fmt.Errorf("unable to get Hub password: environment variable %s not set", config.HubUserPasswordEnvVar)
-	}
-
-	cliRootPath := "/tmp/scanner"
-	scanClientInfo, err := DownloadScanClient(
-		cliRootPath,
-		config.HubHost,
-		config.HubUser,
-		hubPassword,
-		config.HubPort,
-		time.Duration(config.HubClientTimeoutSeconds)*time.Second)
-	if err != nil {
-		log.Errorf("unable to download scan client: %s", err.Error())
-		return nil, err
-	}
-
-	log.Infof("instantiating scanner with hub %s, user %s", config.HubHost, config.HubUser)
-
-	imagePuller := NewImageFacadePuller(imageFacadeBaseURL, config.ImageFacadePort)
-	scanClient, err := NewHubScanClient(
-		config.HubHost,
-		config.HubUser,
-		hubPassword,
-		config.HubPort,
-		scanClientInfo)
-	if err != nil {
-		log.Errorf("unable to instantiate hub scan client: %s", err.Error())
-		return nil, err
-	}
-
-	httpClient := &http.Client{Timeout: 5 * time.Second}
-
-	scanner := ScannerManager{
-		scanClient:    scanClient,
-		imagePuller:   imagePuller,
-		httpClient:    httpClient,
-		perceptorHost: config.PerceptorHost,
-		perceptorPort: config.PerceptorPort}
-
-	return &scanner, nil
+// NewScanner .....
+func NewScanner(imagePuller ImagePullerInterface, scanClient ScanClientInterface) *Scanner {
+	return &Scanner{imagePuller: imagePuller, scanClient: scanClient}
 }
 
-// StartRequestingScanJobs will start asking for work
-func (scanner *ScannerManager) StartRequestingScanJobs() {
-	log.Infof("starting to request scan jobs")
-	go func() {
-		for {
-			time.Sleep(requestScanJobPause)
-			scanner.requestAndRunScanJob()
-		}
-	}()
-}
-
-func (scanner *ScannerManager) requestAndRunScanJob() {
-	log.Debug("requesting scan job")
-	apiImage, err := scanner.requestScanJob()
-	if err != nil {
-		log.Errorf("unable to request scan job: %s", err.Error())
-		return
-	}
-	if apiImage == nil {
-		log.Debug("requested scan job, got nil")
-		return
-	}
-
-	log.Infof("processing scan job %+v", apiImage)
-
+// ScanFullDockerImage is the 2.0 functionality
+func (scanner *Scanner) ScanFullDockerImage(apiImage *api.ImageSpec) error {
 	image := &common.Image{PullSpec: apiImage.PullSpec}
-	err = scanner.imagePuller.PullImage(image)
-	errorString := ""
-	if err == nil {
-		err = scanner.scanClient.Scan(image.DockerTarFilePath(), apiImage.HubProjectName, apiImage.HubProjectVersionName, apiImage.HubScanName)
-		if err != nil {
-			errorString = err.Error()
-		}
-	} else {
-		errorString = err.Error()
-	}
-
-	cleanUpTarFile(image.DockerTarFilePath())
-
-	finishedJob := api.FinishedScanClientJob{Err: errorString, ImageSpec: *apiImage}
-	log.Infof("about to finish job, going to send over %+v", finishedJob)
-	err = scanner.finishScan(finishedJob)
+	err := scanner.imagePuller.PullImage(image)
 	if err != nil {
-		log.Errorf("unable to finish scan job: %s", err.Error())
+		return err
 	}
+	defer cleanUpFile(image.DockerTarFilePath())
+	return scanner.scanClient.Scan(image.DockerTarFilePath(), apiImage.HubProjectName, apiImage.HubProjectVersionName, apiImage.HubScanName)
 }
 
-func cleanUpTarFile(path string) {
+// ScanLayersInDockerSaveTarFile avoids repeatedly scanning the same layers
+func (scanner *Scanner) ScanLayersInDockerSaveTarFile(apiImage *api.ImageSpec) error {
+	image := &common.Image{PullSpec: apiImage.PullSpec}
+	// 1. pull image
+	err := scanner.imagePuller.PullImage(image)
+	if err != nil {
+		return err
+	}
+	defer cleanUpFile(image.DockerTarFilePath())
+	// 2. extract full image
+	extractedDir := "/var/images/extracted" + strings.Replace(image.PullSpec, "/", "_", -1)
+	err = extractTarFile(image.DockerTarFilePath(), extractedDir)
+	if err != nil {
+		return err
+	}
+	defer cleanUpFile(extractedDir)
+	// 3. read manifest.json to find the layers and calculate the hashes
+	shaToFilename, err := buildLayerHashes(extractedDir)
+	if err != nil {
+		return err
+	}
+	// 4. TODO check whether the layers need to be scanned
+
+	// 5. scan the layers
+	// TODO how should error handling work?
+	// retry?  abort everything?  partial success?
+	errors := []error{}
+	for sha, filename := range shaToFilename {
+		err = scanner.ScanFile(filename, sha, sha, sha)
+		if err != nil {
+			errors = append(errors, err)
+			log.Errorf("unable to scan file: %s", err.Error())
+		}
+	}
+
+	// TODO this is kind of a hack, fix it
+	if len(errors) > 0 {
+		return fmt.Errorf("scan errors: %+v", errors)
+	}
+
+	// success!
+	return nil
+}
+
+func (scanner *Scanner) ScanFile(path string, hubProjectName string, hubVersionName string, hubScanName string) error {
+	return scanner.scanClient.Scan(path, hubProjectName, hubVersionName, hubScanName)
+}
+
+func buildLayerHashes(extractedDockerTarFileDir string) (map[string]string, error) {
+	// 1. read manifest.json
+	bytes, err := ioutil.ReadFile(fmt.Sprintf("%s/manifest.json", extractedDockerTarFileDir))
+	if err != nil {
+		return nil, err
+	}
+	var images []manifestImage
+	err = json.Unmarshal(bytes, &images)
+	if err != nil {
+		return nil, err
+	}
+	log.Debugf("parsed json: %+v", images)
+	// 2. verify that there's only 1 image
+	if len(images) != 1 {
+		return nil, fmt.Errorf("expected 1 image, found %d", len(images))
+	}
+	// 3. go through json[0].Layers and calculate shas from files
+	shaToFilename := map[string]string{} // map of sha to filename
+	for _, layerId := range images[0].Layers {
+		layerFileName := extractedDockerTarFileDir + "/" + layerId
+		layerFile, err := os.Open(layerFileName)
+		if err != nil {
+			return nil, err
+		}
+		// defer layerFile.Close()
+		hasher := sha256.New()
+		// hasher := sha512.New512_224() // TODO which algorithm?
+		if _, err := io.Copy(hasher, layerFile); err != nil {
+			return nil, err
+		}
+		layerFile.Close()
+		shaBytes := hasher.Sum(nil)
+		sha := hex.EncodeToString(shaBytes)
+		log.Infof("sha for %s: %s\n", layerFileName, sha)
+		shaToFilename[sha] = layerFileName
+	}
+	return shaToFilename, nil
+}
+
+func extractTarFile(source string, dir string) error {
+	log.Debugf("extract %s", source)
+	f, err := os.Open(source)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	tarReader := tar.NewReader(f)
+
+	for i := 0; ; i++ {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return err
+		}
+
+		log.Debugf("extractTarFile found a file: %+v", header)
+		if header.Typeflag == tar.TypeDir {
+			err := os.MkdirAll(fmt.Sprintf("%s/%s", dir, header.Name), 0755)
+			if err != nil {
+				return err
+			}
+		} else {
+			file, err := os.Create(fmt.Sprintf("%s/%s", dir, header.Name))
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+			if _, err := io.Copy(file, tarReader); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func cleanUpFile(path string) {
 	err := os.Remove(path)
-	recordCleanUpTarFile(err == nil)
+	recordCleanUpFile(err == nil)
 	if err != nil {
 		log.Errorf("unable to remove file %s: %s", path, err.Error())
 	} else {
 		log.Infof("successfully cleaned up file %s", path)
 	}
-}
-
-func (scanner *ScannerManager) requestScanJob() (*api.ImageSpec, error) {
-	nextImageURL := scanner.buildURL(api.NextImagePath)
-	resp, err := scanner.httpClient.Post(nextImageURL, "", bytes.NewBuffer([]byte{}))
-
-	if err != nil {
-		recordScannerError("unable to POST get next image")
-		log.Errorf("unable to POST to %s: %s", nextImageURL, err.Error())
-		return nil, err
-	}
-
-	recordHTTPStats(api.NextImagePath, resp.StatusCode)
-
-	if resp.StatusCode != 200 {
-		err = fmt.Errorf("http POST request to %s failed with status code %d", nextImageURL, resp.StatusCode)
-		log.Error(err.Error())
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		recordScannerError("unable to read response body")
-		log.Errorf("unable to read response body from %s: %s", nextImageURL, err.Error())
-		return nil, err
-	}
-
-	var nextImage api.NextImage
-	err = json.Unmarshal(bodyBytes, &nextImage)
-	if err != nil {
-		recordScannerError("unmarshaling JSON body failed")
-		log.Errorf("unmarshaling JSON body bytes %s failed for URL %s: %s", string(bodyBytes), nextImageURL, err.Error())
-		return nil, err
-	}
-
-	imageSha := "null"
-	if nextImage.ImageSpec != nil {
-		imageSha = nextImage.ImageSpec.Sha
-	}
-	log.Debugf("http POST request to %s succeeded, got image %s", nextImageURL, imageSha)
-	return nextImage.ImageSpec, nil
-}
-
-func (scanner *ScannerManager) finishScan(results api.FinishedScanClientJob) error {
-	finishedScanURL := scanner.buildURL(api.FinishedScanPath)
-	jsonBytes, err := json.Marshal(results)
-	if err != nil {
-		recordScannerError("unable to marshal json for finished job")
-		log.Errorf("unable to marshal json for finished job: %s", err.Error())
-		return err
-	}
-
-	log.Debugf("about to send over json text for finishing a job: %s", string(jsonBytes))
-	// TODO change to exponential backoff or something ... but don't loop indefinitely in production
-	for {
-		resp, err := scanner.httpClient.Post(finishedScanURL, "application/json", bytes.NewBuffer(jsonBytes))
-		if err != nil {
-			recordScannerError("unable to POST finished job")
-			log.Errorf("unable to POST to %s: %s", finishedScanURL, err.Error())
-			continue
-		}
-
-		recordHTTPStats(api.FinishedScanPath, resp.StatusCode)
-
-		defer resp.Body.Close()
-		if resp.StatusCode != 200 {
-			log.Errorf("POST to %s failed with status code %d", finishedScanURL, resp.StatusCode)
-			continue
-		}
-
-		log.Infof("POST to %s succeeded", finishedScanURL)
-		return nil
-	}
-}
-
-func (scanner *ScannerManager) buildURL(path string) string {
-	return fmt.Sprintf("http://%s:%d/%s", scanner.perceptorHost, scanner.perceptorPort, path)
 }

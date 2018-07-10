@@ -21,21 +21,7 @@ under the License.
 
 package scanner
 
-import (
-	"testing"
-	"time"
-
-	log "github.com/sirupsen/logrus"
-)
-
-func TestMetrics(t *testing.T) {
-	recordScannerError("blar")
-	recordCleanUpFile(false)
-	recordScanClientDuration(time.Now().Sub(time.Now()), true)
-	recordTotalScannerDuration(time.Now().Sub(time.Now()), false)
-	recordHTTPStats("getnextimage", 200)
-
-	message := "finished test case"
-	t.Log(message)
-	log.Info(message)
+type manifestImage struct {
+	Config string
+	Layers []string
 }
