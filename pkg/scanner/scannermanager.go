@@ -83,7 +83,7 @@ func NewScannerManager(config *Config) (*ScannerManager, error) {
 
 	httpClient := &http.Client{Timeout: 5 * time.Second}
 
-	scanner := NewScanner(imagePuller, scanClient)
+	scanner := NewScanner(imagePuller, scanClient, config.ImageDirectory)
 
 	scannerManager := ScannerManager{
 		scanner:       scanner,

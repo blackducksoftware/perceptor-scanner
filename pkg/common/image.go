@@ -27,7 +27,12 @@ import (
 )
 
 type Image struct {
-	PullSpec string
+	Directory string
+	PullSpec  string
+}
+
+func NewImage(directory string, pullSpec string) *Image {
+	return &Image{Directory: directory, PullSpec: pullSpec}
 }
 
 func (image *Image) DockerPullSpec() string {
@@ -35,6 +40,5 @@ func (image *Image) DockerPullSpec() string {
 }
 
 func (image *Image) DockerTarFilePath() string {
-	filePath := strings.Replace(image.PullSpec, "/", "_", -1)
-	return fmt.Sprintf("/var/images/%s.tar", filePath)
+	return fmt.Sprintf("%s/%s", image.Directory, strings.Replace(image.PullSpec, "/", "_", -1))
 }

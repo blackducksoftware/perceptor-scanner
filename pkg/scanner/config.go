@@ -38,6 +38,8 @@ type Config struct {
 	LogLevel string
 	Port     int
 
+	ImageDirectory string
+
 	ImageFacadePort int
 
 	PerceptorHost string

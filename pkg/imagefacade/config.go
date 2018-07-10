@@ -35,6 +35,7 @@ type Config struct {
 
 	LogLevel string
 
+	ImageDirectory   string
 	CreateImagesOnly bool
 	Port             int
 }

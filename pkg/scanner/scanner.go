@@ -42,13 +42,14 @@ import (
 
 // Scanner ......
 type Scanner struct {
-	imagePuller ImagePullerInterface
-	scanClient  ScanClientInterface
+	imagePuller    ImagePullerInterface
+	scanClient     ScanClientInterface
+	imageDirectory string
 }
 
 // NewScanner .....
-func NewScanner(imagePuller ImagePullerInterface, scanClient ScanClientInterface) *Scanner {
-	return &Scanner{imagePuller: imagePuller, scanClient: scanClient}
+func NewScanner(imagePuller ImagePullerInterface, scanClient ScanClientInterface, imageDirectory string) *Scanner {
+	return &Scanner{imagePuller: imagePuller, scanClient: scanClient, imageDirectory: imageDirectory}
 }
 
 // ScanFullDockerImage is the 2.0 functionality
@@ -64,7 +65,7 @@ func (scanner *Scanner) ScanFullDockerImage(apiImage *api.ImageSpec) error {
 
 // ScanLayersInDockerSaveTarFile avoids repeatedly scanning the same layers
 func (scanner *Scanner) ScanLayersInDockerSaveTarFile(apiImage *api.ImageSpec) error {
-	image := &common.Image{PullSpec: apiImage.PullSpec}
+	image := common.NewImage(scanner.imageDirectory, apiImage.PullSpec)
 	// 1. pull image
 	log.Debugf("about to pull %s to %s", image.DockerPullSpec(), image.DockerTarFilePath())
 	err := scanner.imagePuller.PullImage(image)
