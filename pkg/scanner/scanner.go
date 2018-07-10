@@ -80,7 +80,7 @@ func (scanner *Scanner) ScanLayersInDockerSaveTarFile(apiImage *api.ImageSpec) e
 	if err != nil {
 		return err
 	}
-	defer cleanUpFile(extractedDir)
+	defer cleanUpDir(extractedDir)
 	log.Debugf("successfully extracted %s to %s", image.DockerTarFilePath(), extractedDir)
 	// 3. read manifest.json to find the layers and calculate the hashes
 	log.Debugf("about to build layer hashes from %s", extractedDir)
@@ -201,5 +201,15 @@ func cleanUpFile(path string) {
 		log.Errorf("unable to remove file %s: %s", path, err.Error())
 	} else {
 		log.Infof("successfully cleaned up file %s", path)
+	}
+}
+
+func cleanUpDir(path string) {
+	err := os.RemoveAll(path)
+	recordCleanUpFile(err == nil)
+	if err != nil {
+		log.Errorf("unable to remove directory %s: %s", path, err.Error())
+	} else {
+		log.Infof("successfully cleaned up directory %s", path)
 	}
 }
