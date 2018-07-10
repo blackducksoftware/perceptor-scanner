@@ -161,6 +161,7 @@ func extractTarFile(source string, dir string) error {
 	log.Debugf("extract %s", source)
 	f, err := os.Open(source)
 	if err != nil {
+		log.Errorf("extractTarFile: unable to open %s for reading: %s", source, err.Error())
 		return err
 	}
 	defer f.Close()
@@ -172,6 +173,7 @@ func extractTarFile(source string, dir string) error {
 		if err == io.EOF {
 			break
 		} else if err != nil {
+			log.Errorf("extractTarFile: unable to get next from tar reader: %s", err.Error())
 			return err
 		}
 
@@ -179,15 +181,18 @@ func extractTarFile(source string, dir string) error {
 		if header.Typeflag == tar.TypeDir {
 			err := os.MkdirAll(fmt.Sprintf("%s/%s", dir, header.Name), 0755)
 			if err != nil {
+				log.Errorf("extractTarFile: unable to create directory %s: %s", header.Name, err.Error())
 				return err
 			}
 		} else {
 			file, err := os.Create(fmt.Sprintf("%s/%s", dir, header.Name))
 			if err != nil {
+				log.Errorf("extractTarFile: unable to create file %s for writing: %s", header.Name, err.Error())
 				return err
 			}
 			defer file.Close()
 			if _, err := io.Copy(file, tarReader); err != nil {
+				log.Errorf("extractTarFile: unable to copy file %s: %s", header.Name, err.Error())
 				return err
 			}
 		}
