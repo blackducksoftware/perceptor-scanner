@@ -56,6 +56,7 @@ func NewScannerManager(config *Config) (*ScannerManager, error) {
 
 	cliRootPath := "/tmp/scanner"
 	scanClientInfo, err := DownloadScanClient(
+		OSTypeLinux,
 		cliRootPath,
 		config.HubHost,
 		config.HubUser,

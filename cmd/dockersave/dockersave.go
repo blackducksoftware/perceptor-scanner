@@ -32,6 +32,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/blackducksoftware/perceptor-scanner/pkg/docker"
 	scanner "github.com/blackducksoftware/perceptor-scanner/pkg/scanner"
@@ -87,7 +88,11 @@ func main() {
 }
 
 func extractTarFile(source string, dir string) {
-	log.Debugf("extract %s", source)
+	log.Debugf("extract %s to %s", source, dir)
+	err := os.MkdirAll(dir, 0755)
+	if err != nil {
+		panic(fmt.Errorf("unable to create root directory %s: %s", dir, err.Error()))
+	}
 	f, err := os.Open(source)
 	if err != nil {
 		panic(err)
@@ -180,14 +185,15 @@ func processExtractedTar(dir string) {
 	hubUser := "sysadmin"
 	hubPassword := "duck"
 	port := 443
-	cliInfo := &scanner.ScanClientInfo{
-		HubVersion:         "4.7.0",
-		ScanClientRootPath: "/Users/mfenwick/projects/go-workspace/src/github.com/blackducksoftware/perceptor-scanner/cmd/dockersave/scanner",
-	}
-	// cliInfo, err := scanner.DownloadScanClient(cliRootPath, hubHost, hubUser, hubPassword, port, 120*time.Second)
-	// if err != nil {
-	// 	panic(err)
+	cliRootPath := "/Users/mfenwick/projects/go-workspace/src/github.com/blackducksoftware/perceptor-scanner/cmd/dockersave/scanner"
+	// cliInfo := &scanner.ScanClientInfo{
+	// 	HubVersion:         "4.7.0",
+	// 	ScanClientRootPath: cliRootPath,
 	// }
+	cliInfo, err := scanner.DownloadScanClient(scanner.OSTypeMac, cliRootPath, hubHost, hubUser, hubPassword, port, 120*time.Second)
+	if err != nil {
+		panic(err)
+	}
 	scanClient, err := scanner.NewHubScanClient(hubHost, hubUser, hubPassword, port, cliInfo)
 	if err != nil {
 		panic(err)

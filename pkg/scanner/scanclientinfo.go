@@ -24,30 +24,37 @@ package scanner
 import "fmt"
 
 type ScanClientInfo struct {
-	HubVersion         string
-	ScanClientRootPath string
+	HubVersion string
+	RootPath   string
+	OSType     OSType
+}
+
+func NewScanClientInfo(hubVersion string, rootPath string, osType OSType) *ScanClientInfo {
+	return &ScanClientInfo{HubVersion: hubVersion, RootPath: rootPath, OSType: osType}
 }
 
 func (sci *ScanClientInfo) scanCliZipPath() string {
-	return fmt.Sprintf("%s/scanclient.zip", sci.ScanClientRootPath)
+	return fmt.Sprintf("%s/scanclient.zip", sci.RootPath)
 }
 
 func (sci *ScanClientInfo) scanCliShPath() string {
-	return fmt.Sprintf("%s/scan.cli-%s/bin/scan.cli.sh", sci.ScanClientRootPath, sci.HubVersion)
+	return fmt.Sprintf("%s/scan.cli-%s/bin/scan.cli.sh", sci.RootPath, sci.HubVersion)
 }
 
 func (sci *ScanClientInfo) scanCliImplJarPath() string {
-	return fmt.Sprintf("%s/scan.cli-%s/lib/cache/scan.cli.impl-standalone.jar", sci.ScanClientRootPath, sci.HubVersion)
+	return fmt.Sprintf("%s/scan.cli-%s/lib/cache/scan.cli.impl-standalone.jar", sci.RootPath, sci.HubVersion)
 }
 
 func (sci *ScanClientInfo) scanCliJarPath() string {
-	return fmt.Sprintf("%s/scan.cli-%s/lib/scan.cli-%s-standalone.jar", sci.ScanClientRootPath, sci.HubVersion, sci.HubVersion)
+	return fmt.Sprintf("%s/scan.cli-%s/lib/scan.cli-%s-standalone.jar", sci.RootPath, sci.HubVersion, sci.HubVersion)
 }
 
 func (sci *ScanClientInfo) scanCliJavaPath() string {
-	return fmt.Sprintf("%s/scan.cli-%s/jre/bin/", sci.ScanClientRootPath, sci.HubVersion)
-}
-
-func (sci *ScanClientInfo) MacScanCliJavaPath() string {
-	return fmt.Sprintf("%s/scan.cli-%s/jre/Contents/Home/bin/", sci.ScanClientRootPath, sci.HubVersion)
+	switch sci.OSType {
+	case OSTypeLinux:
+		return fmt.Sprintf("%s/scan.cli-%s/jre/bin/", sci.RootPath, sci.HubVersion)
+	case OSTypeMac:
+		return fmt.Sprintf("%s/scan.cli-%s/jre/Contents/Home/bin/", sci.RootPath, sci.HubVersion)
+	}
+	panic(fmt.Errorf("invalid os type: %d", sci.OSType))
 }

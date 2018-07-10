@@ -30,7 +30,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func DownloadScanClient(cliRootPath string, hubHost string, hubUser string, hubPassword string, hubPort int, timeout time.Duration) (*ScanClientInfo, error) {
+func DownloadScanClient(osType OSType, cliRootPath string, hubHost string, hubUser string, hubPassword string, hubPort int, timeout time.Duration) (*ScanClientInfo, error) {
 	// 1. instantiate hub client
 	hubBaseURL := fmt.Sprintf("https://%s:%d", hubHost, hubPort)
 	hubClient, err := hubclient.NewWithSession(hubBaseURL, hubclient.HubClientDebugTimings, timeout)
@@ -59,17 +59,22 @@ func DownloadScanClient(cliRootPath string, hubHost string, hubUser string, hubP
 
 	log.Infof("got hub version: %s", currentVersion.Version)
 
-	cliInfo := &ScanClientInfo{HubVersion: currentVersion.Version, ScanClientRootPath: cliRootPath}
+	cliInfo := NewScanClientInfo(currentVersion.Version, cliRootPath, osType)
 
 	// 4. create directory
-	err = os.MkdirAll(cliInfo.ScanClientRootPath, 0755)
+	err = os.MkdirAll(cliInfo.RootPath, 0755)
 	if err != nil {
-		log.Errorf("unable to make dir %s: %s", cliInfo.ScanClientRootPath, err.Error())
+		log.Errorf("unable to make dir %s: %s", cliInfo.RootPath, err.Error())
 		return nil, err
 	}
 
 	// 5. pull down scan client as .zip
-	err = hubClient.DownloadScanClientLinux(cliInfo.scanCliZipPath())
+	switch osType {
+	case OSTypeMac:
+		err = hubClient.DownloadScanClientMac(cliInfo.scanCliZipPath())
+	case OSTypeLinux:
+		err = hubClient.DownloadScanClientLinux(cliInfo.scanCliZipPath())
+	}
 	if err != nil {
 		log.Errorf("unable to download scan client: %s", err.Error())
 		return nil, err
@@ -78,12 +83,12 @@ func DownloadScanClient(cliRootPath string, hubHost string, hubUser string, hubP
 	log.Infof("successfully downloaded scan client to %s", cliInfo.scanCliZipPath())
 
 	// 6. unzip scan client
-	err = unzip(cliInfo.scanCliZipPath(), cliInfo.ScanClientRootPath)
+	err = unzip(cliInfo.scanCliZipPath(), cliInfo.RootPath)
 	if err != nil {
 		log.Errorf("unable to unzip %s: %s", cliInfo.scanCliZipPath(), err.Error())
 		return nil, err
 	}
-	log.Infof("successfully unzipped from %s to %s", cliInfo.scanCliZipPath(), cliInfo.ScanClientRootPath)
+	log.Infof("successfully unzipped from %s to %s", cliInfo.scanCliZipPath(), cliInfo.RootPath)
 
 	// 7. we're done
 	return cliInfo, nil
