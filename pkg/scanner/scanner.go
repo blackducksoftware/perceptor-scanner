@@ -97,7 +97,7 @@ func (scanner *Scanner) ScanLayersInDockerSaveTarFile(apiImage *api.ImageSpec) e
 	errors := []error{}
 	for sha, filename := range shaToFilename {
 		log.Debugf("about to scan %s", filename)
-		err = scanner.ScanFile(filename, sha, sha, sha)
+		err = scanner.ScanFile(filename, image.PullSpec, image.PullSpec, sha)
 		if err != nil {
 			errors = append(errors, err)
 			log.Errorf("unable to scan file: %s", err.Error())
