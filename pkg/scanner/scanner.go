@@ -66,23 +66,29 @@ func (scanner *Scanner) ScanFullDockerImage(apiImage *api.ImageSpec) error {
 func (scanner *Scanner) ScanLayersInDockerSaveTarFile(apiImage *api.ImageSpec) error {
 	image := &common.Image{PullSpec: apiImage.PullSpec}
 	// 1. pull image
+	log.Debugf("about to pull %s to %s", image.DockerPullSpec(), image.DockerTarFilePath())
 	err := scanner.imagePuller.PullImage(image)
 	if err != nil {
 		return err
 	}
+	log.Debugf("successfully pulled %s to %s", image.DockerPullSpec(), image.DockerTarFilePath())
 	defer cleanUpFile(image.DockerTarFilePath())
 	// 2. extract full image
 	extractedDir := "/var/images/extracted/" + strings.Replace(image.PullSpec, "/", "_", -1)
+	log.Debugf("about to extract %s to %s", image.DockerTarFilePath(), extractedDir)
 	err = extractTarFile(image.DockerTarFilePath(), extractedDir)
 	if err != nil {
 		return err
 	}
 	defer cleanUpFile(extractedDir)
+	log.Debugf("successfully extracted %s to %s", image.DockerTarFilePath(), extractedDir)
 	// 3. read manifest.json to find the layers and calculate the hashes
+	log.Debugf("about to build layer hashes from %s", extractedDir)
 	shaToFilename, err := buildLayerHashes(extractedDir)
 	if err != nil {
 		return err
 	}
+	log.Debugf("successfully built layer hashes from %s", extractedDir)
 	// 4. TODO check whether the layers need to be scanned
 
 	// 5. scan the layers
@@ -90,6 +96,7 @@ func (scanner *Scanner) ScanLayersInDockerSaveTarFile(apiImage *api.ImageSpec) e
 	// retry?  abort everything?  partial success?
 	errors := []error{}
 	for sha, filename := range shaToFilename {
+		log.Debugf("about to scan %s", filename)
 		err = scanner.ScanFile(filename, sha, sha, sha)
 		if err != nil {
 			errors = append(errors, err)
