@@ -31,8 +31,9 @@ import (
 type Model struct {
 	Pods               map[string]*Pod
 	Images             map[string]*ModelImageInfo
-	ImageScanQueue     []string
-	ImageHubCheckQueue []string
+	ImageScanQueue     []map[string]interface{}
+	LayerHubCheckQueue []string
+	Layers             map[string]*ModelLayerInfo
 	HubVersion         string
 	Config             *ModelConfig
 	Timings            *ModelTimings
@@ -85,11 +86,17 @@ type ModelTimings struct {
 
 // ModelImageInfo .....
 type ModelImageInfo struct {
+	ImageSha   string
+	ImageNames []string
+	Layers     []string
+}
+
+// ModelLayerInfo .....
+type ModelLayerInfo struct {
 	ScanStatus             string
 	TimeOfLastStatusChange string
-	ScanResults            *hub.ImageScan
+	ScanResults            *hub.ScanResults
 	ImageSha               string
-	ImageNames             []string
 }
 
 // ModelCircuitBreaker ...

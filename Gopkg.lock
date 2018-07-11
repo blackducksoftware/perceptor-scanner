@@ -3,21 +3,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/alecthomas/template"
-  packages = [
-    ".",
-    "parse"
-  ]
-  revision = "a0175ee3bccc567396460bf5acd36800cb10c49c"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/alecthomas/units"
-  packages = ["."]
-  revision = "2efee857e7cfd4f3d0138cc3cbb1b4966962b93a"
-
-[[projects]]
-  branch = "master"
   name = "github.com/beorn7/perks"
   packages = ["quantile"]
   revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
@@ -32,17 +17,18 @@
   revision = "940138f994024143ee604ff0821f08ed2b597f9c"
 
 [[projects]]
-  branch = "master"
+  branch = "ophelia"
   name = "github.com/blackducksoftware/perceptor"
   packages = [
     "pkg/api",
     "pkg/core",
     "pkg/core/actions",
     "pkg/core/model",
+    "pkg/datastructures",
     "pkg/hub",
     "pkg/logging"
   ]
-  revision = "de76340d61721381743b899d6faaec7bbde45a4c"
+  revision = "cd1e2513a80d5db91d8168ceeeb1fa8b9d649640"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -159,7 +145,6 @@
   packages = [
     "expfmt",
     "internal/bitbucket.org/ww/goautoneg",
-    "log",
     "model"
   ]
   revision = "7600349dcfe1abd18d72d3a1770870d9800a7801"
@@ -173,7 +158,7 @@
     "nfs",
     "xfs"
   ]
-  revision = "40f013a808ec4fa79def444a1a56de4d1727efcb"
+  revision = "ae68e2d4c00fed4943b5f6698d504a5fe083da8a"
 
 [[projects]]
   name = "github.com/sirupsen/logrus"
@@ -228,18 +213,16 @@
     "html/atom",
     "html/charset"
   ]
-  revision = "4cb1c02c05b0e749b0365f61ae859a8e0cfceed9"
+  revision = "039a4258aec0ad3c79b905677cceeab13b296a77"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = [
     "unix",
-    "windows",
-    "windows/registry",
-    "windows/svc/eventlog"
+    "windows"
   ]
-  revision = "7138fd3d9dc8335c567ca206f4333fb75eb05d56"
+  revision = "1b2967e3c290b7c545b3db0deeda16e9be4f98a2"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -269,12 +252,6 @@
   version = "v0.3.0"
 
 [[projects]]
-  name = "gopkg.in/alecthomas/kingpin.v2"
-  packages = ["."]
-  revision = "947dcec5ba9c011838740e680966fd7087a71d0d"
-  version = "v2.2.6"
-
-[[projects]]
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
@@ -283,6 +260,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ecbb548b4f034ef4ded8962aa56d1ec543986a533f5ec819f710a84ca7acbe55"
+  inputs-digest = "fb9ede8f7f421bb4a3a241c5fc1d65e4b279ecc9d26948170c29999a86934e59"
   solver-name = "gps-cdcl"
   solver-version = 1

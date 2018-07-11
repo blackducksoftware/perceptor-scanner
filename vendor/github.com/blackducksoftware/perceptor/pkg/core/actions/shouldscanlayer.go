@@ -22,28 +22,23 @@ under the License.
 package actions
 
 import (
-	"time"
+	"fmt"
 
 	m "github.com/blackducksoftware/perceptor/pkg/core/model"
 )
 
-// RequeueStalledScans .....
-type RequeueStalledScans struct {
-	StalledScanClientTimeout time.Duration
+// ShouldScanLayer .....
+type ShouldScanLayer struct {
+	Layer   string
+	Success chan *bool
+	Err     chan error
+}
+
+func NewShouldScanLayer(layer string) *ShouldScanLayer {
+	return &ShouldScanLayer{Layer: layer, Success: make(chan *bool), Err: make(chan error)}
 }
 
 // Apply .....
-func (r *RequeueStalledScans) Apply(model *m.Model) {
-	// TODO
-	// for _, imageInfo := range model.Images {
-	// 	switch imageInfo.ScanStatus {
-	// 	case m.ScanStatusRunningScanClient:
-	// 		if imageInfo.TimeInCurrentScanStatus() > r.StalledScanClientTimeout {
-	// 			recordRequeueStalledScan(imageInfo.ScanStatus.String())
-	// 			model.SetImageScanStatus(imageInfo.ImageSha, m.ScanStatusInQueue)
-	// 		}
-	// 	default:
-	// 		// nothing to do
-	// 	}
-	// }
+func (g *ShouldScanLayer) Apply(model *m.Model) {
+	g.Err <- fmt.Errorf("TODO -- unimplemented")
 }

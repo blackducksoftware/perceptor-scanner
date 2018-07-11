@@ -25,9 +25,9 @@ import (
 	"github.com/blackducksoftware/perceptor/pkg/hub"
 )
 
-// HubImageScan .....
-type HubImageScan struct {
-	Sha  DockerImageSha
-	Scan *hub.ImageScan
+// HubScan .....
+type HubScan struct {
+	Sha  string
+	Scan *hub.ScanResults
 	Err  error
 }

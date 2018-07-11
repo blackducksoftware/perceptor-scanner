@@ -19,31 +19,14 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package actions
+package api
 
-import (
-	"time"
-
-	m "github.com/blackducksoftware/perceptor/pkg/core/model"
-)
-
-// RequeueStalledScans .....
-type RequeueStalledScans struct {
-	StalledScanClientTimeout time.Duration
+// LayerScanRequest .....
+type LayerScanRequest struct {
+	Layer string
 }
 
-// Apply .....
-func (r *RequeueStalledScans) Apply(model *m.Model) {
-	// TODO
-	// for _, imageInfo := range model.Images {
-	// 	switch imageInfo.ScanStatus {
-	// 	case m.ScanStatusRunningScanClient:
-	// 		if imageInfo.TimeInCurrentScanStatus() > r.StalledScanClientTimeout {
-	// 			recordRequeueStalledScan(imageInfo.ScanStatus.String())
-	// 			model.SetImageScanStatus(imageInfo.ImageSha, m.ScanStatusInQueue)
-	// 		}
-	// 	default:
-	// 		// nothing to do
-	// 	}
-	// }
+// NewLayerScanRequest .....
+func NewLayerScanRequest(layer string) *LayerScanRequest {
+	return &LayerScanRequest{Layer: layer}
 }

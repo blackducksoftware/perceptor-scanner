@@ -19,13 +19,15 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package model
+package api
 
-import "github.com/blackducksoftware/perceptor/pkg/hub"
+// ImageLayers .....
+type ImageLayers struct {
+	ImageSpec ImageSpec
+	Layers    []string
+}
 
-// ImageScan .....
-type ImageScan struct {
-	OverallStatus    hub.PolicyStatusType
-	PolicyViolations int
-	Vulnerabilities  int
+// NewImageLayers .....
+func NewImageLayers(imageSpec ImageSpec, layers []string) *ImageLayers {
+	return &ImageLayers{ImageSpec: imageSpec, Layers: layers}
 }
