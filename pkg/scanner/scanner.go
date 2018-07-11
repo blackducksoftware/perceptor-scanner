@@ -37,19 +37,22 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// TODO eventually, this will need to check whether layers have been scanned
-// before scanning them.  But for now, let's just scan everything.
-
 // Scanner ......
 type Scanner struct {
-	imagePuller    ImagePullerInterface
-	scanClient     ScanClientInterface
-	imageDirectory string
+	imagePuller     ImagePullerInterface
+	scanClient      ScanClientInterface
+	imageDirectory  string
+	shouldScanLayer chan *shouldScanLayer
+	imageLayers     chan *imageLayers
 }
 
 // NewScanner .....
 func NewScanner(imagePuller ImagePullerInterface, scanClient ScanClientInterface, imageDirectory string) *Scanner {
-	return &Scanner{imagePuller: imagePuller, scanClient: scanClient, imageDirectory: imageDirectory}
+	return &Scanner{
+		imagePuller:     imagePuller,
+		scanClient:      scanClient,
+		imageDirectory:  imageDirectory,
+		shouldScanLayer: make(chan *shouldScanLayer)}
 }
 
 // ScanFullDockerImage is the 2.0 functionality
@@ -63,7 +66,7 @@ func (scanner *Scanner) ScanFullDockerImage(apiImage *api.ImageSpec) error {
 	return scanner.scanClient.Scan(image.DockerTarFilePath(), apiImage.HubProjectName, apiImage.HubProjectVersionName, apiImage.HubScanName)
 }
 
-// ScanLayersInDockerSaveTarFile avoids repeatedly scanning the same layers
+// ScanLayersInDockerSaveTarFile ...
 func (scanner *Scanner) ScanLayersInDockerSaveTarFile(apiImage *api.ImageSpec) error {
 	image := common.NewImage(scanner.imageDirectory, apiImage.PullSpec)
 	// 1. pull image
@@ -95,13 +98,35 @@ func (scanner *Scanner) ScanLayersInDockerSaveTarFile(apiImage *api.ImageSpec) e
 		return err
 	}
 	log.Debugf("successfully built layer hashes from %s", extractedDir)
-	// 4. TODO check whether the layers need to be scanned
+	// 4. report the image layers
+	layerShas := []string{}
+	for layerSha := range shaToFilename {
+		layerShas = append(layerShas, layerSha)
+	}
+	apiImageLayers := api.NewImageLayers(*apiImage, layerShas)
+	action := newImageLayers(apiImageLayers)
+	scanner.imageLayers <- action
+	err = <-action.done
+	if err != nil {
+		log.Errorf("unable to report image layers to perceptor: %s", err.Error())
+		return err
+	}
 
-	// 5. scan the layers
+	// 5. scan the layers one by one, first checking whether each one should be scanned
 	// TODO how should error handling work?
 	// retry?  abort everything?  partial success?
 	errors := []error{}
 	for sha, filename := range shaToFilename {
+		action := newShouldScanLayer(sha)
+		select {
+		case shouldScan := <-action.done:
+			if !shouldScan {
+				continue
+			}
+		case err := <-action.err:
+			errors = append(errors, err)
+			continue
+		}
 		log.Debugf("about to scan %s", filename)
 		err = scanner.ScanFile(filename, image.PullSpec, image.PullSpec, sha)
 		if err != nil {

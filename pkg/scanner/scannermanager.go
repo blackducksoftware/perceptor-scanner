@@ -22,11 +22,7 @@ under the License.
 package scanner
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"os"
 	"time"
 
@@ -40,10 +36,8 @@ const (
 )
 
 type ScannerManager struct {
-	scanner       *Scanner
-	httpClient    *http.Client
-	perceptorHost string
-	perceptorPort int
+	scanner         *Scanner
+	perceptorClient *PerceptorClient
 }
 
 func NewScannerManager(config *Config) (*ScannerManager, error) {
@@ -82,15 +76,28 @@ func NewScannerManager(config *Config) (*ScannerManager, error) {
 		return nil, err
 	}
 
-	httpClient := &http.Client{Timeout: 5 * time.Second}
-
 	scanner := NewScanner(imagePuller, scanClient, config.ImageDirectory)
 
+	pc := NewPerceptorClient(config.PerceptorHost, config.PerceptorPort)
 	scannerManager := ScannerManager{
-		scanner:       scanner,
-		httpClient:    httpClient,
-		perceptorHost: config.PerceptorHost,
-		perceptorPort: config.PerceptorPort}
+		scanner:         scanner,
+		perceptorClient: pc}
+
+	go func() {
+		for {
+			select {
+			case action := <-scanner.shouldScanLayer:
+				response, err := pc.GetShouldScanLayer(action.request)
+				if err != nil {
+					action.err <- err
+				} else {
+					action.done <- response.ShouldScan
+				}
+			case imageLayers := <-scanner.imageLayers:
+				imageLayers.done <- pc.PostImageLayers(imageLayers.layers)
+			}
+		}
+	}()
 
 	return &scannerManager, nil
 }
@@ -108,107 +115,29 @@ func (sm *ScannerManager) StartRequestingScanJobs() {
 
 func (sm *ScannerManager) requestAndRunScanJob() {
 	log.Debug("requesting scan job")
-	apiImage, err := sm.requestScanJob()
+	nextImage, err := sm.perceptorClient.GetNextImage()
 	if err != nil {
 		log.Errorf("unable to request scan job: %s", err.Error())
 		return
 	}
-	if apiImage == nil {
+	if nextImage == nil {
 		log.Debug("requested scan job, got nil")
 		return
 	}
 
-	log.Infof("processing scan job %+v", apiImage)
+	log.Infof("processing scan job %+v", nextImage)
 
-	err = sm.scanner.ScanLayersInDockerSaveTarFile(apiImage)
+	err = sm.scanner.ScanLayersInDockerSaveTarFile(nextImage.ImageSpec)
 	errorString := ""
 	if err != nil {
 		log.Errorf("scan error: %s", err.Error())
 		errorString = err.Error()
 	}
 
-	finishedJob := api.FinishedScanClientJob{Err: errorString, ImageSpec: *apiImage}
+	finishedJob := api.FinishedScanClientJob{Err: errorString, ImageSpec: *nextImage.ImageSpec}
 	log.Infof("about to finish job, going to send over %+v", finishedJob)
-	err = sm.finishScan(finishedJob)
+	sm.perceptorClient.PostFinishedScan(&finishedJob)
 	if err != nil {
 		log.Errorf("unable to finish scan job: %s", err.Error())
 	}
-}
-
-func (sm *ScannerManager) requestScanJob() (*api.ImageSpec, error) {
-	nextImageURL := sm.buildURL(api.NextImagePath)
-	resp, err := sm.httpClient.Post(nextImageURL, "", bytes.NewBuffer([]byte{}))
-
-	if err != nil {
-		recordScannerError("unable to POST get next image")
-		log.Errorf("unable to POST to %s: %s", nextImageURL, err.Error())
-		return nil, err
-	}
-
-	recordHTTPStats(api.NextImagePath, resp.StatusCode)
-
-	if resp.StatusCode != 200 {
-		err = fmt.Errorf("http POST request to %s failed with status code %d", nextImageURL, resp.StatusCode)
-		log.Error(err.Error())
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		recordScannerError("unable to read response body")
-		log.Errorf("unable to read response body from %s: %s", nextImageURL, err.Error())
-		return nil, err
-	}
-
-	var nextImage api.NextImage
-	err = json.Unmarshal(bodyBytes, &nextImage)
-	if err != nil {
-		recordScannerError("unmarshaling JSON body failed")
-		log.Errorf("unmarshaling JSON body bytes %s failed for URL %s: %s", string(bodyBytes), nextImageURL, err.Error())
-		return nil, err
-	}
-
-	imageSha := "null"
-	if nextImage.ImageSpec != nil {
-		imageSha = nextImage.ImageSpec.Sha
-	}
-	log.Debugf("http POST request to %s succeeded, got image %s", nextImageURL, imageSha)
-	return nextImage.ImageSpec, nil
-}
-
-func (sm *ScannerManager) finishScan(results api.FinishedScanClientJob) error {
-	finishedScanURL := sm.buildURL(api.FinishedScanPath)
-	jsonBytes, err := json.Marshal(results)
-	if err != nil {
-		recordScannerError("unable to marshal json for finished job")
-		log.Errorf("unable to marshal json for finished job: %s", err.Error())
-		return err
-	}
-
-	log.Debugf("about to send over json text for finishing a job: %s", string(jsonBytes))
-	// TODO change to exponential backoff or something ... but don't loop indefinitely in production
-	for {
-		resp, err := sm.httpClient.Post(finishedScanURL, "application/json", bytes.NewBuffer(jsonBytes))
-		if err != nil {
-			recordScannerError("unable to POST finished job")
-			log.Errorf("unable to POST to %s: %s", finishedScanURL, err.Error())
-			continue
-		}
-
-		recordHTTPStats(api.FinishedScanPath, resp.StatusCode)
-
-		defer resp.Body.Close()
-		if resp.StatusCode != 200 {
-			log.Errorf("POST to %s failed with status code %d", finishedScanURL, resp.StatusCode)
-			continue
-		}
-
-		log.Infof("POST to %s succeeded", finishedScanURL)
-		return nil
-	}
-}
-
-func (sm *ScannerManager) buildURL(path string) string {
-	return fmt.Sprintf("http://%s:%d/%s", sm.perceptorHost, sm.perceptorPort, path)
 }
