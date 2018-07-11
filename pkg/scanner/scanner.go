@@ -76,6 +76,11 @@ func (scanner *Scanner) ScanLayersInDockerSaveTarFile(apiImage *api.ImageSpec) e
 	defer cleanUpFile(image.DockerTarFilePath())
 	// 2. extract full image
 	extractedDir := "/var/images/extracted/" + strings.Replace(image.PullSpec, "/", "_", -1)
+	err = os.MkdirAll(extractedDir, 0755)
+	if err != nil {
+		log.Errorf("unable to create extraction dir %s: %s", extractedDir, err.Error())
+		return err
+	}
 	log.Debugf("about to extract %s to %s", image.DockerTarFilePath(), extractedDir)
 	err = extractTarFile(image.DockerTarFilePath(), extractedDir)
 	if err != nil {
