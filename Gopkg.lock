@@ -28,13 +28,19 @@
     "pkg/hub",
     "pkg/logging"
   ]
-  revision = "cd1e2513a80d5db91d8168ceeeb1fa8b9d649640"
+  revision = "f80854d0352ce9b494526c940facba7da76f24b6"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
   packages = ["."]
   revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
   version = "v1.4.7"
+
+[[projects]]
+  name = "github.com/go-resty/resty"
+  packages = ["."]
+  revision = "fccc498aed22c31ff3768bcac00795f94149a21d"
+  version = "v1.7.0"
 
 [[projects]]
   name = "github.com/golang/protobuf"
@@ -211,7 +217,9 @@
   packages = [
     "html",
     "html/atom",
-    "html/charset"
+    "html/charset",
+    "idna",
+    "publicsuffix"
   ]
   revision = "039a4258aec0ad3c79b905677cceeab13b296a77"
 
@@ -227,6 +235,8 @@
 [[projects]]
   name = "golang.org/x/text"
   packages = [
+    "collate",
+    "collate/build",
     "encoding",
     "encoding/charmap",
     "encoding/htmlindex",
@@ -237,6 +247,7 @@
     "encoding/simplifiedchinese",
     "encoding/traditionalchinese",
     "encoding/unicode",
+    "internal/colltab",
     "internal/gen",
     "internal/tag",
     "internal/triegen",
@@ -244,9 +255,12 @@
     "internal/utf8internal",
     "language",
     "runes",
+    "secure/bidirule",
     "transform",
+    "unicode/bidi",
     "unicode/cldr",
-    "unicode/norm"
+    "unicode/norm",
+    "unicode/rangetable"
   ]
   revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
   version = "v0.3.0"
@@ -260,6 +274,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "fb9ede8f7f421bb4a3a241c5fc1d65e4b279ecc9d26948170c29999a86934e59"
+  inputs-digest = "6f957d28179ec50cdfdedee1f8a797cbfc948cfd0e1b86daeb4f12e63094c32d"
   solver-name = "gps-cdcl"
   solver-version = 1
