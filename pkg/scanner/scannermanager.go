@@ -120,7 +120,7 @@ func (sm *ScannerManager) requestAndRunScanJob() {
 		log.Errorf("unable to request scan job: %s", err.Error())
 		return
 	}
-	if nextImage == nil {
+	if nextImage.ImageSpec == nil {
 		log.Debug("requested scan job, got nil")
 		return
 	}
