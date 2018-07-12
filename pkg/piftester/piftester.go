@@ -56,20 +56,21 @@ func NewPifTester(imageFacadePort int) *PifTester {
 	go func() {
 		for {
 			select {
-			case image := <-responder.AddImageChannel:
-				pif.addImage(image)
-			case pod := <-responder.AddPodChannel:
-				pif.addPod(pod)
-			case allPods := <-responder.AllPodsChannel:
-				for _, pod := range allPods {
-					pif.addPod(pod)
-				}
-			case allImages := <-responder.AllImagesChannel:
-				for _, image := range allImages {
-					pif.addImage(image)
-				}
-			case continuation := <-responder.GetModelChannel:
-				go continuation(pif.APIModel())
+			// TODO reimplement
+			// case image := <-responder.AddImageChannel:
+			// 	pif.addImage(image)
+			// case pod := <-responder.AddPodChannel:
+			// 	pif.addPod(pod)
+			// case allPods := <-responder.AllPodsChannel:
+			// 	for _, pod := range allPods {
+			// 		pif.addPod(pod)
+			// 	}
+			// case allImages := <-responder.AllImagesChannel:
+			// 	for _, image := range allImages {
+			// 		pif.addImage(image)
+			// 	}
+			// case continuation := <-responder.GetModelChannel:
+			// 	go continuation(pif.APIModel())
 
 			case continuation := <-pif.getNextImageChannel:
 				image := pif.getNextImage()
