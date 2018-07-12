@@ -108,12 +108,14 @@ func (scanner *Scanner) ScanLayersInDockerSaveTarFile(apiImage *api.ImageSpec) e
 		log.Errorf("unable to report image layers to perceptor: %s", err.Error())
 		return err
 	}
+	log.Infof("successfully reported image layers for sha %s: ", apiImage.Sha)
 
 	// 5. scan the layers one by one, first checking whether each one should be scanned
 	// TODO how should error handling work?
 	// retry?  abort everything?  partial success?
 	errors := []error{}
 	for sha, filename := range shaToFilename {
+		log.Debugf("about to check whether layer %s should be scanned", sha)
 		// TODO rate limiting?  how will this work with perceptor not allowing us to
 		// run a scan?  if we just poll perceptor, there's the possibility that one
 		// scanner happens to run all of its jobs before another, meaning that a high
@@ -138,6 +140,7 @@ func (scanner *Scanner) ScanLayersInDockerSaveTarFile(apiImage *api.ImageSpec) e
 			log.Errorf("unable to scan file: %s", err.Error())
 		}
 	}
+	log.Infof("finished scanning %d layers, got %d errors", len(shaToFilename), len(errors))
 
 	// TODO this is kind of a hack, fix it
 	if len(errors) > 0 {
