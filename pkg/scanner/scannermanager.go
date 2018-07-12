@@ -76,28 +76,12 @@ func NewScannerManager(config *Config) (*ScannerManager, error) {
 		return nil, err
 	}
 
-	scanner := NewScanner(imagePuller, scanClient, config.ImageDirectory)
-
 	pc := NewPerceptorClient(config.PerceptorHost, config.PerceptorPort)
+	scanner := NewScanner(imagePuller, pc, scanClient, config.ImageDirectory)
+
 	scannerManager := ScannerManager{
 		scanner:         scanner,
 		perceptorClient: pc}
-
-	go func() {
-		for {
-			select {
-			case action := <-scanner.shouldScanLayer:
-				response, err := pc.GetShouldScanLayer(action.request)
-				if err != nil {
-					action.err <- err
-				} else {
-					action.done <- response.ShouldScan
-				}
-			case imageLayers := <-scanner.imageLayers:
-				imageLayers.done <- pc.PostImageLayers(imageLayers.layers)
-			}
-		}
-	}()
 
 	return &scannerManager, nil
 }

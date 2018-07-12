@@ -25,11 +25,9 @@ import (
 	"github.com/blackducksoftware/perceptor/pkg/api"
 )
 
-type imageLayers struct {
-	layers *api.ImageLayers
-	done   chan error
-}
-
-func newImageLayers(layers *api.ImageLayers) *imageLayers {
-	return &imageLayers{layers: layers, done: make(chan error)}
+type PerceptorClientInterface interface {
+	GetNextImage() (*api.NextImage, error)
+	PostImageLayers(imageLayers *api.ImageLayers) error
+	GetShouldScanLayer(request *api.LayerScanRequest) (*api.LayerScanResponse, error)
+	PostFinishedScan(scan *api.FinishedScanClientJob) error
 }

@@ -41,18 +41,17 @@ import (
 type Scanner struct {
 	imagePuller     ImagePullerInterface
 	scanClient      ScanClientInterface
+	perceptorClient PerceptorClientInterface
 	imageDirectory  string
-	shouldScanLayer chan *shouldScanLayer
-	imageLayers     chan *imageLayers
 }
 
 // NewScanner .....
-func NewScanner(imagePuller ImagePullerInterface, scanClient ScanClientInterface, imageDirectory string) *Scanner {
+func NewScanner(imagePuller ImagePullerInterface, perceptorClient PerceptorClientInterface, scanClient ScanClientInterface, imageDirectory string) *Scanner {
 	return &Scanner{
 		imagePuller:     imagePuller,
 		scanClient:      scanClient,
-		imageDirectory:  imageDirectory,
-		shouldScanLayer: make(chan *shouldScanLayer)}
+		perceptorClient: perceptorClient,
+		imageDirectory:  imageDirectory}
 }
 
 // ScanFullDockerImage is the 2.0 functionality
@@ -104,11 +103,7 @@ func (scanner *Scanner) ScanLayersInDockerSaveTarFile(apiImage *api.ImageSpec) e
 		layerShas = append(layerShas, layerSha)
 	}
 	apiImageLayers := api.NewImageLayers(*apiImage, layerShas)
-	action := newImageLayers(apiImageLayers)
-	go func() {
-		scanner.imageLayers <- action
-	}()
-	err = <-action.done
+	err = scanner.perceptorClient.PostImageLayers(apiImageLayers)
 	if err != nil {
 		log.Errorf("unable to report image layers to perceptor: %s", err.Error())
 		return err
@@ -123,17 +118,13 @@ func (scanner *Scanner) ScanLayersInDockerSaveTarFile(apiImage *api.ImageSpec) e
 		// run a scan?  if we just poll perceptor, there's the possibility that one
 		// scanner happens to run all of its jobs before another, meaning that a high
 		// priority thing gets stuck behind low priority things
-		action := newShouldScanLayer(sha)
-		go func() {
-			scanner.shouldScanLayer <- action
-		}()
-		select {
-		case shouldScan := <-action.done:
-			if !shouldScan {
-				continue
-			}
-		case err := <-action.err:
+		resp, err := scanner.perceptorClient.GetShouldScanLayer(&api.LayerScanRequest{Layer: sha})
+		// TODO handle other responses -- don't know, wait
+		if err != nil {
+			log.Errorf("unable to determine whether layer %s should be scanned: %s", sha, err.Error())
 			errors = append(errors, err)
+			continue
+		} else if !resp.ShouldScan {
 			continue
 		}
 		log.Debugf("about to scan %s", filename)
