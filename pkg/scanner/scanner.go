@@ -105,7 +105,9 @@ func (scanner *Scanner) ScanLayersInDockerSaveTarFile(apiImage *api.ImageSpec) e
 	}
 	apiImageLayers := api.NewImageLayers(*apiImage, layerShas)
 	action := newImageLayers(apiImageLayers)
-	scanner.imageLayers <- action
+	go func() {
+		scanner.imageLayers <- action
+	}()
 	err = <-action.done
 	if err != nil {
 		log.Errorf("unable to report image layers to perceptor: %s", err.Error())
@@ -117,7 +119,14 @@ func (scanner *Scanner) ScanLayersInDockerSaveTarFile(apiImage *api.ImageSpec) e
 	// retry?  abort everything?  partial success?
 	errors := []error{}
 	for sha, filename := range shaToFilename {
+		// TODO rate limiting?  how will this work with perceptor not allowing us to
+		// run a scan?  if we just poll perceptor, there's the possibility that one
+		// scanner happens to run all of its jobs before another, meaning that a high
+		// priority thing gets stuck behind low priority things
 		action := newShouldScanLayer(sha)
+		go func() {
+			scanner.shouldScanLayer <- action
+		}()
 		select {
 		case shouldScan := <-action.done:
 			if !shouldScan {
@@ -129,6 +138,10 @@ func (scanner *Scanner) ScanLayersInDockerSaveTarFile(apiImage *api.ImageSpec) e
 		}
 		log.Debugf("about to scan %s", filename)
 		err = scanner.ScanFile(filename, image.PullSpec, image.PullSpec, sha)
+		// TODO report completion of each layer
+		// action := newFinishLayerScan(sha, err)
+		// scanner.finishLayerScan <- action
+		// // don't need to worry about whether that's successful or not
 		if err != nil {
 			errors = append(errors, err)
 			log.Errorf("unable to scan file: %s", err.Error())
