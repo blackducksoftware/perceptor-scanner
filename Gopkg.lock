@@ -28,7 +28,7 @@
     "pkg/hub",
     "pkg/logging"
   ]
-  revision = "f80854d0352ce9b494526c940facba7da76f24b6"
+  revision = "ccfcf7a6134ec86333ad8f6fa558a9a9ad739956"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -143,7 +143,7 @@
   branch = "master"
   name = "github.com/prometheus/client_model"
   packages = ["go"]
-  revision = "99fa1f4be8e564e8a6b613da7fa6f46c9edafc6c"
+  revision = "5c3871d89910bfb32f5fcab2aa4b9ec68e65a99f"
 
 [[projects]]
   branch = "master"
@@ -221,7 +221,7 @@
     "idna",
     "publicsuffix"
   ]
-  revision = "039a4258aec0ad3c79b905677cceeab13b296a77"
+  revision = "d0887baf81f4598189d4e12a37c6da86f0bba4d0"
 
 [[projects]]
   branch = "master"

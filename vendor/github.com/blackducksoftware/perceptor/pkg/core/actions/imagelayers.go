@@ -22,8 +22,6 @@ under the License.
 package actions
 
 import (
-	"fmt"
-
 	m "github.com/blackducksoftware/perceptor/pkg/core/model"
 )
 
@@ -40,5 +38,6 @@ func NewImageLayers(imageSha string, layers []string) *ImageLayers {
 
 // Apply .....
 func (g *ImageLayers) Apply(model *m.Model) {
-	g.Done <- fmt.Errorf("TODO -- unimplemented")
+	err := model.SetLayersForImage(m.DockerImageSha(g.ImageSha), g.Layers)
+	g.Done <- err
 }

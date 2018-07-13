@@ -52,6 +52,7 @@ func NewModel(hubVersion string, config *Config, timings *Timings) *Model {
 	return &Model{
 		Pods:                 make(map[string]Pod),
 		Images:               make(map[DockerImageSha]*ImageInfo),
+		Layers:               make(map[string]*LayerInfo),
 		ImageScanQueue:       ds.NewPriorityQueue(),
 		ImagePriority:        map[DockerImageSha]int{},
 		LayerHubCheckQueue:   []string{},
@@ -93,6 +94,7 @@ func (model *Model) AddImage(image Image, priority int) {
 	added := model.createImage(image)
 	if added {
 		model.ImagePriority[image.Sha] = priority
+		model.addImageToScanQueue(image.Sha)
 	}
 }
 
@@ -177,6 +179,30 @@ func (model *Model) removeImageFromScanQueue(sha DockerImageSha) error {
 
 // "Public" methods
 
+func (model *Model) SetLayersForImage(imageSha DockerImageSha, layers []string) error {
+	// TODO if image not present, could add ...
+	imageInfo, ok := model.Images[imageSha]
+	if !ok {
+		return fmt.Errorf("cannot add layers, image %s not found", imageSha)
+	}
+	// add layers to image
+	err := imageInfo.SetLayers(layers)
+	if err != nil {
+		return err
+	}
+	// add layers to global scope
+	for _, layer := range layers {
+		_, ok := model.Layers[layer]
+		if ok {
+			log.Infof("skipping layer %s, already present", layer)
+			continue
+		}
+		model.Layers[layer] = NewLayerInfo(imageSha)
+	}
+	// done
+	return nil
+}
+
 // SetLayerScanStatus .....
 func (model *Model) SetLayerScanStatus(sha string, newScanStatus ScanStatus) {
 	err := model.setLayerScanStatus(sha, newScanStatus)
@@ -199,6 +225,33 @@ func (model *Model) GetNextLayerFromHubCheckQueue() *string {
 
 	first := model.LayerHubCheckQueue[0]
 	return &first
+}
+
+// GetNextImageFromScanQueue .....
+func (model *Model) ShouldScanLayer(layer string) (ShouldScanLayerAnswer, error) {
+	layerInfo, ok := model.Layers[layer]
+	if !ok {
+		return ShouldScanLayerAnswerNo, fmt.Errorf("layer %s not found", layer)
+	}
+
+	if !model.IsHubEnabled {
+		log.Debugf("Hub not enabled, can't start a new scan")
+		return ShouldScanLayerAnswerWait, nil
+	}
+
+	if model.InProgressScanCount() >= model.Config.ConcurrentScanLimit {
+		log.Debugf("max concurrent scan count reached, can't start a new scan -- %v", model.InProgressScans())
+		return ShouldScanLayerAnswerWait, nil
+	}
+
+	switch layerInfo.ScanStatus {
+	case ScanStatusUnknown:
+		return ShouldScanLayerAnswerDontKnow, nil
+	case ScanStatusNotScanned:
+		return ShouldScanLayerAnswerYes, nil
+	default:
+		return ShouldScanLayerAnswerNo, nil
+	}
 }
 
 // GetNextImageFromScanQueue .....
@@ -289,9 +342,10 @@ func (model *Model) RemoveLayerFromRefreshQueue(sha string) error {
 func (model *Model) FinishRunningScanClient(sha string, scanClientError error) {
 	_, ok := model.Layers[sha]
 
-	// if we don't have this sha already, let's add it to the model
+	// TODO if we don't have this sha already ... bail out?
 	if !ok {
-		log.Warnf("finish running scan client -- expected to already have layer %s, but did not", sha)
+		log.Errorf("finish running scan client -- expected to already have layer %s, but did not", sha)
+		return
 	}
 
 	scanStatus := ScanStatusRunningHubScan
