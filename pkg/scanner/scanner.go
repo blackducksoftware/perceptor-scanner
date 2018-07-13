@@ -96,7 +96,7 @@ func (scanner *Scanner) ScanLayersInDockerSaveTarFile(apiImage *api.ImageSpec) e
 	if err != nil {
 		return err
 	}
-	log.Debugf("successfully built layer hashes from %s", extractedDir)
+	log.Debugf("successfully built %d layer hashes from %s", len(shaToFilename), extractedDir)
 	// 4. report the image layers
 	layerShas := []string{}
 	for layerSha := range shaToFilename {
@@ -127,6 +127,7 @@ func (scanner *Scanner) ScanLayersInDockerSaveTarFile(apiImage *api.ImageSpec) e
 			errors = append(errors, err)
 			continue
 		} else if !resp.ShouldScan {
+			log.Infof("should not scan layer %s, skipping", sha)
 			continue
 		}
 		log.Debugf("about to scan %s", filename)
