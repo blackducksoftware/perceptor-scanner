@@ -28,7 +28,7 @@
     "pkg/hub",
     "pkg/logging"
   ]
-  revision = "ccfcf7a6134ec86333ad8f6fa558a9a9ad739956"
+  revision = "9ff05a26ea14a3344724148edb196acc621edd00"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"

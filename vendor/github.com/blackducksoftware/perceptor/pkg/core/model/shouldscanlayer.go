@@ -21,9 +21,12 @@ under the License.
 
 package model
 
-// PodScan .....
-type PodScan struct {
-	OverallStatus    string
-	PolicyViolations int
-	Vulnerabilities  int
-}
+// ShouldScanLayer .....
+type ShouldScanLayer int
+
+// .....
+const (
+	ShouldScanLayerNo   ShouldScanLayer = iota
+	ShouldScanLayerYes  ShouldScanLayer = iota
+	ShouldScanLayerWait ShouldScanLayer = iota
+)
