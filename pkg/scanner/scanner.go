@@ -114,32 +114,55 @@ func (scanner *Scanner) ScanLayersInDockerSaveTarFile(apiImage *api.ImageSpec) e
 	// TODO how should error handling work?
 	// retry?  abort everything?  partial success?
 	errors := []error{}
-	for sha, filename := range shaToFilename {
-		log.Debugf("about to check whether layer %s should be scanned", sha)
+
+	todoShas := []string{}
+	for sha := range shaToFilename {
+		todoShas = append(todoShas, sha)
+	}
+	for len(todoShas) > 0 {
+		nextSha := todoShas[0]
+		todoShas = todoShas[1:]
+		log.Debugf("about to check whether layer %s should be scanned", nextSha)
 		// TODO rate limiting?  how will this work with perceptor not allowing us to
 		// run a scan?  if we just poll perceptor, there's the possibility that one
 		// scanner happens to run all of its jobs before another, meaning that a high
 		// priority thing gets stuck behind low priority things
-		resp, err := scanner.perceptorClient.GetShouldScanLayer(&api.LayerScanRequest{Layer: sha})
+		resp, err := scanner.perceptorClient.GetShouldScanLayer(&api.LayerScanRequest{Layer: nextSha})
 		// TODO handle other responses -- don't know, wait
 		if err != nil {
-			log.Errorf("unable to determine whether layer %s should be scanned: %s", sha, err.Error())
+			log.Errorf("unable to determine whether layer %s should be scanned: %s", nextSha, err.Error())
 			errors = append(errors, err)
-			continue
-		} else if !resp.ShouldScan {
-			log.Infof("should not scan layer %s, skipping", sha)
+			// TODO for now, just push it to the back of the queue so that it'll get redone.
+			// later, we should probably only allow it to fail N times before stopping the retries
+			todoShas = append(todoShas, nextSha)
 			continue
 		}
-		log.Debugf("about to scan %s", filename)
-		err = scanner.ScanFile(filename, image.PullSpec, image.PullSpec, sha)
-		// TODO report completion of each layer
-		// action := newFinishLayerScan(sha, err)
-		// scanner.finishLayerScan <- action
-		// // don't need to worry about whether that's successful or not
+		switch resp.ShouldScanAnswer {
+		// TODO create an actual type in the perceptor API for this
+		case "ShouldScanLayerAnswerNo":
+			continue
+		case "ShouldScanLayerAnswerWait", "ShouldScanLayerAnswerDontKnow":
+			todoShas = append(todoShas, nextSha)
+			continue
+		case "ShouldScanLayerAnswerYes":
+			// just keep on going
+		}
+		filename, ok := shaToFilename[nextSha]
+		if ok {
+			log.Debugf("about to scan %s", filename)
+			err = scanner.ScanFile(filename, image.PullSpec, image.PullSpec, nextSha)
+			// TODO report completion of each layer
+			// action := newFinishLayerScan(sha, err)
+			// scanner.finishLayerScan <- action
+			// // don't need to worry about whether that's successful or not
+		} else {
+			err = fmt.Errorf("no filename found for sha %s", nextSha)
+		}
 		if err != nil {
 			errors = append(errors, err)
 			log.Errorf("unable to scan file: %s", err.Error())
 		}
+
 	}
 	log.Infof("finished scanning %d layers, got %d errors", len(shaToFilename), len(errors))
 
