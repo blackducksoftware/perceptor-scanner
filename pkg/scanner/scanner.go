@@ -31,6 +31,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/blackducksoftware/perceptor-scanner/pkg/common"
 	"github.com/blackducksoftware/perceptor/pkg/api"
@@ -120,11 +121,13 @@ func (scanner *Scanner) ScanLayersInDockerSaveTarFile(apiImage *api.ImageSpec) e
 		todoShas = append(todoShas, sha)
 	}
 	for len(todoShas) > 0 {
+		// TODO come up with a better way to do rate limiting
+		time.Sleep(500 * time.Millisecond)
 		nextSha := todoShas[0]
 		todoShas = todoShas[1:]
 		log.Debugf("about to check whether layer %s should be scanned", nextSha)
-		// TODO rate limiting?  how will this work with perceptor not allowing us to
-		// run a scan?  if we just poll perceptor, there's the possibility that one
+		// TODO how will this work with perceptor not allowing us to
+		// run a scan -- if we just poll perceptor, there's the possibility that one
 		// scanner happens to run all of its jobs before another, meaning that a high
 		// priority thing gets stuck behind low priority things
 		resp, err := scanner.perceptorClient.GetShouldScanLayer(&api.LayerScanRequest{Layer: nextSha})
