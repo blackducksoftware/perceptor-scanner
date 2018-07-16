@@ -140,24 +140,30 @@ func (scanner *Scanner) ScanLayersInDockerSaveTarFile(apiImage *api.ImageSpec) e
 			todoShas = append(todoShas, nextSha)
 			continue
 		}
-		switch resp.ShouldScanAnswer {
-		// TODO create an actual type in the perceptor API for this
-		case "ShouldScanLayerAnswerNo":
+		switch resp.ShouldScan {
+		case api.ShouldScanLayerNo:
 			continue
-		case "ShouldScanLayerAnswerWait", "ShouldScanLayerAnswerDontKnow":
+		case api.ShouldScanLayerWait:
 			todoShas = append(todoShas, nextSha)
 			continue
-		case "ShouldScanLayerAnswerYes":
+		case api.ShouldScanLayerYes:
 			// just keep on going
 		}
 		filename, ok := shaToFilename[nextSha]
 		if ok {
 			log.Debugf("about to scan %s", filename)
 			err = scanner.ScanFile(filename, image.PullSpec, image.PullSpec, nextSha)
-			// TODO report completion of each layer
-			// action := newFinishLayerScan(sha, err)
-			// scanner.finishLayerScan <- action
-			// // don't need to worry about whether that's successful or not
+			errorString := ""
+			if err != nil {
+				errorString = err.Error()
+			}
+			scanInfo := &api.FinishedScanClientJob{Err: errorString, ImageSpec: *apiImage, Layer: nextSha}
+			err := scanner.perceptorClient.PostFinishedScan(scanInfo)
+			if err != nil {
+				// can't do anything if it failed, except to log it and TODO metrics
+				// TODO should we retry later?
+				log.Errorf("unable to post finished scan %+v: %s", scanInfo, err.Error())
+			}
 		} else {
 			err = fmt.Errorf("no filename found for sha %s", nextSha)
 		}
