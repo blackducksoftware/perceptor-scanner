@@ -84,7 +84,7 @@ func (pc *PerceptorClient) PostImageLayers(imageLayers *api.ImageLayers) error {
 	resp, err := pc.Resty.R().
 		SetBody(imageLayers).
 		Post(url)
-	log.Debugf("received resp %+v and error %+v from url %s", resp, err, url)
+	log.Debugf("received resp %+v, status code %d, error %+v from url %s", resp, resp.StatusCode(), err, url)
 	recordHTTPStats(imageLayersPath, resp.StatusCode())
 	if (resp.StatusCode() < 200) || (resp.StatusCode() >= 300) {
 		recordScannerError("unable to post image layers -- bad status code")
@@ -98,15 +98,15 @@ func (pc *PerceptorClient) PostImageLayers(imageLayers *api.ImageLayers) error {
 func (pc *PerceptorClient) GetShouldScanLayer(request *api.LayerScanRequest) (*api.LayerScanResponse, error) {
 	url := fmt.Sprintf("http://%s:%d/%s", pc.Host, pc.Port, shouldScanLayerPath)
 	response := api.LayerScanResponse{}
-	log.Debugf("about to issue get request %+v to url %s", request, url)
-	resp, err := pc.Resty.R().SetResult(&response).Get(url)
-	log.Debugf("received resp %+v and error %+v from url %s", resp, err, url)
+	log.Debugf("about to issue post request %+v to url %s", request, url)
+	resp, err := pc.Resty.R().SetBody(request)SetResult(&response).Post(url)
+	log.Debugf("received resp %+v, status code %d, error %+v from url %s", resp, resp.StatusCode(), err, url)
 	recordHTTPStats(shouldScanLayerPath, resp.StatusCode())
 	if err != nil {
 		return nil, err
 	} else if (resp.StatusCode() < 200) || (resp.StatusCode() >= 300) {
-		recordScannerError("unable to get should scan layer -- bad status code")
-		err := fmt.Errorf("unable to get should scan layer; body %s and status code %d", string(resp.Body()), resp.StatusCode())
+		recordScannerError("unable to post should scan layer -- bad status code")
+		err := fmt.Errorf("unable to post should scan layer; body %s and status code %d", string(resp.Body()), resp.StatusCode())
 		log.Error(err.Error())
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func (pc *PerceptorClient) PostFinishedScan(scan *api.FinishedScanClientJob) err
 	url := fmt.Sprintf("http://%s:%d/%s", pc.Host, pc.Port, finishedScanPath)
 	log.Debugf("about to issue post request %+v to url %s", scan, url)
 	resp, err := pc.Resty.R().SetBody(scan).Post(url)
-	log.Debugf("received resp %+v and error %+v from url %s", resp, err, url)
+	log.Debugf("received resp %+v, status code %d, error %+v from url %s", resp, resp.StatusCode(), err, url)
 	recordHTTPStats(finishedScanPath, resp.StatusCode())
 	if (resp.StatusCode() < 200) || (resp.StatusCode() >= 300) {
 		recordScannerError("unable to post finished scan -- bad status code")
@@ -127,17 +127,3 @@ func (pc *PerceptorClient) PostFinishedScan(scan *api.FinishedScanClientJob) err
 	}
 	return err
 }
-
-// func (pd *PerceptorClient) DumpModel() (*api.Model, error) {
-// 	url := fmt.Sprintf("http://%s:%d/model", pd.Host, pd.Port)
-// 	resp, err := pd.Resty.R().SetResult(&api.Model{}).Get(url)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	switch result := resp.Result().(type) {
-// 	case *api.Model:
-// 		return result, nil
-// 	default:
-// 		return nil, fmt.Errorf("invalid response type: expected *api.Model, got %s (%+v)", reflect.TypeOf(result), result)
-// 	}
-// }
