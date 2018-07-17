@@ -59,10 +59,12 @@ func (pc *PerceptorClient) GetNextImage() (*api.NextImage, error) {
 	url := fmt.Sprintf("http://%s:%d/%s", pc.Host, pc.Port, nextImagePath)
 	nextImage := api.NextImage{}
 	// TODO: verify that if err == nil, everything actually worked right (got 200 status code, etc.)
+	log.Debugf("about to issue post request to url %s", url)
 	resp, err := pc.Resty.R().
 		SetHeader("Content-Type", "application/json").
 		SetResult(&nextImage).
 		Post(url)
+	log.Debugf("received resp %+v and error %+v from url %s", resp, err, url)
 	recordHTTPStats(nextImagePath, resp.StatusCode())
 	if err != nil {
 		recordScannerError("unable to get next image")
@@ -74,9 +76,11 @@ func (pc *PerceptorClient) GetNextImage() (*api.NextImage, error) {
 
 func (pc *PerceptorClient) PostImageLayers(imageLayers *api.ImageLayers) error {
 	url := fmt.Sprintf("http://%s:%d/%s", pc.Host, pc.Port, imageLayersPath)
+	log.Debugf("about to issue post request %+v to url %s", imageLayers, url)
 	resp, err := pc.Resty.R().
 		SetBody(imageLayers).
 		Post(url)
+	log.Debugf("received resp %+v and error %+v from url %s", resp, err, url)
 	recordHTTPStats(imageLayersPath, resp.StatusCode())
 	return err
 }
@@ -84,7 +88,9 @@ func (pc *PerceptorClient) PostImageLayers(imageLayers *api.ImageLayers) error {
 func (pc *PerceptorClient) GetShouldScanLayer(request *api.LayerScanRequest) (*api.LayerScanResponse, error) {
 	url := fmt.Sprintf("http://%s:%d/%s", pc.Host, pc.Port, shouldScanLayerPath)
 	response := api.LayerScanResponse{}
+	log.Debugf("about to issue get request %+v to url %s", request, url)
 	resp, err := pc.Resty.R().SetResult(&response).Get(url)
+	log.Debugf("received resp %+v and error %+v from url %s", resp, err, url)
 	recordHTTPStats(shouldScanLayerPath, resp.StatusCode())
 	if err != nil {
 		return nil, err
@@ -94,7 +100,9 @@ func (pc *PerceptorClient) GetShouldScanLayer(request *api.LayerScanRequest) (*a
 
 func (pc *PerceptorClient) PostFinishedScan(scan *api.FinishedScanClientJob) error {
 	url := fmt.Sprintf("http://%s:%d/%s", pc.Host, pc.Port, finishedScanPath)
+	log.Debugf("about to issue post request %+v to url %s", scan, url)
 	resp, err := pc.Resty.R().SetBody(scan).Post(url)
+	log.Debugf("received resp %+v and error %+v from url %s", resp, err, url)
 	recordHTTPStats(finishedScanPath, resp.StatusCode())
 	return err
 }
