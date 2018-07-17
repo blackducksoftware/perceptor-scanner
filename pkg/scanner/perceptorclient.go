@@ -33,7 +33,7 @@ import (
 const (
 	nextImagePath       = "nextimage"
 	imageLayersPath     = "imagelayers"
-	shouldScanLayerPath = "shouldscanlayers"
+	shouldScanLayerPath = "shouldscanlayer"
 	finishedScanPath    = "finishedscan"
 )
 
