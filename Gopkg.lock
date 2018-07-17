@@ -28,7 +28,7 @@
     "pkg/hub",
     "pkg/logging"
   ]
-  revision = "9ff05a26ea14a3344724148edb196acc621edd00"
+  revision = "1d1b71628bb559b9a5927cbc33f640f16a85b93e"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -81,7 +81,7 @@
   branch = "master"
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
-  revision = "bb74f1db0675b241733089d5a1faa5dd8b0ef57b"
+  revision = "f15292f7a699fcc1a38a80977f80a046874ba8ac"
 
 [[projects]]
   name = "github.com/onsi/ginkgo"
@@ -230,7 +230,7 @@
     "unix",
     "windows"
   ]
-  revision = "1b2967e3c290b7c545b3db0deeda16e9be4f98a2"
+  revision = "ac767d655b305d4e9612f5f6e33120b9176c4ad4"
 
 [[projects]]
   name = "golang.org/x/text"

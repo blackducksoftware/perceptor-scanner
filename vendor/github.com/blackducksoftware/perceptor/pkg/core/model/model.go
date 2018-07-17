@@ -140,6 +140,16 @@ func (model *Model) unsafeGet(sha DockerImageSha) *ImageInfo {
 	return results
 }
 
+func (model *Model) addLayer(layer string, imageSha DockerImageSha) error {
+	_, ok := model.Layers[layer]
+	if ok {
+		log.Debugf("skipping addition of layer %s, already present", layer)
+		return nil
+	}
+	model.Layers[layer] = NewLayerInfo(imageSha)
+	return model.addLayerToHubCheckQueue(layer)
+}
+
 // Adding and removing from scan queues.  These are "unsafe" calls and should
 // only be called by methods that have already checked all the error conditions
 // (things are in the right state, things that are expected to be present are
@@ -150,7 +160,7 @@ func (model *Model) addLayerToHubCheckQueue(sha string) error {
 	return nil
 }
 
-func (model *Model) removeLayerFromHubCheckQueue(sha string) error {
+func (model *Model) RemoveLayerFromHubCheckQueue(sha string) error {
 	index := -1
 	for i := 0; i < len(model.LayerHubCheckQueue); i++ {
 		if model.LayerHubCheckQueue[i] == sha {
@@ -178,6 +188,7 @@ func (model *Model) removeImageFromScanQueue(sha DockerImageSha) error {
 
 // "Public" methods
 
+// SetLayersForImage ...
 func (model *Model) SetLayersForImage(imageSha DockerImageSha, layers []string) error {
 	// TODO if image not present, could add ...
 	imageInfo, ok := model.Images[imageSha]
@@ -191,19 +202,17 @@ func (model *Model) SetLayersForImage(imageSha DockerImageSha, layers []string) 
 	}
 	// add layers to global scope
 	for _, layer := range layers {
-		_, ok := model.Layers[layer]
-		if ok {
-			log.Infof("skipping layer %s, already present", layer)
-			continue
+		err = model.addLayer(layer, imageSha)
+		if err != nil {
+			return err
 		}
-		model.Layers[layer] = NewLayerInfo(imageSha)
 	}
 	// done
 	return nil
 }
 
 // SetLayerScanStatus .....
-func (model *Model) SetLayerScanStatus(sha string, newScanStatus ScanStatus) {
+func (model *Model) SetLayerScanStatus(sha string, newScanStatus ScanStatus) error {
 	err := model.setLayerScanStatus(sha, newScanStatus)
 	if err != nil {
 		layerInfo, ok := model.Layers[sha]
@@ -213,6 +222,7 @@ func (model *Model) SetLayerScanStatus(sha string, newScanStatus ScanStatus) {
 		}
 		log.Errorf("unable to transition layer state for sha %s from <%s> to %s", sha, statusString, newScanStatus)
 	}
+	return err
 }
 
 // GetNextLayerFromHubCheckQueue .....
@@ -226,7 +236,7 @@ func (model *Model) GetNextLayerFromHubCheckQueue() *string {
 	return &first
 }
 
-// GetNextImageFromScanQueue .....
+// ShouldScanLayer .....
 func (model *Model) ShouldScanLayer(layer string) (ShouldScanLayer, error) {
 	layerInfo, ok := model.Layers[layer]
 	if !ok {
@@ -319,7 +329,7 @@ func (model *Model) GetNextLayerFromRefreshQueue() *string {
 	return &first
 }
 
-// RemoveImageFromRefreshQueue .....
+// RemoveLayerFromRefreshQueue .....
 func (model *Model) RemoveLayerFromRefreshQueue(sha string) error {
 	index := -1
 	for i := 0; i < len(model.LayerRefreshQueue); i++ {
