@@ -99,7 +99,7 @@ func (pc *PerceptorClient) GetShouldScanLayer(request *api.LayerScanRequest) (*a
 	url := fmt.Sprintf("http://%s:%d/%s", pc.Host, pc.Port, shouldScanLayerPath)
 	response := api.LayerScanResponse{}
 	log.Debugf("about to issue post request %+v to url %s", request, url)
-	resp, err := pc.Resty.R().SetBody(request)SetResult(&response).Post(url)
+	resp, err := pc.Resty.R().SetBody(request).SetResult(&response).Post(url)
 	log.Debugf("received resp %+v, status code %d, error %+v from url %s", resp, resp.StatusCode(), err, url)
 	recordHTTPStats(shouldScanLayerPath, resp.StatusCode())
 	if err != nil {
