@@ -75,7 +75,6 @@ func NewScanner(config *Config) (*Scanner, error) {
 
 	imagePuller := NewImageFacadePuller(imageFacadeBaseURL, config.ImageFacadePort)
 	scanClient, err := NewHubScanClient(
-		config.HubHost,
 		config.HubUser,
 		config.HubPort,
 		scanClientInfo,
