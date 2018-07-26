@@ -31,7 +31,7 @@
 
 [[constraint]]
   name = "github.com/blackducksoftware/perceptor"
-  branch = "hub-naming"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/prometheus/client_golang"

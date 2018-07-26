@@ -32,7 +32,7 @@
   revision = "940138f994024143ee604ff0821f08ed2b597f9c"
 
 [[projects]]
-  branch = "hub-naming"
+  branch = "master"
   name = "github.com/blackducksoftware/perceptor"
   packages = [
     "pkg/api",
@@ -43,7 +43,7 @@
     "pkg/hub",
     "pkg/logging"
   ]
-  revision = "07f20e1a8261b82d870377074c602d466ffd4c6c"
+  revision = "255a1e739b162098de273abecb3795d146f0e1eb"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -309,6 +309,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f3bd72cf9fe9321986c3c751cf62831b57b6513944f4776118530ce5cb92ecb4"
+  inputs-digest = "ca5684fae4ac5c56c80d7fa2e473bddadd8914a9782af742e15bec7a3da59d55"
   solver-name = "gps-cdcl"
   solver-version = 1
