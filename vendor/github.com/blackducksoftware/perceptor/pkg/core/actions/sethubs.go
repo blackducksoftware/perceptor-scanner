@@ -19,11 +19,18 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package model
+package actions
 
-// PodScan .....
-type PodScan struct {
-	OverallStatus    string
-	PolicyViolations int
-	Vulnerabilities  int
+import (
+	m "github.com/blackducksoftware/perceptor/pkg/core/model"
+)
+
+// SetHubs .....
+type SetHubs struct {
+	HubURLs []string
+}
+
+// Apply .....
+func (s *SetHubs) Apply(model *m.Model) {
+	panic("TODO -- unimplemented")
 }

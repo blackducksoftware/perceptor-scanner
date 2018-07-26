@@ -26,15 +26,17 @@ import "github.com/blackducksoftware/perceptor-scanner/pkg/common"
 type ScanJob struct {
 	PullSpec              string
 	Sha                   string
+	HubHost               string
 	HubProjectName        string
 	HubProjectVersionName string
 	HubScanName           string
 }
 
-func NewScanJob(pullSpec string, sha string, hubProjectName string, hubProjectVersionName string, hubScanName string) *ScanJob {
+func NewScanJob(pullSpec string, sha string, hubHost string, hubProjectName string, hubProjectVersionName string, hubScanName string) *ScanJob {
 	return &ScanJob{
 		PullSpec:              pullSpec,
 		Sha:                   sha,
+		HubHost:               hubHost,
 		HubProjectName:        hubProjectName,
 		HubProjectVersionName: hubProjectVersionName,
 		HubScanName:           hubScanName}

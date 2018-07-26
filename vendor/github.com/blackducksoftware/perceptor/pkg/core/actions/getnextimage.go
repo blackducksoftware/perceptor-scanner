@@ -28,11 +28,24 @@ import (
 
 // GetNextImage .....
 type GetNextImage struct {
-	Continuation func(image *m.Image)
+	Done  chan *m.HubImageAssignment
+	Error chan error
+}
+
+// NewGetNextImage ...
+func NewGetNextImage() *GetNextImage {
+	return &GetNextImage{Done: make(chan *m.HubImageAssignment), Error: make(chan error)}
 }
 
 // Apply .....
 func (g *GetNextImage) Apply(model *m.Model) {
-	log.Debugf("looking for next image to scan with concurrency limit of %d, and %d currently in progress", model.Config.ConcurrentScanLimit, model.InProgressScanCount())
-	go g.Continuation(model.GetNextImageFromScanQueue())
+	log.Debugf("looking for next image to scan")
+	imageAssignment, err := model.GetNextImageFromScanQueue()
+	go func() {
+		if err == nil {
+			g.Done <- imageAssignment
+		} else {
+			g.Error <- err
+		}
+	}()
 }

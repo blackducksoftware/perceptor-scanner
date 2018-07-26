@@ -75,7 +75,6 @@ func NewScanner(config *Config) (*Scanner, error) {
 
 	imagePuller := NewImageFacadePuller(imageFacadeBaseURL, config.ImageFacadePort)
 	scanClient, err := NewHubScanClient(
-		config.HubHost,
 		config.HubUser,
 		config.HubPort,
 		scanClientInfo,
@@ -121,7 +120,7 @@ func (scanner *Scanner) requestAndRunScanJob() {
 
 	log.Infof("processing scan job %+v", image)
 
-	job := NewScanJob(image.PullSpec, image.Sha, image.HubProjectName, image.HubProjectVersionName, image.HubScanName)
+	job := NewScanJob(image.PullSpec, image.Sha, image.HubURL, image.HubProjectName, image.HubProjectVersionName, image.HubScanName)
 	err = scanner.scanClient.Scan(*job)
 	errorString := ""
 	if err != nil {
