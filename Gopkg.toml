@@ -31,7 +31,7 @@
 
 [[constraint]]
   name = "github.com/blackducksoftware/perceptor"
-  branch = "master"
+  branch = "hub-naming"
 
 [[constraint]]
   name = "github.com/prometheus/client_golang"
@@ -44,6 +44,10 @@
 [[constraint]]
   name = "github.com/spf13/viper"
   version = "1.0.0"
+
+[[override]]
+  source = "https://github.com/fsnotify/fsnotify/archive/v1.4.7.tar.gz"
+  name = "gopkg.in/fsnotify.v1"
 
 [prune]
   go-tests = true

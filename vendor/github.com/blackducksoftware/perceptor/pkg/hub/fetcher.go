@@ -32,11 +32,14 @@ import (
 
 const (
 	maxHubExponentialBackoffDuration = 1 * time.Hour
+	hubDeleteTimeout                 = 1 * time.Hour
 )
 
 // Fetcher .....
 type Fetcher struct {
 	client         *hubclient.Client
+	deleteClient   *hubclient.Client
+	scansToDelete  map[string]bool
 	circuitBreaker *CircuitBreaker
 	hubVersion     string
 	username       string
@@ -70,6 +73,13 @@ func (hf *Fetcher) Login() error {
 	err := hf.client.Login(hf.username, hf.password)
 	recordHubResponse("login", err == nil)
 	recordHubResponseTime("login", time.Now().Sub(start))
+	if err != nil {
+		return err
+	}
+	startDelete := time.Now()
+	err = hf.deleteClient.Login(hf.username, hf.password)
+	recordHubResponse("login", err == nil)
+	recordHubResponseTime("login", time.Now().Sub(startDelete))
 	return err
 }
 
@@ -100,8 +110,14 @@ func NewFetcher(username string, password string, hubHost string, hubPort int, h
 	if err != nil {
 		return nil, err
 	}
+	deleteClient, err := hubclient.NewWithSession(baseURL, 0, hubDeleteTimeout)
+	if err != nil {
+		return nil, err
+	}
 	hf := Fetcher{
 		client:         client,
+		deleteClient:   deleteClient,
+		scansToDelete:  map[string]bool{},
 		circuitBreaker: NewCircuitBreaker(maxHubExponentialBackoffDuration, client),
 		username:       username,
 		password:       password,
@@ -114,6 +130,8 @@ func NewFetcher(username string, password string, hubHost string, hubPort int, h
 	if err != nil {
 		return nil, err
 	}
+	// TODO replace with scheduler
+	hf.startDeletingScans()
 	return &hf, nil
 }
 
@@ -125,6 +143,69 @@ func (hf *Fetcher) SetTimeout(timeout time.Duration) {
 // HubVersion .....
 func (hf *Fetcher) HubVersion() string {
 	return hf.hubVersion
+}
+
+// DeleteScans ...
+func (hf *Fetcher) DeleteScans(scanNames []string) {
+	// TODO protect from concurrent read/write
+	for _, scanName := range scanNames {
+		hf.scansToDelete[scanName] = true
+	}
+}
+
+func (hf *Fetcher) startDeletingScans() {
+	go func() {
+		for {
+			time.Sleep(1 * time.Minute)
+			var scanName *string
+			for key := range hf.scansToDelete {
+				scanName = &key
+				break
+			}
+			if scanName != nil {
+				err := hf.DeleteScan(*scanName)
+				if err != nil {
+					log.Errorf("unable to delete scan: %s", err.Error())
+				} else {
+					delete(hf.scansToDelete, *scanName)
+				}
+			}
+		}
+	}()
+}
+
+// DeleteScan deletes the code location and project version (but NOT the project)
+// associated with the given scan name.
+func (hf *Fetcher) DeleteScan(scanName string) error {
+	if !hf.circuitBreaker.IsEnabled() {
+		return fmt.Errorf("unable to delete scan, circuit breaker is disabled")
+	}
+	queryString := fmt.Sprintf("name:%s", scanName)
+	start := time.Now()
+	clList, err := hf.deleteClient.ListAllCodeLocations(&hubapi.GetListOptions{Q: &queryString})
+	recordHubResponseTime("allCodeLocations", time.Now().Sub(start))
+	recordHubResponse("allCodeLocations", err == nil)
+	switch len(clList.Items) {
+	case 0:
+		return nil
+	case 1:
+		// continue
+	default:
+		return fmt.Errorf("expected 0 or 1 scans of name %s, found %d", scanName, len(clList.Items))
+	}
+	codeLocation := clList.Items[0]
+	deleteCodeLocationStart := time.Now()
+	err = hf.deleteClient.DeleteCodeLocation(codeLocation.Meta.Href)
+	recordHubResponseTime("deleteCodeLocation", time.Now().Sub(deleteCodeLocationStart))
+	recordHubResponse("deleteCodeLocation", err == nil)
+	if err != nil {
+		return err
+	}
+	deleteVersionStart := time.Now()
+	err = hf.deleteClient.DeleteProjectVersion(codeLocation.MappedProjectVersion)
+	recordHubResponseTime("deleteVersion", time.Now().Sub(deleteVersionStart))
+	recordHubResponse("deleteVersion", err == nil)
+	return err
 }
 
 // func (hf *Fetcher) FetchAllScanNames() ([]string, error) {
@@ -139,19 +220,19 @@ func (hf *Fetcher) HubVersion() string {
 // 	return scanNames, nil
 // }
 
-// FetchScanFromImage finds an ImageScan by starting from a code location,
+// FetchScan finds ScanResults by starting from a code location,
 // and following links from there.
 // It returns:
 //  - nil, if there's no code location with a matching name
 //  - nil, if there's 0 scan summaries for the code location
 //  - an error, if there were any HTTP problems or link problems
-//  - an ImageScan, but possibly with garbage data, in all other cases
+//  - an ScanResults, but possibly with garbage data, in all other cases
 // Weird cases to watch out for:
 //  - multiple code locations with a matching name
 //  - multiple scan summaries for a code location
 //  - zero scan summaries for a code location
-func (hf *Fetcher) FetchScanFromImage(image ImageInterface) (*ImageScan, error) {
-	codeLocationList, err := hf.circuitBreaker.ListCodeLocations(image.HubScanNameSearchString())
+func (hf *Fetcher) FetchScan(scanNameSearchString string) (*ScanResults, error) {
+	codeLocationList, err := hf.circuitBreaker.ListCodeLocations(scanNameSearchString)
 
 	if err != nil {
 		log.Errorf("error fetching code location list: %v", err)
@@ -166,14 +247,14 @@ func (hf *Fetcher) FetchScanFromImage(image ImageInterface) (*ImageScan, error) 
 		recordHubData("codeLocations", true) // good to go
 	default:
 		recordHubData("codeLocations", false)
-		log.Warnf("expected 1 code location matching name search string %s, found %d", image.HubScanNameSearchString(), len(codeLocations))
+		log.Warnf("expected 1 code location matching name search string %s, found %d", scanNameSearchString, len(codeLocations))
 	}
 
 	codeLocation := codeLocations[0]
-	return hf.fetchImageScanUsingCodeLocation(codeLocation, image)
+	return hf.fetchScanResultsUsingCodeLocation(codeLocation, scanNameSearchString)
 }
 
-func (hf *Fetcher) fetchImageScanUsingCodeLocation(codeLocation hubapi.CodeLocation, image ImageInterface) (*ImageScan, error) {
+func (hf *Fetcher) fetchScanResultsUsingCodeLocation(codeLocation hubapi.CodeLocation, scanNameSearchString string) (*ScanResults, error) {
 	versionLink, err := codeLocation.GetProjectVersionLink()
 	if err != nil {
 		log.Errorf("unable to get project version link: %s", err.Error())
@@ -234,7 +315,7 @@ func (hf *Fetcher) fetchImageScanUsingCodeLocation(codeLocation hubapi.CodeLocat
 		recordHubData("scan summaries", true) // good to go, continue
 	default:
 		recordHubData("scan summaries", false)
-		log.Warnf("expected to find one scan summary for code location %s, found %d", image.HubScanNameSearchString(), len(scanSummariesList.Items))
+		log.Warnf("expected to find one scan summary for code location %s, found %d", scanNameSearchString, len(scanSummariesList.Items))
 	}
 
 	mappedRiskProfile, err := newRiskProfile(riskProfile.BomLastUpdatedAt, riskProfile.Categories)
@@ -252,7 +333,7 @@ func (hf *Fetcher) fetchImageScanUsingCodeLocation(codeLocation hubapi.CodeLocat
 		scanSummaries[i] = *NewScanSummaryFromHub(scanSummary)
 	}
 
-	scan := ImageScan{
+	scan := ScanResults{
 		RiskProfile:           *mappedRiskProfile,
 		PolicyStatus:          *mappedPolicyStatus,
 		ComponentsHref:        componentsLink.Href,
