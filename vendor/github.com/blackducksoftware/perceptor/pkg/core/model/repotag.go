@@ -21,9 +21,8 @@ under the License.
 
 package model
 
-// PodScan .....
-type PodScan struct {
-	OverallStatus    string
-	PolicyViolations int
-	Vulnerabilities  int
+// RepoTag combines a Docker repository and tag
+type RepoTag struct {
+	Repository string
+	Tag        string
 }
