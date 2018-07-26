@@ -121,7 +121,7 @@ func (scanner *Scanner) requestAndRunScanJob() {
 
 	log.Infof("processing scan job %+v", image)
 
-	job := NewScanJob(image.PullSpec, image.Sha, image.HubProjectName, image.HubProjectVersionName, image.HubScanName)
+	job := NewScanJob(image.Repository, image.Sha, image.HubProjectName, image.HubProjectVersionName, image.HubScanName)
 	err = scanner.scanClient.Scan(*job)
 	errorString := ""
 	if err != nil {
