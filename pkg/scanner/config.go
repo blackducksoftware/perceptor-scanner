@@ -38,6 +38,7 @@ type Config struct {
 	LogLevel string
 	Port     int
 
+	ImageFacadeHost string
 	ImageFacadePort int
 
 	PerceptorHost string
@@ -52,6 +53,8 @@ func GetConfig(configPath string) (*Config, error) {
 	var config *Config
 
 	viper.SetConfigFile(configPath)
+	// Default ImageFacadeHost to 'localhost'
+	viper.SetDefault("ImageFacadeHost", "localhost")
 
 	err := viper.ReadInConfig()
 	if err != nil {
