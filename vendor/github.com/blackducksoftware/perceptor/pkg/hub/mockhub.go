@@ -26,6 +26,8 @@ import (
 	"math/rand"
 	"strings"
 	"time"
+
+	"github.com/blackducksoftware/perceptor/pkg/api"
 )
 
 // need: mock hub, ?mock apiserver?
@@ -65,29 +67,14 @@ func (hub *MockHub) startRandomScanFinishing() {
 	}
 }
 
-// FetchProjectByName .....
-func (hub *MockHub) FetchProjectByName(string) (*Project, error) {
-	return nil, nil
+// DeleteScan ...
+func (hub *MockHub) DeleteScan(scanName string) {
+	//
 }
 
-// DeleteScans ...
-func (hub *MockHub) DeleteScans(scanNames []string) {
-	// unimplemented
-}
-
-// FetchScan .....
-func (hub *MockHub) FetchScan(scanNameSearchString string) (*ScanResults, error) {
-	return nil, nil
-}
-
-// HubVersion .....
-func (hub *MockHub) HubVersion() string {
-	return hub.hubVersion
-}
-
-// Login .....
-func (hub *MockHub) Login() error {
-	return nil
+// Version .....
+func (hub *MockHub) Version() (string, error) {
+	return hub.hubVersion, nil
 }
 
 // SetTimeout ...
@@ -96,8 +83,8 @@ func (hub *MockHub) SetTimeout(timeout time.Duration) {
 }
 
 // Model ...
-func (hub *MockHub) Model() *FetcherModel {
-	return &FetcherModel{}
+func (hub *MockHub) Model() *api.HubModel {
+	return &api.HubModel{}
 }
 
 // ResetCircuitBreaker ...
@@ -108,4 +95,39 @@ func (hub *MockHub) ResetCircuitBreaker() {
 // IsEnabled ...
 func (hub *MockHub) IsEnabled() <-chan bool {
 	return make(<-chan bool)
+}
+
+// Host ...
+func (hub *MockHub) Host() string {
+	return "unimplemented"
+}
+
+// CodeLocationsCount ...
+func (hub *MockHub) CodeLocationsCount() <-chan int {
+	return nil
+}
+
+// StartScanClient ...
+func (hub *MockHub) StartScanClient(scanName string) {
+	//
+}
+
+// FinishScanClient ...
+func (hub *MockHub) FinishScanClient(scanName string) {
+	//
+}
+
+// ScanDidFinish ...
+func (hub *MockHub) ScanDidFinish() <-chan *ScanDidFinish {
+	return nil
+}
+
+// InProgressScans ...
+func (hub *MockHub) InProgressScans() <-chan []string {
+	return nil
+}
+
+// Stop ...
+func (hub *MockHub) Stop() {
+	//
 }

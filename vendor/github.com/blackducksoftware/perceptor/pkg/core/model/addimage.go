@@ -19,13 +19,14 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package actions
+package model
 
-import (
-	m "github.com/blackducksoftware/perceptor/pkg/core/model"
-)
+// AddImage .....
+type AddImage struct {
+	Image Image
+}
 
-// Action .....
-type Action interface {
-	Apply(model *m.Model)
+// Apply .....
+func (a *AddImage) Apply(model *Model) {
+	model.addImage(a.Image, 0)
 }

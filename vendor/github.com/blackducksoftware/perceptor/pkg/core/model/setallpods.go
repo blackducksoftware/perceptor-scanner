@@ -19,21 +19,17 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package actions
+package model
 
-import (
-	m "github.com/blackducksoftware/perceptor/pkg/core/model"
-	log "github.com/sirupsen/logrus"
-)
-
-// CheckScanRefresh .....
-type CheckScanRefresh struct {
-	Continuation func(image *m.Image)
+// AllPods .....
+type AllPods struct {
+	Pods []Pod
 }
 
 // Apply .....
-func (g *CheckScanRefresh) Apply(model *m.Model) {
-	log.Debugf("looking for next image to refresh in the hub")
-	image := model.GetNextImageFromRefreshQueue()
-	go g.Continuation(image)
+func (a *AllPods) Apply(model *Model) {
+	model.Pods = map[string]Pod{}
+	for _, pod := range a.Pods {
+		model.addPod(pod)
+	}
 }

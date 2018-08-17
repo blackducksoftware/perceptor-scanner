@@ -19,18 +19,16 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package actions
+package model
 
-import (
-	m "github.com/blackducksoftware/perceptor/pkg/core/model"
-)
-
-// CheckScansCompletion .....
-type CheckScansCompletion struct {
-	Continuation func(images *[]m.Image)
+// AllImages .....
+type AllImages struct {
+	Images []Image
 }
 
-// Apply .....
-func (g *CheckScansCompletion) Apply(model *m.Model) {
-	go g.Continuation(model.InProgressHubScans())
+// Apply just adds new images.  It currently does not delete any images.
+func (a *AllImages) Apply(model *Model) {
+	for _, image := range a.Images {
+		model.addImage(image, 0)
+	}
 }

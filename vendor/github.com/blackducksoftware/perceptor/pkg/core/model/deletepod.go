@@ -19,30 +19,23 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package actions
+package model
 
 import (
-	"time"
-
-	m "github.com/blackducksoftware/perceptor/pkg/core/model"
+	log "github.com/sirupsen/logrus"
 )
 
-// RequeueStalledScans .....
-type RequeueStalledScans struct {
-	StalledScanClientTimeout time.Duration
+// DeletePod .....
+type DeletePod struct {
+	PodName string
 }
 
 // Apply .....
-func (r *RequeueStalledScans) Apply(model *m.Model) {
-	for _, imageInfo := range model.Images {
-		switch imageInfo.ScanStatus {
-		case m.ScanStatusRunningScanClient:
-			if imageInfo.TimeInCurrentScanStatus() > r.StalledScanClientTimeout {
-				recordRequeueStalledScan(imageInfo.ScanStatus.String())
-				model.SetImageScanStatus(imageInfo.ImageSha, m.ScanStatusInQueue)
-			}
-		default:
-			// nothing to do
-		}
+func (d *DeletePod) Apply(model *Model) {
+	_, ok := model.Pods[d.PodName]
+	if !ok {
+		log.Warnf("unable to delete pod %s, pod not found", d.PodName)
+		return
 	}
+	delete(model.Pods, d.PodName)
 }

@@ -19,21 +19,28 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package actions
+package core
 
 import (
 	m "github.com/blackducksoftware/perceptor/pkg/core/model"
+	"github.com/blackducksoftware/perceptor/pkg/hub"
 )
 
-// AllPods .....
-type AllPods struct {
-	Pods []m.Pod
+// ScanScheduler ...
+type ScanScheduler struct {
+	// ProjectLimit int
+	CodeLocationLimit   int
+	ConcurrentScanLimit int
+	HubManager          HubManagerInterface
 }
 
-// Apply .....
-func (a *AllPods) Apply(model *m.Model) {
-	model.Pods = map[string]m.Pod{}
-	for _, pod := range a.Pods {
-		model.AddPod(pod)
+// AssignImage finds a Hub that is available to scan `image`.
+func (s *ScanScheduler) AssignImage(image *m.Image) hub.ClientInterface {
+	for _, hub := range s.HubManager.HubClients() {
+		if <-hub.CodeLocationsCount() < s.CodeLocationLimit && len(<-hub.InProgressScans()) < s.ConcurrentScanLimit {
+			return hub
+		}
 	}
+	// TODO eventually, could look through projects
+	return nil
 }

@@ -32,18 +32,17 @@
   revision = "940138f994024143ee604ff0821f08ed2b597f9c"
 
 [[projects]]
-  branch = "master"
+  branch = "federate"
   name = "github.com/blackducksoftware/perceptor"
   packages = [
     "pkg/api",
     "pkg/core",
-    "pkg/core/actions",
     "pkg/core/model",
-    "pkg/datastructures",
     "pkg/hub",
-    "pkg/logging"
+    "pkg/logging",
+    "pkg/util"
   ]
-  revision = "255a1e739b162098de273abecb3795d146f0e1eb"
+  revision = "a1312c6f2a0669b6548237f69233bb48d1b940f8"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -175,7 +174,7 @@
     "log",
     "model"
   ]
-  revision = "7600349dcfe1abd18d72d3a1770870d9800a7801"
+  revision = "c7de2306084e37d54b8be01f3541a8464345e9a5"
 
 [[projects]]
   branch = "master"
@@ -213,25 +212,25 @@
   branch = "master"
   name = "github.com/spf13/jwalterweatherman"
   packages = ["."]
-  revision = "7c0cea34c8ece3fbeb2b27ab9b59511d360fb394"
+  revision = "14d3d4c518341bea657dd8a226f5121c0ff8c9f2"
 
 [[projects]]
   name = "github.com/spf13/pflag"
   packages = ["."]
-  revision = "583c0c0531f06d5278b7d917446061adc344b5cd"
-  version = "v1.0.1"
+  revision = "9a97c102cda95a86cec2345a6f09f55a939babf5"
+  version = "v1.0.2"
 
 [[projects]]
   name = "github.com/spf13/viper"
   packages = ["."]
-  revision = "b5e8006cbee93ec955a89ab31e0e3ce3204f3736"
-  version = "v1.0.2"
+  revision = "907c19d40d9a6c9bb55f040ff4ae45271a4754b9"
+  version = "v1.1.0"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "c126467f60eb25f8f27e5a981f32a87e3965053f"
+  revision = "aabede6cba87e37f413b3e60ebfc214f8eeca1b0"
 
 [[projects]]
   branch = "master"
@@ -241,7 +240,7 @@
     "html/atom",
     "html/charset"
   ]
-  revision = "3673e40ba22529d22c3fd7c93e97b0ce50fa7bdd"
+  revision = "aaf60122140d3fcf75376d319f0554393160eb50"
 
 [[projects]]
   branch = "master"
@@ -252,7 +251,7 @@
     "windows/registry",
     "windows/svc/eventlog"
   ]
-  revision = "e072cadbbdc8dd3d3ffa82b8b4b9304c261d9311"
+  revision = "1c9583448a9c3aa0f9a6a5241bf73c0bd8aafded"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -309,6 +308,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ca5684fae4ac5c56c80d7fa2e473bddadd8914a9782af742e15bec7a3da59d55"
+  inputs-digest = "64cded1de8b43e853427cab5e6100fd13948bf59e35b8ccfcef344a8c6a3b13f"
   solver-name = "gps-cdcl"
   solver-version = 1

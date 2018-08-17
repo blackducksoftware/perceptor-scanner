@@ -23,20 +23,25 @@ package api
 
 import (
 	"time"
-
-	"github.com/blackducksoftware/perceptor/pkg/hub"
 )
 
-// Model .....
+// Model ...
 type Model struct {
-	Pods               map[string]*Pod
-	Images             map[string]*ModelImageInfo
-	ImageScanQueue     []map[string]interface{}
-	ImageHubCheckQueue []string
-	HubVersion         string
-	Config             *ModelConfig
-	Timings            *ModelTimings
-	HubCircuitBreaker  *ModelCircuitBreaker
+	// TODO
+	Todo      string
+	CoreModel CoreModel
+}
+
+// CoreModel .....
+type CoreModel struct {
+	Pods           map[string]*Pod
+	Images         map[string]*ModelImageInfo
+	ImageScanQueue []map[string]interface{}
+	// ImageHubCheckQueue []string // TODO
+	HubVersion        string
+	Config            *ModelConfig
+	Timings           *ModelTimings
+	HubCircuitBreaker *ModelCircuitBreaker
 }
 
 // ModelConfig .....
@@ -87,7 +92,7 @@ type ModelTimings struct {
 type ModelImageInfo struct {
 	ScanStatus             string
 	TimeOfLastStatusChange string
-	ScanResults            *hub.ScanResults
+	ScanResults            interface{}
 	ImageSha               string
 	RepoTags               []*ModelRepoTag
 }

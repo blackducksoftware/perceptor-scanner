@@ -19,18 +19,14 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package hub
+package model
 
-import "time"
+// UpdatePod .....
+type UpdatePod struct {
+	Pod Pod
+}
 
-// FetcherInterface .....
-type FetcherInterface interface {
-	Login() error
-	HubVersion() string
-	DeleteScans(scanNames []string)
-	FetchScan(scanNameSearchString string) (*ScanResults, error)
-	SetTimeout(timeout time.Duration)
-	ResetCircuitBreaker()
-	Model() *FetcherModel
-	IsEnabled() <-chan bool
+// Apply .....
+func (u *UpdatePod) Apply(model *Model) {
+	model.addPod(u.Pod)
 }

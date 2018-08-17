@@ -19,13 +19,29 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package hub
+package api
 
 import "time"
 
-// FetcherModel holds the state of the fetcher
-type FetcherModel struct {
-	State               CircuitBreakerState
+// HubModel describes a hub client model
+type HubModel struct {
+	// can we log in to the hub?
+	IsLoggedIn bool
+	// have all the projects been sucked in?
+	HasLoadedAllProjects bool
+	// is circuit breaker enabled?
+	IsCircuitBreakerEnabled bool
+	// map of project name to ... ? hub URL?
+	Projects map[string]string
+	// map of code location name to mapped project version url
+	CodeLocations map[string]string
+	// bad things that have happened
+	Errors []string
+	// status
+	Status string
+
+	// more stuff
+	CircuitBreakerState string
 	NextCheckTime       *time.Time
 	ConsecutiveFailures int
 }

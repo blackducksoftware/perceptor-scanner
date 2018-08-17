@@ -26,7 +26,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/blackducksoftware/perceptor/pkg/api"
 	// import just for the side-effect of changing how logrus works
 	_ "github.com/blackducksoftware/perceptor/pkg/logging"
 	"github.com/prometheus/client_golang/prometheus"
@@ -64,21 +63,33 @@ func RunPerceptor(configPath string) {
 
 	http.Handle("/metrics", prometheus.Handler())
 
-	if config.UseMockMode {
-		responder := api.NewMockResponder()
-		api.SetupHTTPServer(responder)
-		log.Info("instantiated responder in mock mode")
-	} else {
-		perceptor, err := NewPerceptor(config)
-		if err != nil {
-			log.Errorf("unable to instantiate percepter: %s", err.Error())
-			panic(err)
-		}
+	stop := make(chan struct{})
 
-		log.Infof("instantiated perceptor in real mode: %+v", perceptor)
+	var creater HubManagerInterface
+	if config.UseMockMode {
+		log.Infof("instantiating perceptor in mock mode")
+		creater = &MockHubCreater{}
+	} else {
+		log.Infof("instantiating perceptor in real mode")
+		password, ok := os.LookupEnv(config.HubUserPasswordEnvVar)
+		if !ok {
+			panic(fmt.Errorf("cannot find Hub password: environment variable %s not found", config.HubUserPasswordEnvVar))
+		}
+		creater = NewHubManager(config.HubUser, password, config.HubPort, config.HubClientTimeout(), stop)
 	}
 
+	perceptor, err := NewPerceptor(config, creater)
+	if err != nil {
+		log.Errorf("unable to instantiate percepter: %s", err.Error())
+		panic(err)
+	}
+
+	log.Infof("instantiated perceptor: %+v", perceptor)
+
 	addr := fmt.Sprintf(":%d", config.Port)
-	http.ListenAndServe(addr, nil)
-	log.Info("Http server started!")
+	go func() {
+		log.Info("starting HTTP server on port %d", config.Port)
+		http.ListenAndServe(addr, nil)
+	}()
+	<-stop
 }

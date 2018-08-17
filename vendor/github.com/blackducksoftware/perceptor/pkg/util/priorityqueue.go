@@ -19,7 +19,7 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package core
+package util
 
 import (
 	"encoding/json"
@@ -109,6 +109,14 @@ func (pq *PriorityQueue) Add(key string, priority int, value interface{}) error 
 	pq.siftUp(pq.size)
 	pq.size++
 	return nil
+}
+
+// Peek returns the highest priority item, or nil if empty.
+func (pq *PriorityQueue) Peek() interface{} {
+	if pq.size == 0 {
+		return nil
+	}
+	return pq.items[0].value
 }
 
 // Pop removes the highest priority element, returning an error if empty.

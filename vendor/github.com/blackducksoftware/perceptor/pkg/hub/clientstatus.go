@@ -22,30 +22,39 @@ under the License.
 package hub
 
 import (
-	"time"
-
-	"github.com/blackducksoftware/perceptor/pkg/api"
+	"fmt"
 )
 
-// ScanDidFinish ...
-type ScanDidFinish struct {
-	ScanName    string
-	ScanResults *ScanResults
+// ClientStatus describes the state of a hub client
+type ClientStatus int
+
+// .....
+const (
+	ClientStatusError ClientStatus = iota
+	ClientStatusUp    ClientStatus = iota
+	ClientStatusDown  ClientStatus = iota
+)
+
+// String .....
+func (status ClientStatus) String() string {
+	switch status {
+	case ClientStatusError:
+		return "ClientStatusError"
+	case ClientStatusUp:
+		return "ClientStatusUp"
+	case ClientStatusDown:
+		return "ClientStatusDown"
+	}
+	panic(fmt.Errorf("invalid ClientStatus value: %d", status))
 }
 
-// ClientInterface .....
-type ClientInterface interface {
-	Host() string
-	Version() (string, error)
-	DeleteScan(scanName string)
-	StartScanClient(scanName string)
-	FinishScanClient(scanName string)
-	ScanDidFinish() <-chan *ScanDidFinish
-	SetTimeout(timeout time.Duration)
-	ResetCircuitBreaker()
-	Model() *api.HubModel
-	CodeLocationsCount() <-chan int
-	InProgressScans() <-chan []string
-	Stop()
-	//	IsEnabled() <-chan bool
+// MarshalJSON .....
+func (status ClientStatus) MarshalJSON() ([]byte, error) {
+	jsonString := fmt.Sprintf(`"%s"`, status.String())
+	return []byte(jsonString), nil
+}
+
+// MarshalText .....
+func (status ClientStatus) MarshalText() (text []byte, err error) {
+	return []byte(status.String()), nil
 }

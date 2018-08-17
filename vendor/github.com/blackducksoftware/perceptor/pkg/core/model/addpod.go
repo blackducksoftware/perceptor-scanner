@@ -19,28 +19,14 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package actions
+package model
 
-import (
-	m "github.com/blackducksoftware/perceptor/pkg/core/model"
-	log "github.com/sirupsen/logrus"
-)
-
-// GetNextImage .....
-type GetNextImage struct {
-	Done chan *m.Image
-}
-
-// NewGetNextImage ...
-func NewGetNextImage() *GetNextImage {
-	return &GetNextImage{Done: make(chan *m.Image)}
+// AddPod .....
+type AddPod struct {
+	Pod Pod
 }
 
 // Apply .....
-func (g *GetNextImage) Apply(model *m.Model) {
-	log.Debugf("looking for next image to scan with concurrency limit of %d, and %d currently in progress", model.Config.ConcurrentScanLimit, model.InProgressScanCount())
-	image := model.GetNextImageFromScanQueue()
-	go func() {
-		g.Done <- image
-	}()
+func (a *AddPod) Apply(model *Model) {
+	model.addPod(a.Pod)
 }

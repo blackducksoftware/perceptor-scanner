@@ -19,24 +19,9 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package actions
+package api
 
-import (
-	m "github.com/blackducksoftware/perceptor/pkg/core/model"
-	log "github.com/sirupsen/logrus"
-)
-
-// DeletePod .....
-type DeletePod struct {
-	PodName string
-}
-
-// Apply .....
-func (d *DeletePod) Apply(model *m.Model) {
-	_, ok := model.Pods[d.PodName]
-	if !ok {
-		log.Warnf("unable to delete pod %s, pod not found", d.PodName)
-		return
-	}
-	delete(model.Pods, d.PodName)
+// PutHubs sets the current Hubs.
+type PutHubs struct {
+	HubURLs []string
 }

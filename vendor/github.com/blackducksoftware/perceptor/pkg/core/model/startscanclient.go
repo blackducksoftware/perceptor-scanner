@@ -19,21 +19,23 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package actions
+package model
 
-import (
-	m "github.com/blackducksoftware/perceptor/pkg/core/model"
-	log "github.com/sirupsen/logrus"
-)
-
-// CheckScanInitial .....
-type CheckScanInitial struct {
-	Continuation func(image *m.Image)
+// StartScanClient .....
+type StartScanClient struct {
+	Sha   DockerImageSha
+	Error chan error
 }
 
-// Apply .....
-func (g *CheckScanInitial) Apply(model *m.Model) {
-	log.Debugf("looking for next image to search for in hub")
-	image := model.GetNextImageFromHubCheckQueue()
-	go g.Continuation(image)
+// NewStartScanClient ...
+func NewStartScanClient(sha DockerImageSha) *StartScanClient {
+	return &StartScanClient{Sha: sha, Error: make(chan error)}
+}
+
+// Apply ...
+func (s *StartScanClient) Apply(model *Model) {
+	err := model.startScanClient(s.Sha)
+	go func() {
+		s.Error <- err
+	}()
 }
