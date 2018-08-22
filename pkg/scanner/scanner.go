@@ -110,7 +110,6 @@ func (scanner *Scanner) downloadScanner(hubURL string) (ScanClientInterface, err
 
 	imagePuller := NewImageFacadePuller(imageFacadeBaseURL, config.ImageFacadePort)
 	scanClient, err := NewHubScanClient(
-		hubURL,
 		config.HubUser,
 		config.HubPort,
 		scanClientInfo,
@@ -143,7 +142,7 @@ func (scanner *Scanner) requestAndRunScanJob() {
 		scanner.scanClient = scanClient
 	}
 
-	job := NewScanJob(image.Repository, image.Sha, image.HubProjectName, image.HubProjectVersionName, image.HubScanName)
+	job := NewScanJob(image.Repository, image.Sha, image.HubURL, image.HubProjectName, image.HubProjectVersionName, image.HubScanName)
 	err = scanner.scanClient.Scan(*job)
 	errorString := ""
 	if err != nil {
