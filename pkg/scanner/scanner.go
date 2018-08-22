@@ -44,9 +44,12 @@ type Scanner struct {
 	httpClient    *http.Client
 	perceptorHost string
 	perceptorPort int
+	config        *Config
+	stop          <-chan struct{}
+	hubPassword   string
 }
 
-func NewScanner(config *Config) (*Scanner, error) {
+func NewScanner(config *Config, stop <-chan struct{}) (*Scanner, error) {
 	log.Infof("instantiating Scanner with config %+v", config)
 
 	hubPassword, ok := os.LookupEnv(config.HubUserPasswordEnvVar)
@@ -60,38 +63,16 @@ func NewScanner(config *Config) (*Scanner, error) {
 		return nil, err
 	}
 
-	scanClientInfo, err := downloadScanClient(
-		config.HubHost,
-		config.HubUser,
-		hubPassword,
-		config.HubPort,
-		time.Duration(config.HubClientTimeoutSeconds)*time.Second)
-	if err != nil {
-		log.Errorf("unable to download scan client: %s", err.Error())
-		return nil, err
-	}
-
-	log.Infof("instantiating scanner with hub %s, user %s", config.HubHost, config.HubUser)
-
-	imagePuller := NewImageFacadePuller(imageFacadeBaseURL, config.ImageFacadePort)
-	scanClient, err := NewHubScanClient(
-		config.HubHost,
-		config.HubUser,
-		config.HubPort,
-		scanClientInfo,
-		imagePuller)
-	if err != nil {
-		log.Errorf("unable to instantiate hub scan client: %s", err.Error())
-		return nil, err
-	}
-
 	httpClient := &http.Client{Timeout: 5 * time.Second}
 
 	scanner := Scanner{
-		scanClient:    scanClient,
+		scanClient:    nil,
 		httpClient:    httpClient,
 		perceptorHost: config.PerceptorHost,
-		perceptorPort: config.PerceptorPort}
+		perceptorPort: config.PerceptorPort,
+		config:        config,
+		stop:          stop,
+		hubPassword:   hubPassword}
 
 	return &scanner, nil
 }
@@ -101,10 +82,44 @@ func (scanner *Scanner) StartRequestingScanJobs() {
 	log.Infof("starting to request scan jobs")
 	go func() {
 		for {
-			time.Sleep(requestScanJobPause)
-			scanner.requestAndRunScanJob()
+			select {
+			case <-scanner.stop:
+				return
+			case <-time.After(requestScanJobPause):
+				time.Sleep(requestScanJobPause)
+				scanner.requestAndRunScanJob()
+			}
 		}
 	}()
+}
+
+func (scanner *Scanner) downloadScanner(hubURL string) (ScanClientInterface, error) {
+	config := scanner.config
+	scanClientInfo, err := downloadScanClient(
+		hubURL,
+		config.HubUser,
+		scanner.hubPassword,
+		config.HubPort,
+		time.Duration(config.HubClientTimeoutSeconds)*time.Second)
+	if err != nil {
+		log.Errorf("unable to download scan client: %s", err.Error())
+		return nil, err
+	}
+
+	log.Infof("instantiating scanner with hub %s, user %s", hubURL, config.HubUser)
+
+	imagePuller := NewImageFacadePuller(imageFacadeBaseURL, config.ImageFacadePort)
+	scanClient, err := NewHubScanClient(
+		hubURL,
+		config.HubUser,
+		config.HubPort,
+		scanClientInfo,
+		imagePuller)
+	if err != nil {
+		log.Errorf("unable to instantiate hub scan client: %s", err.Error())
+		return nil, err
+	}
+	return scanClient, nil
 }
 
 func (scanner *Scanner) requestAndRunScanJob() {
@@ -120,6 +135,13 @@ func (scanner *Scanner) requestAndRunScanJob() {
 	}
 
 	log.Infof("processing scan job %+v", image)
+	if scanner.scanClient == nil {
+		scanClient, err := scanner.downloadScanner(image.HubURL)
+		if err != nil {
+			return
+		}
+		scanner.scanClient = scanClient
+	}
 
 	job := NewScanJob(image.Repository, image.Sha, image.HubProjectName, image.HubProjectVersionName, image.HubScanName)
 	err = scanner.scanClient.Scan(*job)

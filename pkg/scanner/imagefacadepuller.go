@@ -103,7 +103,7 @@ func (ifp *ImageFacadePuller) startImagePull(image *common.Image) error {
 	}
 
 	if resp.StatusCode != 200 {
-		err = fmt.Errorf("image pull to %s failed with status code %d", url, resp.StatusCode)
+		err = fmt.Errorf("request to start image pull for image %s failed with status code %d", url, resp.StatusCode)
 		log.Errorf(err.Error())
 		return err
 	}
@@ -111,7 +111,7 @@ func (ifp *ImageFacadePuller) startImagePull(image *common.Image) error {
 	defer resp.Body.Close()
 	_, _ = ioutil.ReadAll(resp.Body)
 
-	log.Infof("image pull for image %s succeeded", image.PullSpec)
+	log.Infof("request to start image pull for image %s succeeded", image.PullSpec)
 
 	return nil
 }

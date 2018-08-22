@@ -29,7 +29,6 @@ import (
 )
 
 type Config struct {
-	HubHost                 string
 	HubUser                 string
 	HubUserPasswordEnvVar   string
 	HubPort                 int
