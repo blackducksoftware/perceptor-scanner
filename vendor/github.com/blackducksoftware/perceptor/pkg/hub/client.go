@@ -37,12 +37,6 @@ const (
 	// hubDeleteTimeout                 = 1 * time.Hour
 )
 
-// Result models computations that may succeed or fail.
-type Result struct {
-	Value interface{}
-	Err   error
-}
-
 // Client .....
 type Client struct {
 	// TODO add a second hub client -- so that there's one for rare, slow requests (all projects,
@@ -67,7 +61,7 @@ type Client struct {
 	// channels
 	stop                    chan struct{}
 	resetCircuitBreakerCh   chan struct{}
-	getModel                chan chan *api.HubModel
+	getModel                chan chan *api.ModelHub
 	getCodeLocationsCh      chan chan map[string]hubapi.CodeLocation
 	deleteScanCh            chan string
 	didDeleteScanCh         chan *Result
@@ -80,8 +74,7 @@ type Client struct {
 	didFetchCodeLocationsCh chan *Result
 }
 
-// NewClient returns a new, logged-in Client.
-// It will not be logged in.
+// NewClient returns a new Client.  It will not be logged in.
 func NewClient(username string, password string, host string, port int, hubClientTimeout time.Duration, fetchAllProjectsPause time.Duration) *Client {
 	hub := &Client{
 		circuitBreaker: NewCircuitBreaker(maxHubExponentialBackoffDuration),
@@ -97,7 +90,7 @@ func NewClient(username string, password string, host string, port int, hubClien
 		//
 		stop: make(chan struct{}),
 		resetCircuitBreakerCh:   make(chan struct{}),
-		getModel:                make(chan chan *api.HubModel),
+		getModel:                make(chan chan *api.ModelHub),
 		getCodeLocationsCh:      make(chan chan map[string]hubapi.CodeLocation),
 		deleteScanCh:            make(chan string),
 		didDeleteScanCh:         make(chan *Result),
@@ -191,15 +184,9 @@ func (hub *Client) ResetCircuitBreaker() {
 	hub.resetCircuitBreakerCh <- struct{}{}
 }
 
-// // IsEnabled returns whether the Client is currently enabled
-// // example: the circuit breaker is disabled -> the Client is disabled
-// func (hub *Client) IsEnabled() <-chan bool {
-// 	return hub.circuitBreaker.IsEnabledChannel
-// }
-
 // Model ...
-func (hub *Client) Model() *api.HubModel {
-	ch := make(chan *api.HubModel)
+func (hub *Client) Model() *api.ModelHub {
+	ch := make(chan *api.ModelHub)
 	hub.getModel <- ch
 	return <-ch
 }
@@ -228,23 +215,26 @@ func (hub *Client) login() error {
 	return err
 }
 
-func (hub *Client) apiModel() *api.HubModel {
+func (hub *Client) apiModel() *api.ModelHub {
 	errors := make([]string, len(hub.errors))
 	for ix, err := range hub.errors {
 		errors[ix] = err.Error()
 	}
-	codeLocations := map[string]string{}
+	codeLocations := map[string]*api.ModelCodeLocation{}
 	for name, cl := range hub.codeLocations {
-		codeLocations[name] = cl.Meta.Href
+		codeLocations[name] = &api.ModelCodeLocation{
+			Href:                 cl.Meta.Href,
+			URL:                  cl.URL,
+			MappedProjectVersion: cl.MappedProjectVersion,
+			UpdatedAt:            cl.UpdatedAt,
+		}
 	}
-	return &api.HubModel{
-		Errors: errors,
-		//		HasLoadedAllProjects:    hub.projects != nil,
-		Status:                  hub.status.String(),
-		IsCircuitBreakerEnabled: false, // TODO
-		IsLoggedIn:              false, // TODO
-		//		Projects:                projects,
-		CodeLocations: codeLocations,
+	return &api.ModelHub{
+		Errors:         errors,
+		Status:         hub.status.String(),
+		IsLoggedIn:     false, // TODO
+		CodeLocations:  codeLocations,
+		CircuitBreaker: hub.circuitBreaker.Model(),
 	}
 }
 

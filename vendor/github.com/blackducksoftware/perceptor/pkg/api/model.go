@@ -27,17 +27,15 @@ import (
 
 // Model ...
 type Model struct {
-	// TODO
-	Todo      string
+	Hubs      map[string]*ModelHub
 	CoreModel CoreModel
 }
 
 // CoreModel .....
 type CoreModel struct {
-	Pods           map[string]*Pod
-	Images         map[string]*ModelImageInfo
-	ImageScanQueue []map[string]interface{}
-	// ImageHubCheckQueue []string // TODO
+	Pods              map[string]*Pod
+	Images            map[string]*ModelImageInfo
+	ImageScanQueue    []map[string]interface{}
 	HubVersion        string
 	Config            *ModelConfig
 	Timings           *ModelTimings
@@ -107,5 +105,29 @@ type ModelRepoTag struct {
 type ModelCircuitBreaker struct {
 	State               string
 	NextCheckTime       *time.Time
+	MaxBackoffDuration  time.Duration
 	ConsecutiveFailures int
+}
+
+// ModelHub describes a hub client model
+type ModelHub struct {
+	// can we log in to the hub?
+	IsLoggedIn bool
+	// have all the projects been sucked in?
+	//	HasLoadedAllProjects bool
+	// map of project name to ... ? hub URL?
+	//	Projects map[string]string
+	// map of code location name to mapped project version url
+	CodeLocations  map[string]*ModelCodeLocation
+	Errors         []string
+	Status         string
+	CircuitBreaker *ModelCircuitBreaker
+}
+
+// ModelCodeLocation ...
+type ModelCodeLocation struct {
+	Href                 string
+	URL                  string
+	MappedProjectVersion string
+	UpdatedAt            string
 }

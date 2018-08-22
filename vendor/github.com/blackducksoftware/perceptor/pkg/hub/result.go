@@ -19,29 +19,10 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package api
+package hub
 
-import "time"
-
-// HubModel describes a hub client model
-type HubModel struct {
-	// can we log in to the hub?
-	IsLoggedIn bool
-	// have all the projects been sucked in?
-	HasLoadedAllProjects bool
-	// is circuit breaker enabled?
-	IsCircuitBreakerEnabled bool
-	// map of project name to ... ? hub URL?
-	Projects map[string]string
-	// map of code location name to mapped project version url
-	CodeLocations map[string]string
-	// bad things that have happened
-	Errors []string
-	// status
-	Status string
-
-	// more stuff
-	CircuitBreakerState string
-	NextCheckTime       *time.Time
-	ConsecutiveFailures int
+// Result models computations that may succeed or fail.
+type Result struct {
+	Value interface{}
+	Err   error
 }
