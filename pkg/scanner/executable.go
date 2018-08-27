@@ -32,7 +32,8 @@ import (
 )
 
 func RunScanner(configPath string, stop <-chan struct{}) {
-	config, err := GetConfig(configPath)
+	ignoreConfigMap, _ := strconv.ParseBool(os.Getenv("IGNORE_CONFIG_MAP"))
+	config, err := GetConfig(configPath, ignoreConfigMap)
 	if err != nil {
 		panic(fmt.Errorf("Failed to load configuration: %v", err))
 	}
