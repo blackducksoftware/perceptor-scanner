@@ -26,11 +26,11 @@ import "time"
 // FetcherInterface .....
 type FetcherInterface interface {
 	Login() error
-	HubVersion() string
-	DeleteScans(scanNames []string)
+	HubVersion() (string, error)
+	DeleteScan(scanName string) error
 	FetchScan(scanNameSearchString string) (*ScanResults, error)
 	SetTimeout(timeout time.Duration)
 	ResetCircuitBreaker()
 	Model() *FetcherModel
-	IsEnabled() <-chan bool
+	//	IsEnabled() <-chan bool
 }

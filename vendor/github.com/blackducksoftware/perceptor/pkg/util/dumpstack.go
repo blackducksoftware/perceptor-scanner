@@ -19,42 +19,35 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package core
+package util
 
 import (
-	"time"
+	"bytes"
+	"runtime"
+	"runtime/pprof"
 )
 
-// Scheduler periodically executes `action`, with a pause of `delay` between
-// invocations, and stops when receiving an event on `stop`.
-type Scheduler struct {
-	delay  time.Duration
-	stop   <-chan struct{}
-	action func()
+// See: https://play.golang.org/p/0hVB0_LMdm
+
+// DumpRuntimeStack uses runtime to inspect goroutines
+func DumpRuntimeStack() string {
+	buf := make([]byte, 1<<16)
+	runtime.Stack(buf, true)
+	return string(bytes.Trim(buf, "\x00"))
 }
 
-// NewScheduler ...
-func NewScheduler(delay time.Duration, stop <-chan struct{}, action func()) *Scheduler {
-	scheduler := &Scheduler{delay: delay, stop: stop, action: action}
-	go scheduler.start()
-	return scheduler
+// DumpPProfStack uses pprof to inspect goroutines
+func DumpPProfStack() (string, int) {
+	pprofBuffer := new(bytes.Buffer)
+	profile := pprof.Lookup("goroutine")
+	profile.WriteTo(pprofBuffer, 1)
+	return pprofBuffer.String(), profile.Count()
 }
 
-func (scheduler *Scheduler) start() {
-	timer := time.NewTimer(scheduler.delay)
-	for {
-		select {
-		case <-scheduler.stop:
-			timer.Stop()
-			return
-		case <-timer.C:
-			scheduler.action()
-			timer = time.NewTimer(scheduler.delay)
-		}
-	}
-}
-
-// SetDelay sets the delay
-func (scheduler *Scheduler) SetDelay(delay time.Duration) {
-	scheduler.delay = delay
+// DumpHeap uses pprof to inspect the heap
+func DumpHeap() (string, int) {
+	heapBuffer := new(bytes.Buffer)
+	profile := pprof.Lookup("heap")
+	profile.WriteTo(heapBuffer, 1)
+	return heapBuffer.String(), profile.Count()
 }
