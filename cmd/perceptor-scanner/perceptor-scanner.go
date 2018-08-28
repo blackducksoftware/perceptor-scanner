@@ -23,6 +23,7 @@ package main
 
 import (
 	"os"
+	"strconv"
 
 	"github.com/blackducksoftware/perceptor-scanner/pkg/scanner"
 	log "github.com/sirupsen/logrus"
@@ -30,10 +31,19 @@ import (
 
 func main() {
 	log.Info("starting perceptor-scanner")
-	configPath := os.Args[1]
+	ignoreConfigMap, _ := strconv.ParseBool(os.Getenv("IGNORE_CONFIG_MAP"))
+	if len(os.Args) == 1 && !ignoreConfigMap {
+		log.Errorf("configPath not present and IGNORE_CONFIG_MAP is false")
+		panic("configPath not present and IGNORE_CONFIG_MAP is false")
+	}
+	configPath := ""
+	if len(os.Args) > 1 {
+		configPath = os.Args[1]
+	}
 	log.Infof("Config path: %s", configPath)
+	log.Infof("IGNORE_CONFIG_MAP env: %v", ignoreConfigMap)
 
 	// Run the scanner
 	stop := make(chan struct{})
-	scanner.RunScanner(configPath, stop)
+	scanner.RunScanner(configPath, ignoreConfigMap, stop)
 }

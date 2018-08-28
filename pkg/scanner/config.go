@@ -46,6 +46,7 @@ type Config struct {
 	PerceptorPort int
 }
 
+// GetDefaults .....
 // The following does a couple of things:
 // 	* Provide a map of sensible defaults for the struct
 //	* Provide a map of values that can be loaded into viper so all structure

@@ -25,15 +25,13 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus"
 
 	log "github.com/sirupsen/logrus"
 )
 
-func RunScanner(configPath string, stop <-chan struct{}) {
-	ignoreConfigMap, _ := strconv.ParseBool(os.Getenv("IGNORE_CONFIG_MAP"))
+func RunScanner(configPath string, ignoreConfigMap bool, stop <-chan struct{}) {
 	config, err := GetConfig(configPath, ignoreConfigMap)
 	if err != nil {
 		panic(fmt.Errorf("Failed to load configuration: %v", err))
