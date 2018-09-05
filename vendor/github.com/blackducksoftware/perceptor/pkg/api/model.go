@@ -27,19 +27,18 @@ import (
 
 // Model ...
 type Model struct {
-	Hubs      map[string]*ModelHub
-	CoreModel CoreModel
+	Hubs              map[string]*ModelHub
+	CoreModel         CoreModel
+	Config            *ModelConfig
+	Timings           *ModelTimings
+	HubCircuitBreaker *ModelCircuitBreaker
 }
 
 // CoreModel .....
 type CoreModel struct {
-	Pods              map[string]*Pod
-	Images            map[string]*ModelImageInfo
-	ImageScanQueue    []map[string]interface{}
-	HubVersion        string
-	Config            *ModelConfig
-	Timings           *ModelTimings
-	HubCircuitBreaker *ModelCircuitBreaker
+	Pods           map[string]*Pod
+	Images         map[string]*ModelImageInfo
+	ImageScanQueue []map[string]interface{}
 }
 
 // ModelConfig .....
@@ -93,6 +92,7 @@ type ModelImageInfo struct {
 	ScanResults            interface{}
 	ImageSha               string
 	RepoTags               []*ModelRepoTag
+	Priority               int
 }
 
 // ModelRepoTag ...
@@ -112,9 +112,9 @@ type ModelCircuitBreaker struct {
 // ModelHub describes a hub client model
 type ModelHub struct {
 	// can we log in to the hub?
-	IsLoggedIn bool
+	//	IsLoggedIn bool
 	// have all the projects been sucked in?
-	//	HasLoadedAllProjects bool
+	HasLoadedAllCodeLocations bool
 	// map of project name to ... ? hub URL?
 	//	Projects map[string]string
 	// map of code location name to mapped project version url

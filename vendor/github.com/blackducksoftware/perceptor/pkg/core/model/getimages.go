@@ -19,18 +19,28 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package hub
+package model
 
-// RiskProfileStatusCounts .....
-type RiskProfileStatusCounts struct {
-	StatusCounts map[RiskProfileStatus]int
+// GetImages .....
+type GetImages struct {
+	Status ScanStatus
+	Done   chan []DockerImageSha
 }
 
-// HighRiskVulnerabilityCount .....
-func (r *RiskProfileStatusCounts) HighRiskVulnerabilityCount() int {
-	highCount, ok := r.StatusCounts[RiskProfileStatusHigh]
-	if !ok {
-		return 0
+// NewGetImages ...
+func NewGetImages(status ScanStatus) *GetImages {
+	return &GetImages{Done: make(chan []DockerImageSha), Status: status}
+}
+
+// Apply .....
+func (g *GetImages) Apply(model *Model) {
+	shas := []DockerImageSha{}
+	for sha, imageInfo := range model.Images {
+		if imageInfo.ScanStatus == g.Status {
+			shas = append(shas, sha)
+		}
 	}
-	return highCount
+	go func() {
+		g.Done <- shas
+	}()
 }

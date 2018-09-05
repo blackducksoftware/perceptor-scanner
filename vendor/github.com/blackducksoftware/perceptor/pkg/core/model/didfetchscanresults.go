@@ -19,17 +19,23 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package hub
+package model
 
-// Version .....
-type Version struct {
-	CodeLocations   []CodeLocation
-	RiskProfile     RiskProfile
-	PolicyStatus    PolicyStatus
-	Distribution    string
-	Nickname        string
-	VersionName     string
-	ReleasedOn      string
-	ReleaseComments string
-	Phase           string
+import (
+	"github.com/blackducksoftware/perceptor/pkg/hub"
+	log "github.com/sirupsen/logrus"
+)
+
+// DidFetchScanResults .....
+type DidFetchScanResults struct {
+	Sha         DockerImageSha
+	ScanResults *hub.ScanResults
+}
+
+// Apply .....
+func (d *DidFetchScanResults) Apply(model *Model) {
+	err := model.scanDidFinish(d.Sha, d.ScanResults)
+	if err != nil {
+		log.Errorf("unable to handle didFetchScanResults: %s", err.Error())
+	}
 }

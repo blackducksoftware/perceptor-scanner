@@ -24,10 +24,10 @@ package core
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	api "github.com/blackducksoftware/perceptor/pkg/api"
 	m "github.com/blackducksoftware/perceptor/pkg/core/model"
+	"github.com/blackducksoftware/perceptor/pkg/hub"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -47,27 +47,77 @@ type Perceptor struct {
 	scanScheduler      *ScanScheduler
 	hubManager         HubManagerInterface
 	// channels
-	postConfig chan *api.PostConfig
-	getModel   chan struct{}
+	stop <-chan struct{}
 }
 
 // NewPerceptor creates a Perceptor using a real hub client.
-func NewPerceptor(config *Config, hubManager HubManagerInterface) (*Perceptor, error) {
+func NewPerceptor(timings *Timings, scanScheduler *ScanScheduler, hubManager HubManagerInterface) (*Perceptor, error) {
 	model := m.NewModel()
 
 	// 1. routine task manager
 	stop := make(chan struct{})
-	pruneOrphanedImagesPause := time.Duration(config.PruneOrphanedImagesPauseMinutes) * time.Minute
-	routineTaskManager := NewRoutineTaskManager(stop, pruneOrphanedImagesPause, &Timings{})
+	routineTaskManager := NewRoutineTaskManager(stop, timings)
 	go func() {
 		for {
 			select {
 			case <-stop:
 				return
-			case imageShas := <-routineTaskManager.OrphanedImages:
-				// TODO reenable deletion with appropriate throttling
-				// hubClient.DeleteScans(imageShas)
-				log.Errorf("deletion temporarily disabled, ignoring shas %+v", imageShas)
+			case <-routineTaskManager.metricsCh:
+				recordModelMetrics(model.GetMetrics())
+			case <-routineTaskManager.unknownImagesCh:
+				log.Debugf("handling RTM unknown images")
+				/*
+					if:
+					 - any unknown scans
+					 - all hubs up
+					 - any scans missing from all hubs:
+					move into scan queue
+				*/
+				unknownShas := model.GetImages(m.ScanStatusUnknown)
+				log.Debugf("found %d unknown shas", len(unknownShas))
+				if len(unknownShas) == 0 {
+					break
+				}
+				isHubNotReady := false
+				scans := map[string]bool{}
+				for _, hub := range hubManager.HubClients() {
+					if !<-hub.HasFetchedCodeLocations() {
+						isHubNotReady = true
+						log.Debugf("found hub %s which is not ready", hub.Host())
+						break
+					}
+					for scanName := range <-hub.CodeLocations() {
+						scans[scanName] = true
+					}
+				}
+				if isHubNotReady {
+					log.Debugf("one or more hubs not ready")
+					break
+				}
+				log.Debugf("about to change status of %d shas", len(unknownShas))
+				for _, sha := range unknownShas {
+					if _, ok := scans[string(sha)]; !ok {
+						model.ScanDidFinish(sha, nil)
+					}
+				}
+			}
+		}
+	}()
+	go func() {
+		updates := hubManager.Updates()
+		for {
+			select {
+			case <-stop:
+				return
+			case update := <-updates:
+				switch u := update.Update.(type) {
+				case *hub.DidFindScan:
+					model.ScanDidFinish(m.DockerImageSha(u.Name), u.Results)
+				case *hub.DidFinishScan:
+					model.ScanDidFinish(m.DockerImageSha(u.Name), u.Results)
+				case *hub.DidRefreshScan:
+					model.ScanDidFinish(m.DockerImageSha(u.Name), u.Results)
+				}
 			}
 		}
 	}()
@@ -76,34 +126,10 @@ func NewPerceptor(config *Config, hubManager HubManagerInterface) (*Perceptor, e
 	perceptor := &Perceptor{
 		model:              model,
 		routineTaskManager: routineTaskManager,
-		scanScheduler:      &ScanScheduler{ConcurrentScanLimit: 2, CodeLocationLimit: 1000, HubManager: hubManager},
+		scanScheduler:      scanScheduler,
 		hubManager:         hubManager,
-		postConfig:         make(chan *api.PostConfig),
-		getModel:           make(chan struct{}),
+		stop:               stop,
 	}
-
-	// 3. gather up model actions
-	go func() {
-		for {
-			select {
-			case <-stop:
-				return
-			case config := <-perceptor.postConfig:
-				// TODO
-				log.Warnf("unimplemented: %+v", config)
-			case get := <-perceptor.getModel:
-				// TODO
-				log.Warnf("unimplemented: %+v", get)
-				//case a := <-routineTaskManager.actions:
-				// TODO
-				// case isEnabled := <-hubClient.IsEnabled():
-				// 	actions <- &model.SetIsHubEnabled{IsEnabled: isEnabled}
-			}
-		}
-	}()
-
-	// 4. http responder
-	api.SetupHTTPServer(perceptor)
 
 	// 5. done
 	return perceptor, nil
@@ -116,7 +142,7 @@ func (pcp *Perceptor) GetModel() api.Model {
 	coreModel := pcp.model.GetModel()
 	hubModels := map[string]*api.ModelHub{}
 	for hubURL, hub := range pcp.hubManager.HubClients() {
-		hubModels[hubURL] = hub.Model()
+		hubModels[hubURL] = <-hub.Model()
 	}
 	return api.Model{CoreModel: coreModel, Hubs: hubModels}
 }
@@ -196,7 +222,9 @@ func (pcp *Perceptor) UpdateAllImages(allImages api.AllImages) error {
 		}
 		images = append(images, *image)
 	}
-	pcp.model.SetImages(images)
+	go func() {
+		pcp.model.SetImages(images)
+	}()
 	log.Debugf("handled update all images -- %d images", len(allImages.Images))
 	return nil
 }
@@ -212,13 +240,15 @@ func (pcp *Perceptor) GetScanResults() api.ScanResults {
 // GetNextImage .....
 func (pcp *Perceptor) GetNextImage() api.NextImage {
 	recordGetNextImage()
-	log.Debugf("handled GET next image")
+	log.Debugf("handling GET next image")
 	image := pcp.model.GetNextImage()
 	if image == nil {
+		log.Debug("get next image: no image found")
 		return *api.NewNextImage(nil)
 	}
 	hub := pcp.scanScheduler.AssignImage(image)
 	if hub == nil {
+		log.Debug("get next image: no available hub found")
 		return *api.NewNextImage(nil)
 	}
 	imageSpec := &api.ImageSpec{
@@ -228,7 +258,13 @@ func (pcp *Perceptor) GetNextImage() api.NextImage {
 		HubURL:                hub.Host(),
 		HubProjectName:        image.HubProjectName(),
 		HubProjectVersionName: image.HubProjectVersionName(),
-		HubScanName:           image.HubScanName()}
+		HubScanName:           image.HubScanName(),
+		Priority:              image.Priority}
+	go func() {
+		log.Debugf("handle didStartScan")
+		pcp.model.StartScanClient(image.Sha)
+		pcp.hubManager.StartScanClient(hub.Host(), string(image.Sha))
+	}()
 	nextImage := *api.NewNextImage(imageSpec)
 	log.Debugf("handled GET next image -- %s", image.PullSpec())
 	return nextImage
@@ -237,15 +273,21 @@ func (pcp *Perceptor) GetNextImage() api.NextImage {
 // PostFinishScan .....
 func (pcp *Perceptor) PostFinishScan(job api.FinishedScanClientJob) error {
 	recordPostFinishedScan()
-	var err error
-	if job.Err == "" {
-		err = nil
-	} else {
-		err = fmt.Errorf(job.Err)
-	}
-	// TODO also send to hub manager so that it can start polling the hub for this scan to complete
-	image := m.NewImage(job.ImageSpec.Repository, job.ImageSpec.Tag, m.DockerImageSha(job.ImageSpec.Sha))
-	pcp.model.FinishScanJob(image, err)
+	go func() {
+		log.Debugf("handle didFinishScanClient")
+		var scanErr error
+		if job.Err == "" {
+			scanErr = nil
+			err := pcp.hubManager.FinishScanClient(job.ImageSpec.HubURL, job.ImageSpec.HubScanName)
+			if err != nil {
+				log.Errorf("unable to record FinishScanClient for hub %s, image %s:", job.ImageSpec.HubURL, job.ImageSpec.HubScanName)
+			}
+		} else {
+			scanErr = fmt.Errorf(job.Err)
+		}
+		image := m.NewImage(job.ImageSpec.Repository, job.ImageSpec.Tag, m.DockerImageSha(job.ImageSpec.Sha), job.ImageSpec.Priority)
+		pcp.model.FinishScanJob(image, scanErr)
+	}()
 	log.Debugf("handled finished scan job -- %v", job)
 	return nil
 }
@@ -254,7 +296,9 @@ func (pcp *Perceptor) PostFinishScan(job api.FinishedScanClientJob) error {
 
 // PostConfig .....
 func (pcp *Perceptor) PostConfig(config *api.PostConfig) {
-	pcp.postConfig <- config
+	log.Warnf("TODO unimplemented: post config %+v", config)
+	// case isEnabled := <-hubClient.IsEnabled():
+	// 	actions <- &model.SetIsHubEnabled{IsEnabled: isEnabled}
 	log.Debugf("handled post config -- %+v", config)
 }
 

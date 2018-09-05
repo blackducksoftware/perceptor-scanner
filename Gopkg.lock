@@ -32,7 +32,7 @@
   revision = "940138f994024143ee604ff0821f08ed2b597f9c"
 
 [[projects]]
-  branch = "federate"
+  branch = "master"
   name = "github.com/blackducksoftware/perceptor"
   packages = [
     "pkg/api",
@@ -42,7 +42,7 @@
     "pkg/logging",
     "pkg/util"
   ]
-  revision = "e75b9637549bb0823411bf9cc4c4336c12ad1dda"
+  revision = "954c5d2beb03533c7d243344dab64b77fe367901"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -57,7 +57,6 @@
   version = "v1.2.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/hashicorp/hcl"
   packages = [
     ".",
@@ -71,7 +70,8 @@
     "json/scanner",
     "json/token"
   ]
-  revision = "ef8a98b0bbce4a65b5aa4c368430a80ddc533168"
+  revision = "8cb6e5b959231cc1119e43259c4a608f9c51a241"
+  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/hpcloud/tail"
@@ -98,10 +98,10 @@
   version = "v1.0.1"
 
 [[projects]]
-  branch = "master"
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
-  revision = "f15292f7a699fcc1a38a80977f80a046874ba8ac"
+  revision = "fa473d140ef3c6adf42d6b391fe76707f1f243c8"
+  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/onsi/ginkgo"
@@ -230,7 +230,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "614d502a4dac94afa3a6ce146bd1736da82514c6"
+  revision = "0709b304e793a5edb4a2c0145f281ecdc20838a4"
 
 [[projects]]
   branch = "master"
@@ -240,7 +240,7 @@
     "html/atom",
     "html/charset"
   ]
-  revision = "922f4815f713f213882e8ef45e0d315b164d705c"
+  revision = "8a410e7b638dca158bf9e766925842f6651ff828"
 
 [[projects]]
   branch = "master"
@@ -251,7 +251,7 @@
     "windows/registry",
     "windows/svc/eventlog"
   ]
-  revision = "3b58ed4ad3395d483fc92d5d14123ce2c3581fec"
+  revision = "ebe1bf3edb3325c393447059974de898d5133eb8"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -308,6 +308,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "64cded1de8b43e853427cab5e6100fd13948bf59e35b8ccfcef344a8c6a3b13f"
+  inputs-digest = "ca5684fae4ac5c56c80d7fa2e473bddadd8914a9782af742e15bec7a3da59d55"
   solver-name = "gps-cdcl"
   solver-version = 1

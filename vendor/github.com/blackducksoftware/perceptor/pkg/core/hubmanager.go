@@ -23,33 +23,49 @@ package core
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/blackducksoftware/perceptor/pkg/hub"
 	log "github.com/sirupsen/logrus"
 )
 
+// Update is a wrapper around hub.Update which also tracks which Hub was the source.
+type Update struct {
+	HubURL string
+	Update hub.Update
+}
+
 // HubManagerInterface ...
 type HubManagerInterface interface {
 	SetHubs(hubURLs []string)
 	HubClients() map[string]hub.ClientInterface
+	StartScanClient(hubURL string, scanName string) error
+	FinishScanClient(hubURL string, scanName string) error
+	ScanResults() map[string]map[string]*hub.ScanResults
+	Updates() <-chan *Update
 }
 
 // HubManager ...
 type HubManager struct {
-	username    string
-	password    string
-	port        int
-	httpTimeout time.Duration
+	newHub func(hubURL string) hub.ClientInterface
 	//
-	stop <-chan struct{}
+	stop    <-chan struct{}
+	updates chan *Update
 	//
-	hubs map[string]hub.ClientInterface
+	hubs                  map[string]hub.ClientInterface
+	didFetchScanResults   chan *hub.ScanResults
+	didFetchCodeLocations chan []string
 }
 
 // NewHubManager ...
-func NewHubManager(username string, password string, port int, httpTimeout time.Duration, stop <-chan struct{}) *HubManager {
-	return &HubManager{username: username, password: password, port: port, httpTimeout: httpTimeout, stop: stop, hubs: map[string]hub.ClientInterface{}}
+func NewHubManager(newHub func(hubURL string) hub.ClientInterface, stop <-chan struct{}) *HubManager {
+	// TODO needs to be made concurrent-safe
+	return &HubManager{
+		newHub:                newHub,
+		stop:                  stop,
+		updates:               make(chan *Update),
+		hubs:                  map[string]hub.ClientInterface{},
+		didFetchScanResults:   make(chan *hub.ScanResults),
+		didFetchCodeLocations: make(chan []string)}
 }
 
 // SetHubs ...
@@ -83,14 +99,30 @@ func (hm *HubManager) SetHubs(hubURLs []string) {
 	}
 }
 
-// Create ...
 func (hm *HubManager) create(hubURL string) error {
 	if _, ok := hm.hubs[hubURL]; ok {
 		return fmt.Errorf("cannot create hub %s: already exists", hubURL)
 	}
-	hubClient := hub.NewClient(hm.username, hm.password, hubURL, hm.port, hm.httpTimeout, 999999*time.Hour)
+	hubClient := hm.newHub(hubURL)
 	hm.hubs[hubURL] = hubClient
+	go func() {
+		stop := hubClient.StopCh()
+		updates := hubClient.Updates()
+		for {
+			select {
+			case <-stop:
+				return
+			case nextUpdate := <-updates:
+				hm.updates <- &Update{HubURL: hubURL, Update: nextUpdate}
+			}
+		}
+	}()
 	return nil
+}
+
+// Updates returns a read-only channel of the combined update stream of each hub.
+func (hm *HubManager) Updates() <-chan *Update {
+	return hm.updates
 }
 
 // HubClients ...
@@ -98,15 +130,33 @@ func (hm *HubManager) HubClients() map[string]hub.ClientInterface {
 	return hm.hubs
 }
 
-// MockHubCreater ...
-type MockHubCreater struct{}
-
-// SetHubs ...
-func (mhc *MockHubCreater) SetHubs(hubURLs []string) {
-	// TODO
+// StartScanClient ...
+func (hm *HubManager) StartScanClient(hubURL string, scanName string) error {
+	hub, ok := hm.hubs[hubURL]
+	if !ok {
+		return fmt.Errorf("hub %s not found", hubURL)
+	}
+	hub.StartScanClient(scanName)
+	return nil
 }
 
-// HubClients ...
-func (mhc *MockHubCreater) HubClients() map[string]hub.ClientInterface {
+// FinishScanClient tells the appropriate hub client to start polling for
+// scan completion.
+func (hm *HubManager) FinishScanClient(hubURL string, scanName string) error {
+	hub, ok := hm.hubs[hubURL]
+	if !ok {
+		return fmt.Errorf("hub %s not found", hubURL)
+	}
+	hub.FinishScanClient(scanName)
 	return nil
+}
+
+// ScanResults ...
+func (hm *HubManager) ScanResults() map[string]map[string]*hub.ScanResults {
+	allScanResults := map[string]map[string]*hub.ScanResults{}
+	for hubURL, hub := range hm.hubs {
+		// TODO could cache to avoid blocking
+		allScanResults[hubURL] = <-hub.ScanResults()
+	}
+	return allScanResults
 }

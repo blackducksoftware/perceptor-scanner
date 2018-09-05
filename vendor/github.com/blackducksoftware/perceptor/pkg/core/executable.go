@@ -25,6 +25,10 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
+
+	"github.com/blackducksoftware/perceptor/pkg/api"
+	"github.com/blackducksoftware/perceptor/pkg/hub"
 
 	// import just for the side-effect of changing how logrus works
 	_ "github.com/blackducksoftware/perceptor/pkg/logging"
@@ -32,6 +36,16 @@ import (
 
 	log "github.com/sirupsen/logrus"
 )
+
+func createMockHub(hubURL string) hub.ClientInterface {
+	return hub.NewMockClient(hubURL)
+}
+
+func createHubClient(username string, password string, port int, httpTimeout time.Duration) func(hubURL string) hub.ClientInterface {
+	return func(hubURL string) hub.ClientInterface {
+		return hub.NewClient(username, password, hubURL, port, httpTimeout, 999999*time.Hour)
+	}
+}
 
 // RunPerceptor .....
 func RunPerceptor(configPath string) {
@@ -65,30 +79,36 @@ func RunPerceptor(configPath string) {
 
 	stop := make(chan struct{})
 
-	var creater HubManagerInterface
+	var newHub func(string) hub.ClientInterface
 	if config.UseMockMode {
 		log.Infof("instantiating perceptor in mock mode")
-		creater = &MockHubCreater{}
+		newHub = createMockHub
 	} else {
 		log.Infof("instantiating perceptor in real mode")
-		password, ok := os.LookupEnv(config.HubUserPasswordEnvVar)
+		password, ok := os.LookupEnv(config.Hub.PasswordEnvVar)
 		if !ok {
-			panic(fmt.Errorf("cannot find Hub password: environment variable %s not found", config.HubUserPasswordEnvVar))
+			panic(fmt.Errorf("cannot find Hub password: environment variable %s not found", config.Hub.PasswordEnvVar))
 		}
-		creater = NewHubManager(config.HubUser, password, config.HubPort, config.HubClientTimeout(), stop)
+		newHub = createHubClient(config.Hub.User, password, config.Hub.Port, config.Hub.ClientTimeout())
 	}
 
-	perceptor, err := NewPerceptor(config, creater)
+	manager := NewHubManager(newHub, stop)
+	scanScheduler := &ScanScheduler{
+		ConcurrentScanLimit: config.Hub.ConcurrentScanLimit,
+		TotalScanLimit:      config.Hub.TotalScanLimit,
+		HubManager:          manager}
+	perceptor, err := NewPerceptor(config.Timings, scanScheduler, manager)
 	if err != nil {
 		log.Errorf("unable to instantiate percepter: %s", err.Error())
 		panic(err)
 	}
 
 	log.Infof("instantiated perceptor: %+v", perceptor)
+	api.SetupHTTPServer(perceptor)
 
 	addr := fmt.Sprintf(":%d", config.Port)
 	go func() {
-		log.Info("starting HTTP server on port %d", config.Port)
+		log.Infof("starting HTTP server on port %d", config.Port)
 		http.ListenAndServe(addr, nil)
 	}()
 	<-stop

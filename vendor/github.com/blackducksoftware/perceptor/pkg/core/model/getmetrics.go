@@ -27,13 +27,20 @@ import (
 
 // GetMetrics .....
 type GetMetrics struct {
-	Continuation func(metrics *Metrics)
+	Done chan *Metrics
+}
+
+// NewGetMetrics ...
+func NewGetMetrics() *GetMetrics {
+	return &GetMetrics{Done: make(chan *Metrics)}
 }
 
 // Apply .....
 func (g *GetMetrics) Apply(model *Model) {
 	modelMetrics := metrics(model)
-	go g.Continuation(modelMetrics)
+	go func() {
+		g.Done <- modelMetrics
+	}()
 }
 
 func metrics(model *Model) *Metrics {
@@ -101,8 +108,6 @@ func metrics(model *Model) *Metrics {
 		}
 	}
 
-	// TODO
-	// number of images without a pod pointing to them
 	return &Metrics{
 		ScanStatusCounts:      statusCounts,
 		NumberOfImages:        len(model.Images),
