@@ -51,9 +51,9 @@ type Scanner struct {
 func NewScanner(config *Config, stop <-chan struct{}) (*Scanner, error) {
 	log.Infof("instantiating Scanner with config %+v", config)
 
-	hubPassword, ok := os.LookupEnv(config.HubUserPasswordEnvVar)
+	hubPassword, ok := os.LookupEnv(config.Hub.PasswordEnvVar)
 	if !ok {
-		return nil, fmt.Errorf("unable to get Hub password: environment variable %s not set", config.HubUserPasswordEnvVar)
+		return nil, fmt.Errorf("unable to get Hub password: environment variable %s not set", config.Hub.PasswordEnvVar)
 	}
 
 	err := os.Setenv("BD_HUB_PASSWORD", hubPassword)
@@ -67,8 +67,8 @@ func NewScanner(config *Config, stop <-chan struct{}) (*Scanner, error) {
 	scanner := Scanner{
 		scanClient:    nil,
 		httpClient:    httpClient,
-		perceptorHost: config.PerceptorHost,
-		perceptorPort: config.PerceptorPort,
+		perceptorHost: config.Perceptor.Host,
+		perceptorPort: config.Perceptor.Port,
 		config:        config,
 		stop:          stop,
 		hubPassword:   hubPassword}
@@ -98,21 +98,21 @@ func (scanner *Scanner) downloadScanner(hubURL string) (ScanClientInterface, err
 	config := scanner.config
 	scanClientInfo, err := downloadScanClient(
 		hubURL,
-		config.HubUser,
+		config.Hub.User,
 		scanner.hubPassword,
-		config.HubPort,
-		time.Duration(config.HubClientTimeoutSeconds)*time.Second)
+		config.Hub.Port,
+		time.Duration(config.Hub.ClientTimeoutSeconds)*time.Second)
 	if err != nil {
 		log.Errorf("unable to download scan client: %s", err.Error())
 		return nil, err
 	}
 
-	log.Infof("instantiating scanner with hub %s, user %s", hubURL, config.HubUser)
+	log.Infof("instantiating scanner with hub %s, user %s", hubURL, config.Hub.User)
 
-	imagePuller := NewImageFacadePuller(config.ImageFacadeHost, config.ImageFacadePort)
+	imagePuller := NewImageFacadePuller(config.ImageFacade.Host, config.ImageFacade.Port)
 	scanClient, err := NewHubScanClient(
-		config.HubUser,
-		config.HubPort,
+		config.Hub.User,
+		config.Hub.Port,
 		scanClientInfo,
 		imagePuller)
 	if err != nil {
