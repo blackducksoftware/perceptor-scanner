@@ -85,8 +85,10 @@ func (scanner *Scanner) StartRequestingScanJobs() {
 			case <-scanner.stop:
 				return
 			case <-time.After(requestScanJobPause):
-				time.Sleep(requestScanJobPause)
-				scanner.requestAndRunScanJob()
+				err := scanner.requestAndRunScanJob()
+				if err != nil {
+					log.Errorf("unable to run requestAndRunScanJob: %s", err.Error())
+				}
 			}
 		}
 	}()
@@ -120,23 +122,24 @@ func (scanner *Scanner) downloadScanner(hubURL string) (ScanClientInterface, err
 	return scanClient, nil
 }
 
-func (scanner *Scanner) requestAndRunScanJob() {
+func (scanner *Scanner) requestAndRunScanJob() error {
 	log.Debug("requesting scan job")
 	image, err := scanner.requestScanJob()
 	if err != nil {
 		log.Errorf("unable to request scan job: %s", err.Error())
-		return
+		return err
 	}
 	if image == nil {
 		log.Debug("requested scan job, got nil")
-		return
+		return nil
 	}
 
 	log.Infof("processing scan job %+v", image)
 	if scanner.scanClient == nil {
 		scanClient, err := scanner.downloadScanner(image.HubURL)
 		if err != nil {
-			return
+			log.Errorf("unable to download scan client from %s: %s", image.HubURL, err.Error())
+			return err
 		}
 		scanner.scanClient = scanClient
 	}
@@ -154,6 +157,7 @@ func (scanner *Scanner) requestAndRunScanJob() {
 	if err != nil {
 		log.Errorf("unable to finish scan job: %s", err.Error())
 	}
+	return err
 }
 
 func (scanner *Scanner) requestScanJob() (*api.ImageSpec, error) {
