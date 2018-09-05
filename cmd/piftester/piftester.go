@@ -57,5 +57,5 @@ func main() {
 	pifTester := piftester.NewPifTester(config.ImageFacadePort)
 	addr := fmt.Sprintf(":%d", config.Port)
 	http.ListenAndServe(addr, nil)
-	log.Info("Http server started! -- %+v", pifTester)
+	log.Infof("Http server started! -- %+v", pifTester)
 }
