@@ -30,7 +30,6 @@ import (
 	"github.com/blackducksoftware/perceptor-scanner/pkg/common"
 	"github.com/blackducksoftware/perceptor-scanner/pkg/scanner"
 	"github.com/blackducksoftware/perceptor/pkg/api"
-	"github.com/blackducksoftware/perceptor/pkg/core"
 	m "github.com/blackducksoftware/perceptor/pkg/core/model"
 	"github.com/prometheus/common/log"
 )
@@ -44,61 +43,62 @@ type PifTester struct {
 }
 
 func NewPifTester(imageFacadePort int) *PifTester {
-	responder := core.NewHTTPResponder()
-	pif := &PifTester{
-		ImageMap:            map[m.Image]bool{},
-		ImageErrors:         map[m.Image][]string{},
-		ImageQueue:          []m.Image{},
-		imagePuller:         scanner.NewImageFacadePuller("http://perceptor-imagefacade", imageFacadePort),
-		getNextImageChannel: make(chan func(*m.Image)),
-	}
-
-	go func() {
-		for {
-			select {
-			case image := <-responder.AddImageChannel:
-				pif.addImage(image.Image)
-			case pod := <-responder.AddPodChannel:
-				pif.addPod(pod.Pod)
-			case allPods := <-responder.AllPodsChannel:
-				for _, pod := range allPods.Pods {
-					pif.addPod(pod)
-				}
-			case allImages := <-responder.AllImagesChannel:
-				for _, image := range allImages.Images {
-					pif.addImage(image)
-				}
-			case action := <-responder.GetModelChannel:
-				model := pif.APIModel()
-				action.Done <- &model
-
-			case continuation := <-pif.getNextImageChannel:
-				image := pif.getNextImage()
-				go continuation(image)
-
-			// we don't care about these:
-			case _ = <-responder.UpdatePodChannel:
-				break
-			case _ = <-responder.DeletePodChannel:
-				break
-			case _ = <-responder.PostNextImageChannel:
-				break
-			case _ = <-responder.PostFinishScanJobChannel:
-				break
-			case _ = <-responder.PostConfigChannel:
-				break
-			case _ = <-responder.GetScanResultsChannel:
-				break
-			case _ = <-responder.ResetCircuitBreakerChannel:
-				break
-			}
-		}
-	}()
-
-	go pif.startPullingImages()
-
-	api.SetupHTTPServer(responder)
-	return pif
+	return nil // TODO get this working again
+	// responder := core.NewHTTPResponder()
+	// pif := &PifTester{
+	// 	ImageMap:            map[m.Image]bool{},
+	// 	ImageErrors:         map[m.Image][]string{},
+	// 	ImageQueue:          []m.Image{},
+	// 	imagePuller:         scanner.NewImageFacadePuller("http://perceptor-imagefacade", imageFacadePort),
+	// 	getNextImageChannel: make(chan func(*m.Image)),
+	// }
+	//
+	// go func() {
+	// 	for {
+	// 		select {
+	// 		case image := <-responder.AddImageChannel:
+	// 			pif.addImage(image.Image)
+	// 		case pod := <-responder.AddPodChannel:
+	// 			pif.addPod(pod.Pod)
+	// 		case allPods := <-responder.AllPodsChannel:
+	// 			for _, pod := range allPods.Pods {
+	// 				pif.addPod(pod)
+	// 			}
+	// 		case allImages := <-responder.AllImagesChannel:
+	// 			for _, image := range allImages.Images {
+	// 				pif.addImage(image)
+	// 			}
+	// 		case action := <-responder.GetModelChannel:
+	// 			model := pif.APIModel()
+	// 			action.Done <- &model
+	//
+	// 		case continuation := <-pif.getNextImageChannel:
+	// 			image := pif.getNextImage()
+	// 			go continuation(image)
+	//
+	// 		// we don't care about these:
+	// 		case _ = <-responder.UpdatePodChannel:
+	// 			break
+	// 		case _ = <-responder.DeletePodChannel:
+	// 			break
+	// 		case _ = <-responder.PostNextImageChannel:
+	// 			break
+	// 		case _ = <-responder.PostFinishScanJobChannel:
+	// 			break
+	// 		case _ = <-responder.PostConfigChannel:
+	// 			break
+	// 		case _ = <-responder.GetScanResultsChannel:
+	// 			break
+	// 		case _ = <-responder.ResetCircuitBreakerChannel:
+	// 			break
+	// 		}
+	// 	}
+	// }()
+	//
+	// go pif.startPullingImages()
+	//
+	// api.SetupHTTPServer(responder)
+	// return pif
 }
 
 func (pif *PifTester) addPod(pod m.Pod) {
@@ -108,13 +108,12 @@ func (pif *PifTester) addPod(pod m.Pod) {
 }
 
 func (pif *PifTester) APIModel() api.Model {
-	jsonBytes, err := json.MarshalIndent(pif, "", "  ")
+	_, err := json.MarshalIndent(pif, "", "  ")
 	if err != nil {
 		panic(err)
 	}
-	return api.Model{
-		HubVersion: string(jsonBytes),
-	}
+	// TODO make this work?
+	return api.Model{}
 }
 
 func (pif *PifTester) addImage(image m.Image) {

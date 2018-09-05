@@ -28,21 +28,30 @@ import (
 	"github.com/spf13/viper"
 )
 
+type HubConfig struct {
+	User                 string
+	PasswordEnvVar       string
+	Port                 int
+	ClientTimeoutSeconds int
+}
+
+type ImageFacadeConfig struct {
+	Host string
+	Port int
+}
+
+type PerceptorConfig struct {
+	Host string
+	Port int
+}
+
 type Config struct {
-	HubHost                 string
-	HubUser                 string
-	HubUserPasswordEnvVar   string
-	HubPort                 int
-	HubClientTimeoutSeconds int
+	Hub         *HubConfig
+	ImageFacade *ImageFacadeConfig
+	Perceptor   *PerceptorConfig
 
 	LogLevel string
 	Port     int
-
-	ImageFacadeHost string
-	ImageFacadePort int
-
-	PerceptorHost string
-	PerceptorPort int
 }
 
 func (config *Config) GetLogLevel() (log.Level, error) {
@@ -66,13 +75,5 @@ func GetConfig(configPath string) (*Config, error) {
 		return nil, fmt.Errorf("failed to unmarshal config: %v", err)
 	}
 
-	// Ports must be reachable
-	if config.Port == 0 || config.PerceptorPort == 0 || config.ImageFacadePort == 0 {
-		err = fmt.Errorf("Need non zero numbers for Port (got %d), PerceptorPort (got %d), HubPort (got %d), and ImageFacadePort (got %d)",
-			config.Port,
-			config.PerceptorPort,
-			config.HubPort,
-			config.ImageFacadePort)
-	}
 	return config, err
 }
