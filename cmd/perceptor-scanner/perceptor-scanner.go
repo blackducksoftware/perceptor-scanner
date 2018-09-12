@@ -29,8 +29,11 @@ import (
 )
 
 func main() {
+	var configPath string
 	log.Info("starting perceptor-scanner")
-	configPath := os.Args[1]
+	if len(os.Args) > 1 {
+		configPath = os.Args[1]
+	}
 	log.Infof("Config path: %s", configPath)
 
 	// Run the scanner

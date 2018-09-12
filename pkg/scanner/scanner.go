@@ -109,7 +109,7 @@ func (scanner *Scanner) downloadScanner(hubURL string) (ScanClientInterface, err
 
 	log.Infof("instantiating scanner with hub %s, user %s", hubURL, config.Hub.User)
 
-	imagePuller := NewImageFacadePuller(config.ImageFacade.Host, config.ImageFacade.Port)
+	imagePuller := NewImageFacadePuller(config.ImageFacade.GetHost(), config.ImageFacade.Port)
 	scanClient, err := NewHubScanClient(
 		config.Hub.User,
 		config.Hub.Port,

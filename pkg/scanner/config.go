@@ -23,6 +23,7 @@ package scanner
 
 import (
 	"fmt"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -38,6 +39,13 @@ type HubConfig struct {
 type ImageFacadeConfig struct {
 	Host string
 	Port int
+}
+
+func (ifc *ImageFacadeConfig) GetHost() string {
+	if ifc.Host == "" {
+		return "localhost"
+	}
+	return ifc.Host
 }
 
 type PerceptorConfig struct {
@@ -61,9 +69,30 @@ func (config *Config) GetLogLevel() (log.Level, error) {
 func GetConfig(configPath string) (*Config, error) {
 	var config *Config
 
+	if configPath != "" {
+		viper.SetConfigFile(configPath)
+	} else {
+		viper.SetEnvPrefix("PCP")
+		viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+		viper.BindEnv("ImageFacade_Host")
+		viper.BindEnv("ImageFacade_Port")
+
+		viper.BindEnv("Perceptor_Host")
+		viper.BindEnv("Perceptor_Port")
+
+		viper.BindEnv("Hub_User")
+		viper.BindEnv("Hub_Port")
+		viper.BindEnv("Hub_PasswordEnvVar")
+		viper.BindEnv("Hub_ClientTimeoutSeconds")
+
+		viper.BindEnv("LogLevel")
+		viper.BindEnv("Port")
+
+		viper.AutomaticEnv()
+	}
+
 	viper.SetConfigFile(configPath)
-	// Default ImageFacadeHost to 'localhost'
-	viper.SetDefault("ImageFacadeHost", "localhost")
 
 	err := viper.ReadInConfig()
 	if err != nil {
