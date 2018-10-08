@@ -129,7 +129,7 @@ func (ip *ImagePuller) CreateImageInLocalDocker(image Image) error {
 
 	if resp.StatusCode != 200 {
 		message := fmt.Sprintf("Create may have failed for %s: status code %d, response %+v", imageURL, resp.StatusCode, resp)
-		log.Errorf(message)
+		log.Error(message)
 		recordDockerError(createStage, "POST request failed", image, err)
 		return errors.New(message)
 	}
