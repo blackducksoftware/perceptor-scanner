@@ -27,10 +27,12 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Config ...
 type Config struct {
 	Port int
 }
 
+// GetConfig ...
 func GetConfig(configPath string) (*Config, error) {
 	var config *Config
 
