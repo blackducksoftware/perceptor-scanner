@@ -30,9 +30,8 @@ import (
 // ClientInterface .....
 type ClientInterface interface {
 	// commands coming in
-	DeleteScan(scanName string)
 	StartScanClient(scanName string)
-	FinishScanClient(scanName string)
+	FinishScanClient(scanName string, scanErr error)
 	SetTimeout(timeout time.Duration)
 	ResetCircuitBreaker()
 	// read-only queries
@@ -40,13 +39,11 @@ type ClientInterface interface {
 	Version() (string, error)
 	// read-only, async queries (the channel produces a single event)
 	Model() <-chan *api.ModelHub
-	HasFetchedCodeLocations() <-chan bool
-	CodeLocations() <-chan map[string]bool
-	CodeLocationsCount() <-chan int
+	HasFetchedScans() <-chan bool
+	ScansCount() <-chan int
 	InProgressScans() <-chan []string
-	ScanResults() <-chan map[string]*ScanResults
+	ScanResults() <-chan map[string]*Scan
 	Updates() <-chan Update
-	//	IsEnabled() <-chan bool
 	// prelude to clean-up
 	Stop()
 	StopCh() <-chan struct{}

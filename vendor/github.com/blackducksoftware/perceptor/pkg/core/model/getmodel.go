@@ -27,20 +27,21 @@ import (
 
 // GetModel .....
 type GetModel struct {
-	Done chan api.CoreModel
+	Done chan *api.CoreModel
 }
 
 // NewGetModel .....
 func NewGetModel() *GetModel {
-	return &GetModel{Done: make(chan api.CoreModel)}
+	return &GetModel{Done: make(chan *api.CoreModel)}
 }
 
 // Apply .....
-func (g *GetModel) Apply(model *Model) {
+func (g *GetModel) Apply(model *Model) error {
 	apiModel := CoreModelToAPIModel(model)
 	go func() {
 		g.Done <- apiModel
 	}()
+	return nil
 }
 
 // CoreContainerToAPIContainer .....
@@ -68,7 +69,7 @@ func CorePodToAPIPod(corePod Pod) *api.Pod {
 }
 
 // CoreModelToAPIModel .....
-func CoreModelToAPIModel(model *Model) api.CoreModel {
+func CoreModelToAPIModel(model *Model) *api.CoreModel {
 	// pods
 	pods := map[string]*api.Pod{}
 	for podName, pod := range model.Pods {
@@ -90,11 +91,26 @@ func CoreModelToAPIModel(model *Model) api.CoreModel {
 			Priority:               imageInfo.Priority,
 		}
 	}
-
+	// image transitions
+	imageTransitions := make([]*api.ModelImageTransition, len(model.ImageTransitions))
+	for ix, it := range model.ImageTransitions {
+		errString := ""
+		if it.Err != nil {
+			errString = it.Err.Error()
+		}
+		imageTransitions[ix] = &api.ModelImageTransition{
+			Sha:  string(it.Sha),
+			From: it.From,
+			To:   it.To.String(),
+			Err:  errString,
+			Time: it.Time.String(),
+		}
+	}
 	// return value
-	return api.CoreModel{
-		Pods:           pods,
-		Images:         images,
-		ImageScanQueue: model.ImageScanQueue.Dump(),
+	return &api.CoreModel{
+		Pods:             pods,
+		Images:           images,
+		ImageScanQueue:   model.ImageScanQueue.Dump(),
+		ImageTransitions: imageTransitions,
 	}
 }

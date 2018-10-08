@@ -19,12 +19,22 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package api
+package model
 
-// PostConfig allows certain config parameters to be changed.
-type PostConfig struct {
-	ConcurrentScanLimit          *int
-	HubClientTimeoutMilliseconds *int
-	LogLevel                     *string
-	ImageRefreshThresholdSeconds *int
+// AllPods .....
+type AllPods struct {
+	Pods []Pod
+}
+
+// Apply .....
+func (a *AllPods) Apply(model *Model) error {
+	model.Pods = map[string]Pod{}
+	errors := []error{}
+	for _, pod := range a.Pods {
+		err := model.addPod(pod)
+		if err != nil {
+			errors = append(errors, err)
+		}
+	}
+	return combineErrors("allPods", errors)
 }

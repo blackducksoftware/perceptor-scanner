@@ -19,9 +19,21 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package api
+package model
 
-// PutHubs sets the current Hubs.
-type PutHubs struct {
-	HubURLs []string
+// AllImages .....
+type AllImages struct {
+	Images []Image
+}
+
+// Apply just adds new images.  It currently does not delete any images.
+func (a *AllImages) Apply(model *Model) error {
+	errors := []error{}
+	for _, image := range a.Images {
+		err := model.addImage(image)
+		if err != nil {
+			errors = append(errors, err)
+		}
+	}
+	return combineErrors("allImages", errors)
 }

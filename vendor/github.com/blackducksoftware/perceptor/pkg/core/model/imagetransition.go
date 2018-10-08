@@ -21,15 +21,24 @@ under the License.
 
 package model
 
-// AllPods .....
-type AllPods struct {
-	Pods []Pod
+import "time"
+
+// ImageTransition .....
+type ImageTransition struct {
+	Sha  DockerImageSha
+	From string
+	To   ScanStatus
+	Err  error
+	Time time.Time
 }
 
-// Apply .....
-func (a *AllPods) Apply(model *Model) {
-	model.Pods = map[string]Pod{}
-	for _, pod := range a.Pods {
-		model.addPod(pod)
+// NewImageTransition .....
+func NewImageTransition(sha DockerImageSha, from string, to ScanStatus, err error) *ImageTransition {
+	return &ImageTransition{
+		Sha:  sha,
+		From: from,
+		To:   to,
+		Err:  err,
+		Time: time.Now(),
 	}
 }
