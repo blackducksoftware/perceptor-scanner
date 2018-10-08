@@ -27,6 +27,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// DiskMetrics ...
 type DiskMetrics struct {
 	FreeBytes      uint64
 	AvailableBytes uint64
