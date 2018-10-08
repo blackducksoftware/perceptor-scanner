@@ -41,11 +41,13 @@ const (
 	getStage    = "get docker image"
 )
 
+// ImagePuller ...
 type ImagePuller struct {
 	client     *http.Client
 	registries []RegistryAuth
 }
 
+// NewImagePuller ...
 func NewImagePuller(registries []RegistryAuth) *ImagePuller {
 	fd := func(proto, addr string) (conn net.Conn, err error) {
 		return net.Dial("unix", dockerSocketPath)
@@ -127,7 +129,7 @@ func (ip *ImagePuller) CreateImageInLocalDocker(image Image) error {
 
 	if resp.StatusCode != 200 {
 		message := fmt.Sprintf("Create may have failed for %s: status code %d, response %+v", imageURL, resp.StatusCode, resp)
-		log.Errorf(message)
+		log.Error(message)
 		recordDockerError(createStage, "POST request failed", image, err)
 		return errors.New(message)
 	}
@@ -144,7 +146,7 @@ func (ip *ImagePuller) CreateImageInLocalDocker(image Image) error {
 	return err
 }
 
-// SaveImageToTar: part of what it does is to issue an http request similar to the following:
+// SaveImageToTar -- part of what it does is to issue an http request similar to the following:
 //   curl --unix-socket /var/run/docker.sock -X GET http://localhost/images/openshift%2Forigin-docker-registry%3Av3.6.1/get
 func (ip *ImagePuller) SaveImageToTar(image Image) error {
 	start := time.Now()

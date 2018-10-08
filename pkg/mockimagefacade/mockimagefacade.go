@@ -30,34 +30,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type MockImagefacade struct {
-	server *imagefacade.HTTPServer
-}
+// MockImagefacade ...
+type MockImagefacade struct{}
 
+// NewMockImagefacade ...
 func NewMockImagefacade() *MockImagefacade {
-	server := imagefacade.NewHTTPServer()
-
-	go func() {
-		for {
-			select {
-			case pullImage := <-server.PullImageChannel():
-				log.Infof("received pullImage: %+v", pullImage.Image)
-				pullImage.Continuation(nil)
-			case getImage := <-server.GetImageChannel():
-				log.Infof("received getImage: %+v", getImage.Image)
-				sourcePath := "/tmp/alpine.tar"
-				err := copyFile(sourcePath, getImage.Image.DockerTarFilePath())
-				status := common.ImageStatusDone
-				if err != nil {
-					log.Errorf("unable to copy file from %s to %s: %s", sourcePath, getImage.Image.DockerTarFilePath(), err.Error())
-					status = common.ImageStatusError
-				}
-				getImage.Continuation(status)
-			}
-		}
-	}()
-
-	return &MockImagefacade{server: server}
+	mif := &MockImagefacade{}
+	imagefacade.SetupHTTPServer(mif)
+	return mif
 }
 
 func copyFile(source string, destination string) error {
@@ -78,4 +58,27 @@ func copyFile(source string, destination string) error {
 		return err
 	}
 	return out.Close()
+}
+
+// PullImage ...
+func (mif *MockImagefacade) PullImage(image *common.Image) error {
+	log.Infof("received pullImage: %+v", image)
+	return nil
+}
+
+// GetImage ...
+func (mif *MockImagefacade) GetImage(image *common.Image) common.ImageStatus {
+	log.Infof("received getImage: %+v", image)
+	sourcePath := "/tmp/alpine.tar"
+	err := copyFile(sourcePath, image.DockerTarFilePath())
+	if err != nil {
+		log.Errorf("unable to copy file from %s to %s: %s", sourcePath, image.DockerTarFilePath(), err.Error())
+		return common.ImageStatusError
+	}
+	return common.ImageStatusDone
+}
+
+// GetModel ...
+func (mif *MockImagefacade) GetModel() map[string]interface{} {
+	return map[string]interface{}{"todo": "unimplemented"}
 }

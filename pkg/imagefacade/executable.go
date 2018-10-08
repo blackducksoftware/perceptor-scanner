@@ -31,6 +31,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// RunImageFacade ...
 func RunImageFacade(configPath string, stop <-chan struct{}) {
 	config, err := GetConfig(configPath)
 	if err != nil {
@@ -48,7 +49,7 @@ func RunImageFacade(configPath string, stop <-chan struct{}) {
 	prometheus.Unregister(prometheus.NewProcessCollector(os.Getpid(), ""))
 	prometheus.Unregister(prometheus.NewGoCollector())
 
-	imageFacade := NewImageFacade(config.PrivateDockerRegistries, config.CreateImagesOnly)
+	imageFacade := NewImageFacade(config.PrivateDockerRegistries, config.CreateImagesOnly, stop)
 
 	log.Infof("successfully instantiated imagefacade -- %+v", imageFacade)
 

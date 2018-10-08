@@ -29,6 +29,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Config ...
 type Config struct {
 	// These allow images to be pulled from registries that require authentication
 	PrivateDockerRegistries []docker.RegistryAuth
@@ -39,6 +40,7 @@ type Config struct {
 	Port             int
 }
 
+// GetLogLevel ...
 func (config *Config) GetLogLevel() (log.Level, error) {
 	return log.ParseLevel(config.LogLevel)
 }
