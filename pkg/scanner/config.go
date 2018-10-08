@@ -22,9 +22,9 @@ under the License.
 package scanner
 
 import (
-	"fmt"
 	"strings"
 
+	"github.com/juju/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -103,13 +103,13 @@ func GetConfig(configPath string) (*Config, error) {
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		return nil, fmt.Errorf("failed to read config file: %v", err)
+		return nil, errors.Annotatef(err, "failed to read config file")
 	}
 
 	err = viper.Unmarshal(&config)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal config: %v", err)
+		return nil, errors.Annotatef(err, "failed to unmarshal config")
 	}
 
-	return config, err
+	return config, nil
 }
