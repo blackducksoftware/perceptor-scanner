@@ -23,7 +23,6 @@ package scanner
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"time"
 
@@ -38,40 +37,29 @@ const (
 // the Black Duck hub and scan client programs.
 type HubScanClient struct {
 	username       string
+	password       string
 	port           int
-	scanClientInfo *scanClientInfo
-	imagePuller    ImagePullerInterface
+	scanClientInfo *ScanClientInfo
 }
 
 // NewHubScanClient requires hub login credentials
-func NewHubScanClient(username string, port int, scanClientInfo *scanClientInfo, imagePuller ImagePullerInterface) (*HubScanClient, error) {
+func NewHubScanClient(username string, password string, port int, scanClientInfo *ScanClientInfo) (*HubScanClient, error) {
 	hsc := HubScanClient{
 		username:       username,
+		password:       password,
 		port:           port,
-		scanClientInfo: scanClientInfo,
-		imagePuller:    imagePuller}
+		scanClientInfo: scanClientInfo}
 	return &hsc, nil
 }
 
 // Scan ...
-func (hsc *HubScanClient) Scan(job ScanJob) error {
+func (hsc *HubScanClient) Scan(host string, path string, projectName string, versionName string, scanName string) error {
 	startTotal := time.Now()
-	image := job.image()
-	err := hsc.imagePuller.PullImage(image)
 
-	defer cleanUpTarFile(image.DockerTarFilePath())
-
-	if err != nil {
-		recordScannerError("docker image pull and tar file creation")
-		log.Errorf("unable to pull docker image %s: %s", job.PullSpec, err.Error())
-		return err
-	}
-
-	scanCliImplJarPath := hsc.scanClientInfo.scanCliImplJarPath()
-	scanCliJarPath := hsc.scanClientInfo.scanCliJarPath()
-	scanCliJavaPath := hsc.scanClientInfo.scanCliJavaPath()
-	path := image.DockerTarFilePath()
-	cmd := exec.Command(scanCliJavaPath+"java",
+	scanCliImplJarPath := hsc.scanClientInfo.ScanCliImplJarPath()
+	scanCliJarPath := hsc.scanClientInfo.ScanCliJarPath()
+	scanCliJavaPath := hsc.scanClientInfo.ScanCliJavaPath()
+	cmd := exec.Command(scanCliJavaPath,
 		"-Xms512m",
 		"-Xmx4096m",
 		"-Dblackduck.scan.cli.benice=true",
@@ -79,18 +67,19 @@ func (hsc *HubScanClient) Scan(job ScanJob) error {
 		"-Done-jar.silent=true",
 		"-Done-jar.jar.path="+scanCliImplJarPath,
 		"-jar", scanCliJarPath,
-		"--host", job.HubHost,
+		"--host", host,
 		"--port", fmt.Sprintf("%d", hsc.port),
 		"--scheme", hubScheme,
-		"--project", job.HubProjectName,
-		"--release", job.HubProjectVersionName,
+		"--project", projectName,
+		"--release", versionName,
 		"--username", hsc.username,
-		"--name", job.HubScanName,
+		"--name", scanName,
 		"--insecure",
 		"-v",
 		path)
+	cmd.Env = append(cmd.Env, fmt.Sprintf("BD_HUB_PASSWORD=%s", hsc.password))
 
-	log.Infof("running command %+v for image %s\n", cmd, job.Sha)
+	log.Infof("running command %+v for path %s\n", cmd, path)
 	startScanClient := time.Now()
 	stdoutStderr, err := cmd.CombinedOutput()
 
@@ -99,41 +88,10 @@ func (hsc *HubScanClient) Scan(job ScanJob) error {
 
 	if err != nil {
 		recordScannerError("scan client failed")
-		log.Errorf("java scanner failed for image %s with error %s and output:\n%s\n", job.Sha, err.Error(), string(stdoutStderr))
+		log.Errorf("java scanner failed for path %s with error %s and output:\n%s\n", path, err.Error(), string(stdoutStderr))
 		return err
 	}
-	log.Infof("successfully completed java scanner for image %s", job.Sha)
-	log.Debugf("output from image %s: %s", job.Sha, stdoutStderr)
+	log.Infof("successfully completed java scanner for path %s", path)
+	log.Debugf("output from path %s: %s", path, stdoutStderr)
 	return err
-}
-
-// func (hsc *HubScanClient) ScanCliSh(job ScanJob) error {
-// 	pathToScanner := "./dependencies/scan.cli-4.3.0/bin/scan.cli.sh"
-// 	cmd := exec.Command(pathToScanner,
-// 		"--project", job.Image.HubProjectName(),
-// 		"--host", hsc.host,
-// 		"--port", hubPort,
-// 		"--insecure",
-// 		"--username", hsc.username,
-// 		job.Image.HumanReadableName())
-// 	log.Infof("running command %v for image %s\n", cmd, job.Image.HumanReadableName())
-// 	stdoutStderr, err := cmd.CombinedOutput()
-// 	if err != nil {
-// 		message := fmt.Sprintf("failed to run scan.cli.sh: %s", err.Error())
-// 		log.Error(message)
-// 		log.Errorf("output from scan.cli.sh:\n%v\n", string(stdoutStderr))
-// 		return err
-// 	}
-// 	log.Infof("successfully completed scan.cli.sh: %s", stdoutStderr)
-// 	return nil
-// }
-
-func cleanUpTarFile(path string) {
-	err := os.Remove(path)
-	recordCleanUpTarFile(err == nil)
-	if err != nil {
-		log.Errorf("unable to remove file %s: %s", path, err.Error())
-	} else {
-		log.Infof("successfully cleaned up file %s", path)
-	}
 }

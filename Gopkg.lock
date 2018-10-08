@@ -3,25 +3,6 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:315c5f2f60c76d89b871c73f9bd5fe689cad96597afd50fb9992228ef80bdd34"
-  name = "github.com/alecthomas/template"
-  packages = [
-    ".",
-    "parse",
-  ]
-  pruneopts = "UT"
-  revision = "a0175ee3bccc567396460bf5acd36800cb10c49c"
-
-[[projects]]
-  branch = "master"
-  digest = "1:c198fdc381e898e8fb62b8eb62758195091c313ad18e52a3067366e1dda2fb3c"
-  name = "github.com/alecthomas/units"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "2efee857e7cfd4f3d0138cc3cbb1b4966962b93a"
-
-[[projects]]
-  branch = "master"
   digest = "1:d6afaeed1502aa28e80a4ed0981d570ad91b2579193404256ce672ed0a609e0d"
   name = "github.com/beorn7/perks"
   packages = ["quantile"]
@@ -59,6 +40,14 @@
   pruneopts = "UT"
   revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
   version = "v1.4.7"
+
+[[projects]]
+  digest = "1:b7fc4c3fd91df516486f53cc86f4b55a0c815782dbe852c5a19cce8e6c577aac"
+  name = "github.com/go-resty/resty"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "d4920dcf5b7689548a6db640278a9b35a5b48ec6"
+  version = "v1.9.1"
 
 [[projects]]
   digest = "1:97df918963298c287643883209a2c3f642e6593379f97ab400c2a2e219ab647d"
@@ -207,12 +196,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:2e87c336c7d1830b28d0a4eba428c6e0d66aa6ddcc8fddd994eb80f1f6dd6a62"
+  digest = "1:63b68062b8968092eb86bedc4e68894bd096ea6b24920faca8b9dcf451f54bb5"
   name = "github.com/prometheus/common"
   packages = [
     "expfmt",
     "internal/bitbucket.org/ww/goautoneg",
-    "log",
     "model",
   ]
   pruneopts = "UT"
@@ -292,33 +280,35 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:fd35bc6003cfae47dd6041db172fb971f3e08991ecdf2971bd03dcabedef3b0b"
+  digest = "1:3516c952a0744bd0537b2cbb652f74b1c5ee949419821ad9e85012bcbf614a34"
   name = "golang.org/x/net"
   packages = [
     "html",
     "html/atom",
     "html/charset",
+    "idna",
+    "publicsuffix",
   ]
   pruneopts = "UT"
   revision = "8a410e7b638dca158bf9e766925842f6651ff828"
 
 [[projects]]
   branch = "master"
-  digest = "1:78957bdf10e955c733d0c38803208b29abe867c93920c09fd64a8735bd64e0be"
+  digest = "1:7f4a61b989d94774dc61016b660cf8347f59eb0bed91a10b2f23fc72a38d45d4"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
-    "windows/registry",
-    "windows/svc/eventlog",
   ]
   pruneopts = "UT"
   revision = "ebe1bf3edb3325c393447059974de898d5133eb8"
 
 [[projects]]
-  digest = "1:4392fcf42d5cf0e3ff78c96b2acf8223d49e4fdc53eb77c99d2f8dfe4680e006"
+  digest = "1:436b24586f8fee329e0dd65fd67c817681420cda1d7f934345c13fe78c212a73"
   name = "golang.org/x/text"
   packages = [
+    "collate",
+    "collate/build",
     "encoding",
     "encoding/charmap",
     "encoding/htmlindex",
@@ -329,6 +319,7 @@
     "encoding/simplifiedchinese",
     "encoding/traditionalchinese",
     "encoding/unicode",
+    "internal/colltab",
     "internal/gen",
     "internal/tag",
     "internal/triegen",
@@ -336,21 +327,16 @@
     "internal/utf8internal",
     "language",
     "runes",
+    "secure/bidirule",
     "transform",
+    "unicode/bidi",
     "unicode/cldr",
     "unicode/norm",
+    "unicode/rangetable",
   ]
   pruneopts = "UT"
   revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
   version = "v0.3.0"
-
-[[projects]]
-  digest = "1:c06d9e11d955af78ac3bbb26bd02e01d2f61f689e1a3bce2ef6fb683ef8a7f2d"
-  name = "gopkg.in/alecthomas/kingpin.v2"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "947dcec5ba9c011838740e680966fd7087a71d0d"
-  version = "v2.2.6"
 
 [[projects]]
   digest = "1:ffb471a599e572700e9b7ee4b1d4869382d00f9268e84938c92b01a4d5941d23"
@@ -384,11 +370,11 @@
     "github.com/blackducksoftware/hub-client-go/hubclient",
     "github.com/blackducksoftware/perceptor/pkg/api",
     "github.com/blackducksoftware/perceptor/pkg/core/model",
+    "github.com/go-resty/resty",
     "github.com/juju/errors",
     "github.com/onsi/ginkgo",
     "github.com/onsi/gomega",
     "github.com/prometheus/client_golang/prometheus",
-    "github.com/prometheus/common/log",
     "github.com/sirupsen/logrus",
     "github.com/spf13/viper",
   ]

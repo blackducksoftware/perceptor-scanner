@@ -34,19 +34,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	requestScanJobPause = 20 * time.Second
-)
-
 // Scanner ...
 type Scanner struct {
-	scanClient    ScanClientInterface
-	httpClient    *http.Client
-	perceptorHost string
-	perceptorPort int
-	config        *Config
-	stop          <-chan struct{}
-	hubPassword   string
+	imagePuller     ImagePullerInterface
+	scanClient      ScanClientInterface
+	perceptorClient PerceptorClientInterface
+	imageDirectory  string
+	stop            <-chan struct{}
+	hubPassword     string
 }
 
 // NewScanner ...

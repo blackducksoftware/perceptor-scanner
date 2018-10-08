@@ -63,6 +63,8 @@ type Config struct {
 	ImageFacade *ImageFacadeConfig
 	Perceptor   *PerceptorConfig
 
+	ImageDirectory string
+
 	LogLevel string
 	Port     int
 }
