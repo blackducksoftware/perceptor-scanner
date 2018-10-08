@@ -38,6 +38,7 @@ const (
 	requestScanJobPause = 20 * time.Second
 )
 
+// Scanner ...
 type Scanner struct {
 	scanClient    ScanClientInterface
 	httpClient    *http.Client
@@ -48,6 +49,7 @@ type Scanner struct {
 	hubPassword   string
 }
 
+// NewScanner ...
 func NewScanner(config *Config, stop <-chan struct{}) (*Scanner, error) {
 	log.Infof("instantiating Scanner with config %+v", config)
 

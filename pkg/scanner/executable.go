@@ -31,6 +31,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// RunScanner ...
 func RunScanner(configPath string, stop <-chan struct{}) {
 	config, err := GetConfig(configPath)
 	if err != nil {

@@ -39,12 +39,14 @@ const (
 	checkImagePath = "checkimage"
 )
 
+// ImageFacadePuller ...
 type ImageFacadePuller struct {
 	ImageFacadeHost string
 	ImageFacadePort int
 	httpClient      *http.Client
 }
 
+// NewImageFacadePuller ...
 func NewImageFacadePuller(imageFacadeHost string, imageFacadePort int) *ImageFacadePuller {
 	return &ImageFacadePuller{
 		ImageFacadeHost: imageFacadeHost,
@@ -52,6 +54,7 @@ func NewImageFacadePuller(imageFacadeHost string, imageFacadePort int) *ImageFac
 		httpClient:      &http.Client{Timeout: 5 * time.Second}}
 }
 
+// PullImage ...
 func (ifp *ImageFacadePuller) PullImage(image *common.Image) error {
 	log.Infof("attempting to pull image %s", image.PullSpec)
 

@@ -27,6 +27,7 @@ import (
 	"github.com/blackducksoftware/perceptor-scanner/pkg/common"
 )
 
+// ScanJob ...
 type ScanJob struct {
 	PullSpec              string
 	Sha                   string
@@ -36,6 +37,7 @@ type ScanJob struct {
 	HubScanName           string
 }
 
+// NewScanJob ...
 func NewScanJob(repository string, sha string, hubHost string, hubProjectName string, hubProjectVersionName string, hubScanName string) *ScanJob {
 	pullSpec := fmt.Sprintf("%s@sha256:%s", repository, sha)
 	return &ScanJob{

@@ -53,6 +53,7 @@ func NewHubScanClient(username string, port int, scanClientInfo *scanClientInfo,
 	return &hsc, nil
 }
 
+// Scan ...
 func (hsc *HubScanClient) Scan(job ScanJob) error {
 	startTotal := time.Now()
 	image := job.image()

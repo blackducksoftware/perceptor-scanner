@@ -21,6 +21,7 @@ under the License.
 
 package scanner
 
+// ScanClientInterface ...
 type ScanClientInterface interface {
 	Scan(job ScanJob) error
 	//ScanCliSh(job ScanJob) error

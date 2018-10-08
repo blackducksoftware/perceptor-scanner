@@ -29,6 +29,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// HubConfig ...
 type HubConfig struct {
 	User                 string
 	PasswordEnvVar       string
@@ -36,11 +37,13 @@ type HubConfig struct {
 	ClientTimeoutSeconds int
 }
 
+// ImageFacadeConfig ...
 type ImageFacadeConfig struct {
 	Host string
 	Port int
 }
 
+// GetHost ...
 func (ifc *ImageFacadeConfig) GetHost() string {
 	if ifc.Host == "" {
 		return "localhost"
@@ -48,11 +51,13 @@ func (ifc *ImageFacadeConfig) GetHost() string {
 	return ifc.Host
 }
 
+// PerceptorConfig ...
 type PerceptorConfig struct {
 	Host string
 	Port int
 }
 
+// Config ...
 type Config struct {
 	Hub         *HubConfig
 	ImageFacade *ImageFacadeConfig
@@ -62,10 +67,12 @@ type Config struct {
 	Port     int
 }
 
+// GetLogLevel ...
 func (config *Config) GetLogLevel() (log.Level, error) {
 	return log.ParseLevel(config.LogLevel)
 }
 
+// GetConfig ...
 func GetConfig(configPath string) (*Config, error) {
 	var config *Config
 
