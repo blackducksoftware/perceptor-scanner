@@ -26,6 +26,7 @@ import (
 	"net/url"
 )
 
+// Image ...
 type Image interface {
 	DockerPullSpec() string
 	DockerTarFilePath() string

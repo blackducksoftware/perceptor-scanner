@@ -26,14 +26,17 @@ import (
 	"strings"
 )
 
+// Image ...
 type Image struct {
 	PullSpec string
 }
 
+// DockerPullSpec ...
 func (image *Image) DockerPullSpec() string {
 	return image.PullSpec
 }
 
+// DockerTarFilePath ...
 func (image *Image) DockerTarFilePath() string {
 	filePath := strings.Replace(image.PullSpec, "/", "_", -1)
 	return fmt.Sprintf("/var/images/%s.tar", filePath)

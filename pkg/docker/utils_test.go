@@ -44,9 +44,9 @@ func (ti *testImage) DockerTarFilePath() string {
 func RunUtilsTests() {
 	Describe("needsAuthHeader", func() {
 		internalDockerRegistries := []RegistryAuth{
-			{Url: "abc.def:5000", User: "", Password: ""},
-			{Url: "docker-registry.default.svc:5000", User: "", Password: ""},
-			{Url: "172.1.1.0:abcd", User: "", Password: ""},
+			{URL: "abc.def:5000", User: "", Password: ""},
+			{URL: "docker-registry.default.svc:5000", User: "", Password: ""},
+			{URL: "172.1.1.0:abcd", User: "", Password: ""},
 		}
 		testCases := []*testImage{
 			{
