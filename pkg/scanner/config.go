@@ -69,6 +69,14 @@ type Config struct {
 	Port     int
 }
 
+// GetImageDirectory ...
+func (config *Config) GetImageDirectory() string {
+	if config.ImageDirectory == "" {
+		return "/var/images"
+	}
+	return config.ImageDirectory
+}
+
 // GetLogLevel ...
 func (config *Config) GetLogLevel() (log.Level, error) {
 	return log.ParseLevel(config.LogLevel)
