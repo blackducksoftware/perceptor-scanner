@@ -27,6 +27,7 @@ import (
 
 	"github.com/blackducksoftware/perceptor/pkg/api"
 	resty "github.com/go-resty/resty"
+	"github.com/juju/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -74,13 +75,10 @@ func (pc *PerceptorClient) GetNextImage() (*api.NextImage, error) {
 	recordHTTPStats(nextImagePath, resp.StatusCode())
 	if err != nil {
 		recordScannerError("unable to get next image")
-		log.Errorf("unable to get next image: %s", err.Error())
-		return nil, err
+		return nil, errors.Annotatef(err, "unable to get next image")
 	} else if (resp.StatusCode() < 200) || (resp.StatusCode() >= 300) {
 		recordScannerError("unable to get next image -- bad status code")
-		err := fmt.Errorf("unable to get next image; body %s and status code %d", string(resp.Body()), resp.StatusCode())
-		log.Error(err.Error())
-		return nil, err
+		return nil, fmt.Errorf("unable to get next image; body %s and status code %d", string(resp.Body()), resp.StatusCode())
 	}
 	return &nextImage, nil
 }
@@ -92,11 +90,12 @@ func (pc *PerceptorClient) PostFinishedScan(scan *api.FinishedScanClientJob) err
 	resp, err := pc.Resty.R().SetBody(scan).Post(url)
 	log.Debugf("received resp %+v, status code %d, error %+v from url %s", resp, resp.StatusCode(), err, url)
 	recordHTTPStats(finishedScanPath, resp.StatusCode())
-	if (resp.StatusCode() < 200) || (resp.StatusCode() >= 300) {
+	if err != nil {
+		recordScannerError("unable to post finished scan")
+		return errors.Annotatef(err, "unable to post finished scan")
+	} else if (resp.StatusCode() < 200) || (resp.StatusCode() >= 300) {
 		recordScannerError("unable to post finished scan -- bad status code")
-		err := fmt.Errorf("unable to post finished scan; body %s and status code %d", string(resp.Body()), resp.StatusCode())
-		log.Error(err.Error())
-		return err
+		return fmt.Errorf("unable to post finished scan; body %s and status code %d", string(resp.Body()), resp.StatusCode())
 	}
-	return err
+	return errors.Trace(err)
 }

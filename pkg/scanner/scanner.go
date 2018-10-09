@@ -27,6 +27,7 @@ import (
 
 	"github.com/blackducksoftware/perceptor-scanner/pkg/common"
 	"github.com/blackducksoftware/perceptor/pkg/api"
+	"github.com/juju/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -53,7 +54,7 @@ func (scanner *Scanner) ScanFullDockerImage(apiImage *api.ImageSpec) error {
 	image := &common.Image{PullSpec: pullSpec}
 	err := scanner.imagePuller.PullImage(image)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	defer cleanUpFile(image.DockerTarFilePath())
 	return scanner.ScanFile(apiImage.HubURL, image.DockerTarFilePath(), apiImage.HubProjectName, apiImage.HubProjectVersionName, apiImage.HubScanName)

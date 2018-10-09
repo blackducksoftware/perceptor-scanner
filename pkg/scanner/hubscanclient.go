@@ -64,8 +64,7 @@ func (hsc *HubScanClient) downloadScanClient(host string) (*ScanClientInfo, erro
 		hsc.port,
 		time.Duration(300)*time.Second)
 	if err != nil {
-		log.Errorf("unable to download scan client: %s", err.Error())
-		return nil, err
+		return nil, errors.Annotatef(err, "unable to download scan client")
 	}
 	return scanClientInfo, nil
 }
@@ -114,9 +113,9 @@ func (hsc *HubScanClient) Scan(host string, path string, projectName string, ver
 	if err != nil {
 		recordScannerError("scan client failed")
 		log.Errorf("java scanner failed for path %s with error %s and output:\n%s\n", path, err.Error(), string(stdoutStderr))
-		return err
+		return errors.Trace(err)
 	}
 	log.Infof("successfully completed java scanner for path %s", path)
 	log.Debugf("output from path %s: %s", path, stdoutStderr)
-	return err
+	return nil
 }

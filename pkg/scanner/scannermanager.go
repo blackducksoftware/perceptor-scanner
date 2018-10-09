@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/blackducksoftware/perceptor/pkg/api"
+	"github.com/juju/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -57,8 +58,7 @@ func NewManager(config *Config, stop <-chan struct{}) (*Manager, error) {
 		hubPassword,
 		config.Hub.Port)
 	if err != nil {
-		log.Errorf("unable to instantiate hub scan client: %s", err.Error())
-		return nil, err
+		return nil, errors.Annotatef(err, "unable to instantiate hub scan client")
 	}
 
 	return &Manager{
