@@ -95,8 +95,14 @@ func (imf *ImageFacade) PullImage(image *common.Image) error {
 	if err != nil {
 		return err
 	}
-	pullErr := imf.pullImage(image)
-	return imf.model.finishImagePull(image, pullErr)
+	go func() {
+		pullErr := imf.pullImage(image)
+		finishErr := imf.model.finishImagePull(image, pullErr)
+		if finishErr != nil {
+			log.Error(finishErr.Error())
+		}
+	}()
+	return nil
 }
 
 // GetImage ...
