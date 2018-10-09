@@ -22,7 +22,6 @@ under the License.
 package docker
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -31,6 +30,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/juju/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -69,15 +69,13 @@ func (ip *ImagePuller) PullImage(image Image) error {
 
 	err := ip.CreateImageInLocalDocker(image)
 	if err != nil {
-		log.Errorf("unable to continue processing image %s: %s", image.DockerPullSpec(), err.Error())
-		return err
+		return errors.Annotatef(err, "unable to create image %s in locker docker", image.DockerPullSpec())
 	}
 	log.Infof("Processing image: %s", image.DockerPullSpec())
 
 	err = ip.SaveImageToTar(image)
 	if err != nil {
-		log.Errorf("unable to continue processing image %s: %s", image.DockerPullSpec(), err.Error())
-		return err
+		return errors.Annotatef(err, "unable to save image %s to tar file", image.DockerPullSpec())
 	}
 
 	recordDockerTotalDuration(time.Now().Sub(start))
@@ -98,9 +96,8 @@ func (ip *ImagePuller) CreateImageInLocalDocker(image Image) error {
 	log.Infof("Attempting to create %s ......", imageURL)
 	req, err := http.NewRequest("POST", imageURL, nil)
 	if err != nil {
-		log.Errorf("unable to create POST request for image %s: %s", imageURL, err.Error())
 		recordDockerError(createStage, "unable to create POST request", image, err)
-		return err
+		return errors.Annotatef(err, "unable to create POST request for image %s", imageURL)
 	}
 
 	if registryAuth := needsAuthHeader(image, ip.registries); registryAuth != nil {
@@ -121,17 +118,14 @@ func (ip *ImagePuller) CreateImageInLocalDocker(image Image) error {
 
 	resp, err := ip.client.Do(req)
 	if err != nil {
-		log.Errorf("Create failed for image %s: %s", imageURL, err.Error())
 		recordDockerError(createStage, "POST request failed", image, err)
-		return err
+		return errors.Annotatef(err, "Create failed for image %s", imageURL)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		message := fmt.Sprintf("Create may have failed for %s: status code %d, response %+v", imageURL, resp.StatusCode, resp)
-		log.Error(message)
 		recordDockerError(createStage, "POST request failed", image, err)
-		return errors.New(message)
+		return fmt.Errorf("Create may have failed for %s: status code %d, response %+v", imageURL, resp.StatusCode, resp)
 	}
 
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
