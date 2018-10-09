@@ -31,7 +31,8 @@ import (
 
 	"github.com/blackducksoftware/perceptor-scanner/pkg/api"
 	"github.com/blackducksoftware/perceptor-scanner/pkg/common"
-	"github.com/prometheus/common/log"
+	"github.com/juju/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -39,12 +40,14 @@ const (
 	checkImagePath = "checkimage"
 )
 
+// ImageFacadePuller ...
 type ImageFacadePuller struct {
 	ImageFacadeHost string
 	ImageFacadePort int
 	httpClient      *http.Client
 }
 
+// NewImageFacadePuller ...
 func NewImageFacadePuller(imageFacadeHost string, imageFacadePort int) *ImageFacadePuller {
 	return &ImageFacadePuller{
 		ImageFacadeHost: imageFacadeHost,
@@ -52,13 +55,13 @@ func NewImageFacadePuller(imageFacadeHost string, imageFacadePort int) *ImageFac
 		httpClient:      &http.Client{Timeout: 5 * time.Second}}
 }
 
+// PullImage ...
 func (ifp *ImageFacadePuller) PullImage(image *common.Image) error {
 	log.Infof("attempting to pull image %s", image.PullSpec)
 
 	err := ifp.startImagePull(image)
 	if err != nil {
-		log.Errorf("unable to pull image %s: %s", image.PullSpec, err.Error())
-		return err
+		return errors.Annotatef(err, "unable to pull image %s", image.PullSpec)
 	}
 
 	for {
@@ -92,20 +95,16 @@ func (ifp *ImageFacadePuller) startImagePull(image *common.Image) error {
 
 	requestBytes, err := json.Marshal(image)
 	if err != nil {
-		log.Errorf("unable to marshal JSON for %s: %s", image.PullSpec, err.Error())
-		return err
+		return errors.Annotatef(err, "unable to marshal JSON for %s", image.PullSpec)
 	}
 
 	resp, err := ifp.httpClient.Post(url, "application/json", bytes.NewBuffer(requestBytes))
 	if err != nil {
-		log.Errorf("unable to create request to %s for image %s: %s", url, image.PullSpec, err.Error())
-		return err
+		return errors.Annotatef(err, "unable to create request to %s for image %s", url, image.PullSpec)
 	}
 
 	if resp.StatusCode != 200 {
-		err = fmt.Errorf("request to start image pull for image %s failed with status code %d", url, resp.StatusCode)
-		log.Errorf(err.Error())
-		return err
+		return fmt.Errorf("request to start image pull for image %s failed with status code %d", url, resp.StatusCode)
 	}
 
 	defer resp.Body.Close()
@@ -121,36 +120,31 @@ func (ifp *ImageFacadePuller) checkImage(image *common.Image) (common.ImageStatu
 
 	requestBytes, err := json.Marshal(image)
 	if err != nil {
-		log.Errorf("unable to marshal JSON for %s: %s", image.PullSpec, err.Error())
-		return common.ImageStatusUnknown, err
+		return common.ImageStatusUnknown, errors.Annotatef(err, "unable to marshal JSON for %s", image.PullSpec)
 	}
 
 	resp, err := ifp.httpClient.Post(url, "application/json", bytes.NewBuffer(requestBytes))
 	if err != nil {
-		log.Errorf("unable to create request to %s for image %s: %s", url, image.PullSpec, err.Error())
-		return common.ImageStatusUnknown, err
+
+		return common.ImageStatusUnknown, errors.Annotatef(err, "unable to create request to %s for image %s", url, image.PullSpec)
 	}
 
 	if resp.StatusCode != 200 {
-		err = fmt.Errorf("GET %s failed with status code %d", url, resp.StatusCode)
-		log.Errorf(err.Error())
-		return common.ImageStatusUnknown, err
+		return common.ImageStatusUnknown, fmt.Errorf("GET %s failed with status code %d", url, resp.StatusCode)
 	}
 
 	defer resp.Body.Close()
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		recordScannerError("unable to read response body")
-		log.Errorf("unable to read response body from %s: %s", url, err.Error())
-		return common.ImageStatusUnknown, err
+		return common.ImageStatusUnknown, errors.Annotatef(err, "unable to read response body from %s", url)
 	}
 
 	var getImage api.CheckImageResponse
 	err = json.Unmarshal(bodyBytes, &getImage)
 	if err != nil {
 		recordScannerError("unmarshaling JSON body failed")
-		log.Errorf("unmarshaling JSON body bytes %s failed for URL %s: %s", string(bodyBytes), url, err.Error())
-		return common.ImageStatusUnknown, err
+		return common.ImageStatusUnknown, errors.Annotatef(err, "unmarshaling JSON body bytes %s failed for URL %s", string(bodyBytes), url)
 	}
 
 	log.Debugf("image check for image %s succeeded", image.PullSpec)

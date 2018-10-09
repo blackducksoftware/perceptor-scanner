@@ -23,6 +23,7 @@ package scanner
 
 import "github.com/blackducksoftware/perceptor-scanner/pkg/common"
 
+// ImagePullerInterface ...
 type ImagePullerInterface interface {
 	PullImage(image *common.Image) error
 }

@@ -21,8 +21,9 @@ under the License.
 
 package scanner
 
+// ScanClientInterface ...
 type ScanClientInterface interface {
-	Scan(job ScanJob) error
+	Scan(host string, path string, projectName string, versionName string, scanName string) error
 	//ScanCliSh(job ScanJob) error
 	//ScanDockerSh(job ScanJob) error
 }

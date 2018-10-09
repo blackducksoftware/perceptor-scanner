@@ -30,7 +30,7 @@ import (
 
 func TestMetrics(t *testing.T) {
 	recordScannerError("blar")
-	recordCleanUpTarFile(false)
+	recordCleanUpFile(false)
 	recordScanClientDuration(time.Now().Sub(time.Now()), true)
 	recordTotalScannerDuration(time.Now().Sub(time.Now()), false)
 	recordHTTPStats("getnextimage", 200)
