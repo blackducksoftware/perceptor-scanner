@@ -26,6 +26,7 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/juju/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -43,17 +44,41 @@ type HubScanClient struct {
 }
 
 // NewHubScanClient requires hub login credentials
-func NewHubScanClient(username string, password string, port int, scanClientInfo *ScanClientInfo) (*HubScanClient, error) {
+func NewHubScanClient(username string, password string, port int) (*HubScanClient, error) {
 	hsc := HubScanClient{
 		username:       username,
 		password:       password,
 		port:           port,
-		scanClientInfo: scanClientInfo}
+		scanClientInfo: nil}
 	return &hsc, nil
+}
+
+func (hsc *HubScanClient) downloadScanClient(host string) (*ScanClientInfo, error) {
+	cliRootPath := "/tmp/scanner"
+	scanClientInfo, err := DownloadScanClient(
+		OSTypeLinux,
+		cliRootPath,
+		host,
+		hsc.username,
+		hsc.password,
+		hsc.port,
+		time.Duration(300)*time.Second)
+	if err != nil {
+		log.Errorf("unable to download scan client: %s", err.Error())
+		return nil, err
+	}
+	return scanClientInfo, nil
 }
 
 // Scan ...
 func (hsc *HubScanClient) Scan(host string, path string, projectName string, versionName string, scanName string) error {
+	if hsc.scanClientInfo == nil {
+		scanClientInfo, err := hsc.downloadScanClient(host)
+		if err != nil {
+			return errors.Trace(err)
+		}
+		hsc.scanClientInfo = scanClientInfo
+	}
 	startTotal := time.Now()
 
 	scanCliImplJarPath := hsc.scanClientInfo.ScanCliImplJarPath()

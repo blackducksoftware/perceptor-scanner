@@ -35,69 +35,54 @@ const (
 	imageFacadeBaseURL  = "http://localhost"
 )
 
-type ScannerManager struct {
+// Manager ...
+type Manager struct {
 	scanner         *Scanner
 	perceptorClient *PerceptorClient
+	stop            <-chan struct{}
 }
 
-func NewScannerManager(config *Config) (*ScannerManager, error) {
-	log.Infof("instantiating ScannerManager with config %+v", config)
+// NewManager ...
+func NewManager(config *Config, stop <-chan struct{}) (*Manager, error) {
+	log.Infof("instantiating Manager with config %+v", config)
 
-	hubPassword, ok := os.LookupEnv(config.HubUserPasswordEnvVar)
+	hubPassword, ok := os.LookupEnv(config.Hub.PasswordEnvVar)
 	if !ok {
-		return nil, fmt.Errorf("unable to get Hub password: environment variable %s not set", config.HubUserPasswordEnvVar)
+		return nil, fmt.Errorf("unable to get Hub password: environment variable %s not set", config.Hub.PasswordEnvVar)
 	}
 
-	cliRootPath := "/tmp/scanner"
-	scanClientInfo, err := DownloadScanClient(
-		OSTypeLinux,
-		cliRootPath,
-		config.HubHost,
-		config.HubUser,
-		hubPassword,
-		config.HubPort,
-		time.Duration(config.HubClientTimeoutSeconds)*time.Second)
-	if err != nil {
-		log.Errorf("unable to download scan client: %s", err.Error())
-		return nil, err
-	}
-
-	log.Infof("instantiating scanner with hub %s, user %s", config.HubHost, config.HubUser)
-
-	imagePuller := NewImageFacadePuller(imageFacadeBaseURL, config.ImageFacadePort)
+	imagePuller := NewImageFacadePuller(imageFacadeBaseURL, config.ImageFacade.Port)
 	scanClient, err := NewHubScanClient(
-		config.HubHost,
-		config.HubUser,
+		config.Hub.User,
 		hubPassword,
-		config.HubPort,
-		scanClientInfo)
+		config.Hub.Port)
 	if err != nil {
 		log.Errorf("unable to instantiate hub scan client: %s", err.Error())
 		return nil, err
 	}
 
-	pc := NewPerceptorClient(config.PerceptorHost, config.PerceptorPort)
-	scanner := NewScanner(imagePuller, pc, scanClient, config.ImageDirectory)
-
-	scannerManager := ScannerManager{
-		scanner:         scanner,
-		perceptorClient: pc}
-
-	return &scannerManager, nil
+	return &Manager{
+		scanner:         NewScanner(imagePuller, scanClient, config.ImageDirectory, stop),
+		perceptorClient: NewPerceptorClient(config.Perceptor.Host, config.Perceptor.Port),
+		stop:            stop}, nil
 }
 
 // StartRequestingScanJobs will start asking for work
-func (sm *ScannerManager) StartRequestingScanJobs() {
+func (sm *Manager) StartRequestingScanJobs() {
 	log.Infof("starting to request scan jobs")
 	go func() {
 		for {
-			time.Sleep(requestScanJobPause)
-			sm.requestAndRunScanJob()
+			select {
+			case <-sm.stop:
+				return
+			case <-time.After(requestScanJobPause):
+				sm.requestAndRunScanJob()
+			}
 		}
 	}()
 }
 
-func (sm *ScannerManager) requestAndRunScanJob() {
+func (sm *Manager) requestAndRunScanJob() {
 	log.Debug("requesting scan job")
 	nextImage, err := sm.perceptorClient.GetNextImage()
 	if err != nil {
@@ -111,7 +96,7 @@ func (sm *ScannerManager) requestAndRunScanJob() {
 
 	log.Infof("processing scan job %+v", nextImage)
 
-	err = sm.scanner.Scan(nextImage.ImageSpec) // TODO is this right????
+	err = sm.scanner.ScanFullDockerImage(nextImage.ImageSpec)
 	errorString := ""
 	if err != nil {
 		log.Errorf("scan error: %s", err.Error())
