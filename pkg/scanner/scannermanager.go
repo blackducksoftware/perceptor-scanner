@@ -33,7 +33,6 @@ import (
 
 const (
 	requestScanJobPause = 20 * time.Second
-	imageFacadeBaseURL  = "http://localhost"
 )
 
 // Manager ...
@@ -52,7 +51,7 @@ func NewManager(config *Config, stop <-chan struct{}) (*Manager, error) {
 		return nil, fmt.Errorf("unable to get Hub password: environment variable %s not set", config.Hub.PasswordEnvVar)
 	}
 
-	imagePuller := NewImageFacadePuller(imageFacadeBaseURL, config.ImageFacade.Port)
+	imagePuller := NewImageFacadePuller(config.ImageFacade.GetHost(), config.ImageFacade.Port)
 	scanClient, err := NewHubScanClient(
 		config.Hub.User,
 		hubPassword,
