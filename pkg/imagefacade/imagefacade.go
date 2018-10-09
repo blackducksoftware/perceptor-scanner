@@ -97,9 +97,12 @@ func (imf *ImageFacade) PullImage(image *common.Image) error {
 	}
 	go func() {
 		pullErr := imf.pullImage(image)
+		if pullErr != nil {
+			log.Errorf("unable to pull image: %s", pullErr.Error())
+		}
 		finishErr := imf.model.finishImagePull(image, pullErr)
 		if finishErr != nil {
-			log.Error(finishErr.Error())
+			log.Errorf("unable to finish image pull: %s", finishErr.Error())
 		}
 	}()
 	return nil
