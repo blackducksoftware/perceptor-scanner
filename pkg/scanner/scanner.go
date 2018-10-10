@@ -51,7 +51,7 @@ func NewScanner(imagePuller ImagePullerInterface, scanClient ScanClientInterface
 // ScanFullDockerImage runs the scan client on a full tar from 'docker export'
 func (scanner *Scanner) ScanFullDockerImage(apiImage *api.ImageSpec) error {
 	pullSpec := fmt.Sprintf("%s@sha256:%s", apiImage.Repository, apiImage.Sha)
-	image := &common.Image{PullSpec: pullSpec}
+	image := common.NewImage(scanner.imageDirectory, pullSpec)
 	err := scanner.imagePuller.PullImage(image)
 	if err != nil {
 		return errors.Trace(err)
