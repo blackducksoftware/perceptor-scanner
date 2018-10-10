@@ -125,7 +125,6 @@ func (ifp *ImageFacadePuller) checkImage(image *common.Image) (common.ImageStatu
 
 	resp, err := ifp.httpClient.Post(url, "application/json", bytes.NewBuffer(requestBytes))
 	if err != nil {
-
 		return common.ImageStatusUnknown, errors.Annotatef(err, "unable to create request to %s for image %s", url, image.PullSpec)
 	}
 
@@ -147,7 +146,7 @@ func (ifp *ImageFacadePuller) checkImage(image *common.Image) (common.ImageStatu
 		return common.ImageStatusUnknown, errors.Annotatef(err, "unmarshaling JSON body bytes %s failed for URL %s", string(bodyBytes), url)
 	}
 
-	log.Debugf("image check for image %s succeeded", image.PullSpec)
+	log.Debugf("image check for image %s succeeded, status %s", image.PullSpec, getImage.ImageStatus.String())
 
 	return getImage.ImageStatus, nil
 }
