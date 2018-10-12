@@ -40,23 +40,28 @@ const (
 	checkImagePath = "checkimage"
 )
 
-// ImageFacadePuller ...
-type ImageFacadePuller struct {
+// ImageFacadeClientInterface ...
+type ImageFacadeClientInterface interface {
+	PullImage(image *common.Image) error
+}
+
+// ImageFacadeClient ...
+type ImageFacadeClient struct {
 	ImageFacadeHost string
 	ImageFacadePort int
 	httpClient      *http.Client
 }
 
-// NewImageFacadePuller ...
-func NewImageFacadePuller(imageFacadeHost string, imageFacadePort int) *ImageFacadePuller {
-	return &ImageFacadePuller{
+// NewImageFacadeClient ...
+func NewImageFacadeClient(imageFacadeHost string, imageFacadePort int) *ImageFacadeClient {
+	return &ImageFacadeClient{
 		ImageFacadeHost: imageFacadeHost,
 		ImageFacadePort: imageFacadePort,
 		httpClient:      &http.Client{Timeout: 5 * time.Second}}
 }
 
 // PullImage ...
-func (ifp *ImageFacadePuller) PullImage(image *common.Image) error {
+func (ifp *ImageFacadeClient) PullImage(image *common.Image) error {
 	log.Infof("attempting to pull image %s", image.PullSpec)
 
 	err := ifp.startImagePull(image)
@@ -90,7 +95,7 @@ func (ifp *ImageFacadePuller) PullImage(image *common.Image) error {
 	}
 }
 
-func (ifp *ImageFacadePuller) startImagePull(image *common.Image) error {
+func (ifp *ImageFacadeClient) startImagePull(image *common.Image) error {
 	url := ifp.buildURL(pullImagePath)
 
 	requestBytes, err := json.Marshal(image)
@@ -115,7 +120,7 @@ func (ifp *ImageFacadePuller) startImagePull(image *common.Image) error {
 	return nil
 }
 
-func (ifp *ImageFacadePuller) checkImage(image *common.Image) (common.ImageStatus, error) {
+func (ifp *ImageFacadeClient) checkImage(image *common.Image) (common.ImageStatus, error) {
 	url := ifp.buildURL(checkImagePath)
 
 	requestBytes, err := json.Marshal(image)
@@ -151,6 +156,6 @@ func (ifp *ImageFacadePuller) checkImage(image *common.Image) (common.ImageStatu
 	return getImage.ImageStatus, nil
 }
 
-func (ifp *ImageFacadePuller) buildURL(path string) string {
+func (ifp *ImageFacadeClient) buildURL(path string) string {
 	return fmt.Sprintf("http://%s:%d/%s?", ifp.ImageFacadeHost, ifp.ImageFacadePort, path)
 }
