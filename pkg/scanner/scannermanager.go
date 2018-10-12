@@ -52,7 +52,7 @@ func NewManager(config *Config, stop <-chan struct{}) (*Manager, error) {
 	}
 
 	imagePuller := NewImageFacadeClient(config.ImageFacade.GetHost(), config.ImageFacade.Port)
-	scanClient, err := NewHubScanClient(
+	scanClient, err := NewScanClient(
 		config.Hub.User,
 		hubPassword,
 		config.Hub.Port)

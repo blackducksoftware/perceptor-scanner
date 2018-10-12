@@ -34,34 +34,41 @@ const (
 	hubScheme = "https"
 )
 
-// HubScanClient implements ScanClientInterface using
+// ScanClientInterface ...
+type ScanClientInterface interface {
+	Scan(host string, path string, projectName string, versionName string, scanName string) error
+	//ScanCliSh(job ScanJob) error
+	//ScanDockerSh(job ScanJob) error
+}
+
+// ScanClient implements ScanClientInterface using
 // the Black Duck hub and scan client programs.
-type HubScanClient struct {
+type ScanClient struct {
 	username       string
 	password       string
 	port           int
 	scanClientInfo *ScanClientInfo
 }
 
-// NewHubScanClient requires hub login credentials
-func NewHubScanClient(username string, password string, port int) (*HubScanClient, error) {
-	hsc := HubScanClient{
+// NewScanClient requires hub login credentials
+func NewScanClient(username string, password string, port int) (*ScanClient, error) {
+	sc := ScanClient{
 		username:       username,
 		password:       password,
 		port:           port,
 		scanClientInfo: nil}
-	return &hsc, nil
+	return &sc, nil
 }
 
-func (hsc *HubScanClient) downloadScanClient(host string) (*ScanClientInfo, error) {
+func (sc *ScanClient) downloadScanClient(host string) (*ScanClientInfo, error) {
 	cliRootPath := "/tmp/scanner"
 	scanClientInfo, err := DownloadScanClient(
 		OSTypeLinux,
 		cliRootPath,
 		host,
-		hsc.username,
-		hsc.password,
-		hsc.port,
+		sc.username,
+		sc.password,
+		sc.port,
 		time.Duration(300)*time.Second)
 	if err != nil {
 		return nil, errors.Annotatef(err, "unable to download scan client")
@@ -70,19 +77,19 @@ func (hsc *HubScanClient) downloadScanClient(host string) (*ScanClientInfo, erro
 }
 
 // Scan ...
-func (hsc *HubScanClient) Scan(host string, path string, projectName string, versionName string, scanName string) error {
-	if hsc.scanClientInfo == nil {
-		scanClientInfo, err := hsc.downloadScanClient(host)
+func (sc *ScanClient) Scan(host string, path string, projectName string, versionName string, scanName string) error {
+	if sc.scanClientInfo == nil {
+		scanClientInfo, err := sc.downloadScanClient(host)
 		if err != nil {
 			return errors.Trace(err)
 		}
-		hsc.scanClientInfo = scanClientInfo
+		sc.scanClientInfo = scanClientInfo
 	}
 	startTotal := time.Now()
 
-	scanCliImplJarPath := hsc.scanClientInfo.ScanCliImplJarPath()
-	scanCliJarPath := hsc.scanClientInfo.ScanCliJarPath()
-	scanCliJavaPath := hsc.scanClientInfo.ScanCliJavaPath()
+	scanCliImplJarPath := sc.scanClientInfo.ScanCliImplJarPath()
+	scanCliJarPath := sc.scanClientInfo.ScanCliJarPath()
+	scanCliJavaPath := sc.scanClientInfo.ScanCliJavaPath()
 	cmd := exec.Command(scanCliJavaPath,
 		"-Xms512m",
 		"-Xmx4096m",
@@ -92,16 +99,16 @@ func (hsc *HubScanClient) Scan(host string, path string, projectName string, ver
 		"-Done-jar.jar.path="+scanCliImplJarPath,
 		"-jar", scanCliJarPath,
 		"--host", host,
-		"--port", fmt.Sprintf("%d", hsc.port),
+		"--port", fmt.Sprintf("%d", sc.port),
 		"--scheme", hubScheme,
 		"--project", projectName,
 		"--release", versionName,
-		"--username", hsc.username,
+		"--username", sc.username,
 		"--name", scanName,
 		"--insecure",
 		"-v",
 		path)
-	cmd.Env = append(cmd.Env, fmt.Sprintf("BD_HUB_PASSWORD=%s", hsc.password))
+	cmd.Env = append(cmd.Env, fmt.Sprintf("BD_HUB_PASSWORD=%s", sc.password))
 
 	log.Infof("running command %+v for path %s\n", cmd, path)
 	startScanClient := time.Now()
