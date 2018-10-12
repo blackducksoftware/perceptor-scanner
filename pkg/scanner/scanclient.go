@@ -126,3 +126,53 @@ func (sc *ScanClient) Scan(host string, path string, projectName string, version
 	log.Debugf("output from path %s: %s", path, stdoutStderr)
 	return nil
 }
+
+// ScanSh invokes scan.cli.sh
+// example:
+// 	BD_HUB_PASSWORD=??? ./bin/scan.cli.sh --host ??? --port 443 --scheme https --username sysadmin --insecure --name ??? --release ??? --project ??? ???.tar
+func (sc *ScanClient) ScanSh(host string, path string, projectName string, versionName string, scanName string) error {
+	if sc.scanClientInfo == nil {
+		scanClientInfo, err := sc.downloadScanClient(host)
+		if err != nil {
+			return errors.Trace(err)
+		}
+		sc.scanClientInfo = scanClientInfo
+	}
+	startTotal := time.Now()
+
+	cmd := exec.Command(sc.scanClientInfo.ScanCliShPath(),
+		"-Xms512m",
+		"-Xmx4096m",
+		"-Dblackduck.scan.cli.benice=true",
+		"-Dblackduck.scan.skipUpdate=true",
+		"-Done-jar.silent=true",
+		//		"-Done-jar.jar.path="+scanCliImplJarPath,
+		//		"-jar", scanCliJarPath,
+		"--host", host,
+		"--port", fmt.Sprintf("%d", sc.port),
+		"--scheme", hubScheme,
+		"--project", projectName,
+		"--release", versionName,
+		"--username", sc.username,
+		"--name", scanName,
+		"--insecure",
+		"-v",
+		path)
+	cmd.Env = append(cmd.Env, fmt.Sprintf("BD_HUB_PASSWORD=%s", sc.password))
+
+	log.Infof("running command %+v for path %s\n", cmd, path)
+	startScanClient := time.Now()
+	stdoutStderr, err := cmd.CombinedOutput()
+
+	recordScanClientDuration(time.Now().Sub(startScanClient), err == nil)
+	recordTotalScannerDuration(time.Now().Sub(startTotal), err == nil)
+
+	if err != nil {
+		recordScannerError("scan.cli.sh failed")
+		log.Errorf("scan.cli.sh failed for path %s with error %s and output:\n%s\n", path, err.Error(), string(stdoutStderr))
+		return errors.Trace(err)
+	}
+	log.Infof("successfully completed scan.cli.sh for path %s", path)
+	log.Debugf("output from path %s: %s", path, stdoutStderr)
+	return nil
+}
