@@ -23,7 +23,7 @@ all: compile
 compile: ${OUTDIR} ${COMPONENTS}
 
 ${COMPONENTS}:
-	docker run -t -i --rm -v ${CURRENT_DIR}:/go/src/github.com/blackducksoftware/perceptor-scanner/ -w /go/src/github.com/blackducksoftware/perceptor-scanner/cmd/$@ -e CGO_ENABLED=0 -e GOOS=linux -e GOARCH=amd64 golang:1.9 go build -o $@
+	docker run -t -i --rm -v ${CURRENT_DIR}:/go/src/github.com/blackducksoftware/perceptor-scanner/ -w /go/src/github.com/blackducksoftware/perceptor-scanner/cmd/$@ -e CGO_ENABLED=0 -e GOOS=linux -e GOARCH=amd64 golang:1.11 go build -o $@
 	cp cmd/$@/$@ $(OUTDIR)
 
 container: $(COMPONENTS)
@@ -33,7 +33,7 @@ push: container
 	$(foreach p,${COMPONENTS},$(PREFIX_CMD) docker $(DOCKER_OPTS) push $(REGISTRY)/$(PREFIX)${p}:latest;)
 
 test:
-	docker run -t -i --rm -v ${CURRENT_DIR}:/go/src/github.com/blackducksoftware/perceptor-scanner/ -w /go/src/github.com/blackducksoftware/perceptor-scanner -e CGO_ENABLED=0 -e GOOS=linux -e GOARCH=amd64 golang:1.9 go test ./pkg/...
+	docker run -t -i --rm -v ${CURRENT_DIR}:/go/src/github.com/blackducksoftware/perceptor-scanner/ -w /go/src/github.com/blackducksoftware/perceptor-scanner -e CGO_ENABLED=0 -e GOOS=linux -e GOARCH=amd64 golang:1.11 go test ./pkg/...
 
 clean:
 	rm -rf ${OUTDIR}
@@ -44,5 +44,5 @@ ${OUTDIR}:
 
 lint:
 	./hack/verify-gofmt.sh
-	#./hack/verify-golint.sh
+	./hack/verify-golint.sh
 	./hack/verify-govet.sh
