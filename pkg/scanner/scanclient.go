@@ -60,7 +60,10 @@ func NewScanClient(username string, password string, port int) (*ScanClient, err
 	return &sc, nil
 }
 
-func (sc *ScanClient) downloadScanClient(host string) (*ScanClientInfo, error) {
+func (sc *ScanClient) ensureScanClientIsDownloaded(host string) error {
+	if sc.scanClientInfo != nil {
+		return nil
+	}
 	cliRootPath := "/tmp/scanner"
 	scanClientInfo, err := DownloadScanClient(
 		OSTypeLinux,
@@ -71,19 +74,16 @@ func (sc *ScanClient) downloadScanClient(host string) (*ScanClientInfo, error) {
 		sc.port,
 		time.Duration(300)*time.Second)
 	if err != nil {
-		return nil, errors.Annotatef(err, "unable to download scan client")
+		return errors.Annotate(err, "unable to download scan client")
 	}
-	return scanClientInfo, nil
+	sc.scanClientInfo = scanClientInfo
+	return nil
 }
 
 // Scan ...
 func (sc *ScanClient) Scan(host string, path string, projectName string, versionName string, scanName string) error {
-	if sc.scanClientInfo == nil {
-		scanClientInfo, err := sc.downloadScanClient(host)
-		if err != nil {
-			return errors.Trace(err)
-		}
-		sc.scanClientInfo = scanClientInfo
+	if err := sc.ensureScanClientIsDownloaded(host); err != nil {
+		return errors.Annotate(err, "cannot run scan cli")
 	}
 	startTotal := time.Now()
 
@@ -131,12 +131,8 @@ func (sc *ScanClient) Scan(host string, path string, projectName string, version
 // example:
 // 	BD_HUB_PASSWORD=??? ./bin/scan.cli.sh --host ??? --port 443 --scheme https --username sysadmin --insecure --name ??? --release ??? --project ??? ???.tar
 func (sc *ScanClient) ScanSh(host string, path string, projectName string, versionName string, scanName string) error {
-	if sc.scanClientInfo == nil {
-		scanClientInfo, err := sc.downloadScanClient(host)
-		if err != nil {
-			return errors.Trace(err)
-		}
-		sc.scanClientInfo = scanClientInfo
+	if err := sc.ensureScanClientIsDownloaded(host); err != nil {
+		return errors.Annotate(err, "cannot run scan.cli.sh")
 	}
 	startTotal := time.Now()
 
