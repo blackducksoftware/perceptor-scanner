@@ -33,16 +33,16 @@ import (
 
 // Scanner ...
 type Scanner struct {
-	imagePuller    ImagePullerInterface
+	ifClient       ImageFacadeClientInterface
 	scanClient     ScanClientInterface
 	imageDirectory string
 	stop           <-chan struct{}
 }
 
 // NewScanner ...
-func NewScanner(imagePuller ImagePullerInterface, scanClient ScanClientInterface, imageDirectory string, stop <-chan struct{}) *Scanner {
+func NewScanner(ifClient ImageFacadeClientInterface, scanClient ScanClientInterface, imageDirectory string, stop <-chan struct{}) *Scanner {
 	return &Scanner{
-		imagePuller:    imagePuller,
+		ifClient:       ifClient,
 		scanClient:     scanClient,
 		imageDirectory: imageDirectory,
 		stop:           stop}
@@ -52,7 +52,7 @@ func NewScanner(imagePuller ImagePullerInterface, scanClient ScanClientInterface
 func (scanner *Scanner) ScanFullDockerImage(apiImage *api.ImageSpec) error {
 	pullSpec := fmt.Sprintf("%s@sha256:%s", apiImage.Repository, apiImage.Sha)
 	image := common.NewImage(scanner.imageDirectory, pullSpec)
-	err := scanner.imagePuller.PullImage(image)
+	err := scanner.ifClient.PullImage(image)
 	if err != nil {
 		return errors.Trace(err)
 	}

@@ -22,9 +22,10 @@ under the License.
 package imagefacade
 
 import (
-	"fmt"
+	"strings"
 
 	"github.com/blackducksoftware/perceptor-scanner/pkg/docker"
+	"github.com/juju/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -45,20 +46,33 @@ func (config *Config) GetLogLevel() (log.Level, error) {
 	return log.ParseLevel(config.LogLevel)
 }
 
-// GetConfig returns a configuration object to configure Perceptor
+// GetConfig returns a configuration object
 func GetConfig(configPath string) (*Config, error) {
-	var cfg *Config
+	var config *Config
 
-	viper.SetConfigFile(configPath)
+	if configPath != "" {
+		viper.SetConfigFile(configPath)
+	} else {
+		viper.SetEnvPrefix("PCP")
+		viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+		viper.BindEnv("PrivateDockerRegistries")
+		viper.BindEnv("LogLevel")
+		viper.BindEnv("Port")
+		viper.BindEnv("CreateImagesOnly")
+
+		viper.AutomaticEnv()
+	}
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		return nil, fmt.Errorf("failed to read config file: %v", err)
+		return nil, errors.Annotate(err, "failed to ReadInConfig")
 	}
 
-	err = viper.Unmarshal(&cfg)
+	err = viper.Unmarshal(&config)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal config: %v", err)
+		return nil, errors.Annotate(err, "failed to unmarshal config")
 	}
-	return cfg, nil
+
+	return config, nil
 }

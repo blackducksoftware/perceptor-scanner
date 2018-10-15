@@ -22,12 +22,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:50c269c74c7fcbec5d3c34e9aa65c280e31e49c0d06476b4bc04f2e74827ce64"
+  digest = "1:d689f977fe541cdcce3616e9f68c8649c887a0758f1331b42926ed007e32c542"
   name = "github.com/blackducksoftware/perceptor"
   packages = [
     "pkg/api",
+    "pkg/core",
     "pkg/core/model",
     "pkg/hub",
+    "pkg/logging",
     "pkg/util",
   ]
   pruneopts = "UT"
@@ -369,6 +371,7 @@
   input-imports = [
     "github.com/blackducksoftware/hub-client-go/hubclient",
     "github.com/blackducksoftware/perceptor/pkg/api",
+    "github.com/blackducksoftware/perceptor/pkg/core",
     "github.com/blackducksoftware/perceptor/pkg/core/model",
     "github.com/go-resty/resty",
     "github.com/juju/errors",

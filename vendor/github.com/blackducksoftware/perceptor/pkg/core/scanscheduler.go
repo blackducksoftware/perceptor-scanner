@@ -19,11 +19,27 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package scanner
+package core
 
-// ScanClientInterface ...
-type ScanClientInterface interface {
-	Scan(host string, path string, projectName string, versionName string, scanName string) error
-	//ScanCliSh(job ScanJob) error
-	//ScanDockerSh(job ScanJob) error
+import (
+	m "github.com/blackducksoftware/perceptor/pkg/core/model"
+	"github.com/blackducksoftware/perceptor/pkg/hub"
+)
+
+// ScanScheduler ...
+type ScanScheduler struct {
+	TotalScanLimit      int
+	ConcurrentScanLimit int
+	HubManager          HubManagerInterface
+}
+
+// AssignImage finds a Hub that is available to scan `image`.
+func (s *ScanScheduler) AssignImage(image *m.Image) hub.ClientInterface {
+	for _, hub := range s.HubManager.HubClients() {
+		if <-hub.CodeLocationsCount() < s.TotalScanLimit && len(<-hub.InProgressScans()) < s.ConcurrentScanLimit {
+			return hub
+		}
+	}
+	// TODO eventually, could look through projects
+	return nil
 }

@@ -105,15 +105,14 @@ func GetConfig(configPath string) (*Config, error) {
 
 		viper.BindEnv("LogLevel")
 		viper.BindEnv("Port")
+		viper.BindEnv("ImageDirectory")
 
 		viper.AutomaticEnv()
 	}
 
-	viper.SetConfigFile(configPath)
-
 	err := viper.ReadInConfig()
 	if err != nil {
-		return nil, errors.Annotatef(err, "failed to read config file")
+		return nil, errors.Annotatef(err, "failed to ReadInConfig")
 	}
 
 	err = viper.Unmarshal(&config)

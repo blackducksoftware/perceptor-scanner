@@ -54,8 +54,13 @@ func main() {
 
 	http.Handle("/metrics", prometheus.Handler())
 
-	pifTester := piftester.NewPifTester(config.ImageFacadePort)
+	stop := make(chan struct{})
+	pifTester := piftester.NewPifTester(config.ImageFacadeHost, config.ImageFacadePort, stop)
 	addr := fmt.Sprintf(":%d", config.Port)
-	http.ListenAndServe(addr, nil)
+	go func() {
+		log.Infof("starting http server on %d", config.Port)
+		http.ListenAndServe(addr, nil)
+	}()
 	log.Infof("Http server started! -- %+v", pifTester)
+	<-stop
 }
