@@ -31,10 +31,9 @@ import (
 
 // HubConfig ...
 type HubConfig struct {
-	User                 string
-	PasswordEnvVar       string
-	Port                 int
-	ClientTimeoutSeconds int
+	User           string
+	PasswordEnvVar string
+	Port           int
 }
 
 // ImageFacadeConfig ...
@@ -57,20 +56,25 @@ type PerceptorConfig struct {
 	Port int
 }
 
+// ScannerConfig ...
+type ScannerConfig struct {
+	ImageDirectory          string
+	Port                    int
+	HubClientTimeoutSeconds int
+}
+
 // Config ...
 type Config struct {
-	Hub         *HubConfig
-	ImageFacade *ImageFacadeConfig
-	Perceptor   *PerceptorConfig
-
-	ImageDirectory string
+	Hub         HubConfig
+	ImageFacade ImageFacadeConfig
+	Perceptor   PerceptorConfig
+	Scanner     ScannerConfig
 
 	LogLevel string
-	Port     int
 }
 
 // GetImageDirectory ...
-func (config *Config) GetImageDirectory() string {
+func (config *ScannerConfig) GetImageDirectory() string {
 	if config.ImageDirectory == "" {
 		return "/var/images"
 	}
@@ -101,11 +105,12 @@ func GetConfig(configPath string) (*Config, error) {
 		viper.BindEnv("Hub_User")
 		viper.BindEnv("Hub_Port")
 		viper.BindEnv("Hub_PasswordEnvVar")
-		viper.BindEnv("Hub_ClientTimeoutSeconds")
+
+		viper.BindEnv("Scanner_Port")
+		viper.BindEnv("Scanner_ImageDirectory")
+		viper.BindEnv("Scanner_HubClientTimeoutSeconds")
 
 		viper.BindEnv("LogLevel")
-		viper.BindEnv("Port")
-		viper.BindEnv("ImageDirectory")
 
 		viper.AutomaticEnv()
 	}

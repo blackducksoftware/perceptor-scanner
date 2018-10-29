@@ -61,7 +61,7 @@ func NewManager(config *Config, stop <-chan struct{}) (*Manager, error) {
 	}
 
 	return &Manager{
-		scanner:         NewScanner(imagePuller, scanClient, config.GetImageDirectory(), stop),
+		scanner:         NewScanner(imagePuller, scanClient, config.Scanner.GetImageDirectory(), stop),
 		perceptorClient: NewPerceptorClient(config.Perceptor.Host, config.Perceptor.Port),
 		stop:            stop}, nil
 }
