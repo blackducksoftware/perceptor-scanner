@@ -58,9 +58,9 @@ type PerceptorConfig struct {
 
 // ScannerConfig ...
 type ScannerConfig struct {
-	ImageDirectory       string
-	Port                 int
-	ClientTimeoutSeconds int
+	ImageDirectory          string
+	Port                    int
+	HubClientTimeoutSeconds int
 }
 
 // Config ...
@@ -108,7 +108,7 @@ func GetConfig(configPath string) (*Config, error) {
 
 		viper.BindEnv("Scanner_Port")
 		viper.BindEnv("Scanner_ImageDirectory")
-		viper.BindEnv("Scanner_ClientTimeoutSeconds")
+		viper.BindEnv("Scanner_HubClientTimeoutSeconds")
 
 		viper.BindEnv("LogLevel")
 
