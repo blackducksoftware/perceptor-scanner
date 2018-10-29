@@ -30,15 +30,19 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Config ...
-type Config struct {
+
+type ImageFacadeConfig struct {
 	// These allow images to be pulled from registries that require authentication
 	PrivateDockerRegistries []docker.RegistryAuth
 
-	LogLevel string
-
 	CreateImagesOnly bool
-	Port             int
+	Port             int	
+}
+
+// Config ...
+type Config struct {
+	LogLevel string
+	ImageFacade ImageFacadeConfig
 }
 
 // GetLogLevel ...
@@ -56,10 +60,10 @@ func GetConfig(configPath string) (*Config, error) {
 		viper.SetEnvPrefix("PCP")
 		viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
-		viper.BindEnv("PrivateDockerRegistries")
+		viper.BindEnv("ImageFacade_PrivateDockerRegistries")
+		viper.BindEnv("ImageFacade_Port")
+		viper.BindEnv("ImageFacade_CreateImagesOnly")
 		viper.BindEnv("LogLevel")
-		viper.BindEnv("Port")
-		viper.BindEnv("CreateImagesOnly")
 
 		viper.AutomaticEnv()
 	}
