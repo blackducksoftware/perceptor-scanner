@@ -49,11 +49,11 @@ func RunImageFacade(configPath string, stop <-chan struct{}) {
 	prometheus.Unregister(prometheus.NewProcessCollector(os.Getpid(), ""))
 	prometheus.Unregister(prometheus.NewGoCollector())
 
-	imageFacade := NewImageFacade(config.PrivateDockerRegistries, config.CreateImagesOnly, stop)
+	imageFacade := NewImageFacade(config.ImageFacade.PrivateDockerRegistries, config.ImageFacade.CreateImagesOnly, stop)
 
 	log.Infof("successfully instantiated imagefacade -- %+v", imageFacade)
 
-	addr := fmt.Sprintf(":%d", config.Port)
+	addr := fmt.Sprintf(":%d", config.ImageFacade.Port)
 	log.Infof("starting HTTP server on %s", addr)
 	go func() {
 		http.ListenAndServe(addr, nil)

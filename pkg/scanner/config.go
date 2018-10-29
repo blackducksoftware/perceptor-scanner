@@ -74,7 +74,7 @@ type Config struct {
 }
 
 // GetImageDirectory ...
-func (config *Config) GetImageDirectory() string {
+func (config *ScannerConfig) GetImageDirectory() string {
 	if config.ImageDirectory == "" {
 		return "/var/images"
 	}

@@ -30,18 +30,18 @@ import (
 	"github.com/spf13/viper"
 )
 
-
+// ImageFacadeConfig ...
 type ImageFacadeConfig struct {
 	// These allow images to be pulled from registries that require authentication
 	PrivateDockerRegistries []docker.RegistryAuth
 
 	CreateImagesOnly bool
-	Port             int	
+	Port             int
 }
 
 // Config ...
 type Config struct {
-	LogLevel string
+	LogLevel    string
 	ImageFacade ImageFacadeConfig
 }
 

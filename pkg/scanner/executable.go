@@ -52,7 +52,7 @@ func RunScanner(configPath string, stop <-chan struct{}) {
 
 	http.Handle("/metrics", prometheus.Handler())
 
-	addr := fmt.Sprintf(":%d", config.Port)
+	addr := fmt.Sprintf(":%d", config.Scanner.Port)
 	log.Infof("successfully instantiated manager %+v, serving on %s", manager, addr)
 	go func() {
 		http.ListenAndServe(addr, nil)
