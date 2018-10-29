@@ -31,10 +31,9 @@ import (
 
 // HubConfig ...
 type HubConfig struct {
-	User                 string
-	PasswordEnvVar       string
-	Port                 int
-	ClientTimeoutSeconds int
+	User           string
+	PasswordEnvVar string
+	Port           int
 }
 
 // ImageFacadeConfig ...
@@ -59,8 +58,9 @@ type PerceptorConfig struct {
 
 // ScannerConfig ...
 type ScannerConfig struct {
-	ImageDirectory string
-	Port           int
+	ImageDirectory       string
+	Port                 int
+	ClientTimeoutSeconds int
 }
 
 // Config ...
