@@ -105,10 +105,10 @@ func GetConfig(configPath string) (*Config, error) {
 		viper.BindEnv("Hub_User")
 		viper.BindEnv("Hub_Port")
 		viper.BindEnv("Hub_PasswordEnvVar")
-		viper.BindEnv("Hub_ClientTimeoutSeconds")
 
 		viper.BindEnv("Scanner_Port")
 		viper.BindEnv("Scanner_ImageDirectory")
+		viper.BindEnv("Scanner_ClientTimeoutSeconds")
 
 		viper.BindEnv("LogLevel")
 
