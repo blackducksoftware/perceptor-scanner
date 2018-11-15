@@ -92,35 +92,34 @@ func GetConfig(configPath string) (*Config, error) {
 
 	if configPath != "" {
 		viper.SetConfigFile(configPath)
+		err := viper.ReadInConfig()
+		if err != nil {
+			return nil, errors.Annotatef(err, "failed to ReadInConfig")
+		}
 	} else {
 		viper.SetEnvPrefix("PCP")
 		viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
-		viper.BindEnv("ImageFacade_Host")
-		viper.BindEnv("ImageFacade_Port")
+		viper.BindEnv("ImageFacade.Host")
+		viper.BindEnv("ImageFacade.Port")
 
-		viper.BindEnv("Perceptor_Host")
-		viper.BindEnv("Perceptor_Port")
+		viper.BindEnv("Perceptor.Host")
+		viper.BindEnv("Perceptor.Port")
 
-		viper.BindEnv("Hub_User")
-		viper.BindEnv("Hub_Port")
-		viper.BindEnv("Hub_PasswordEnvVar")
+		viper.BindEnv("Hub.User")
+		viper.BindEnv("Hub.Port")
+		viper.BindEnv("Hub.PasswordEnvVar")
 
-		viper.BindEnv("Scanner_Port")
-		viper.BindEnv("Scanner_ImageDirectory")
-		viper.BindEnv("Scanner_HubClientTimeoutSeconds")
+		viper.BindEnv("Scanner.Port")
+		viper.BindEnv("Scanner.ImageDirectory")
+		viper.BindEnv("Scanner.HubClientTimeoutSeconds")
 
 		viper.BindEnv("LogLevel")
 
 		viper.AutomaticEnv()
 	}
 
-	err := viper.ReadInConfig()
-	if err != nil {
-		return nil, errors.Annotatef(err, "failed to ReadInConfig")
-	}
-
-	err = viper.Unmarshal(&config)
+	err := viper.Unmarshal(&config)
 	if err != nil {
 		return nil, errors.Annotatef(err, "failed to unmarshal config")
 	}
