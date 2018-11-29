@@ -32,13 +32,11 @@ func (c *Client) Login(username string, password string) error {
 	resp, err := c.httpClient.PostForm(loginURL, formValues)
 
 	if err != nil {
-		log.Errorf("Error trying to login via form login: %+v.", err)
-		return err
+		return AnnotateHubClientError(err, "Error trying to login via form login")
 	}
 
 	if resp.StatusCode != 204 {
-		log.Errorf("Login: Got a %d response instead of a 204.", resp.StatusCode)
-		return fmt.Errorf("got a %d response instead of a 204", resp.StatusCode)
+		return HubClientErrorf("got a %d response instead of a 204", resp.StatusCode)
 	}
 
 	if csrf := resp.Header.Get(HeaderNameCsrfToken); csrf != "" {

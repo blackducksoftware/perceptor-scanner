@@ -22,33 +22,35 @@ under the License.
 package core
 
 import (
+	"encoding/json"
 	"time"
 
+	"github.com/blackducksoftware/perceptor/pkg/api"
 	log "github.com/sirupsen/logrus"
 )
 
 // HubConfig handles Hub-specific configuration
 type HubConfig struct {
-	User                      string
-	PasswordEnvVar            string
-	ClientTimeoutMilliseconds int
-	Port                      int
-	ConcurrentScanLimit       int
-	TotalScanLimit            int
-}
-
-// ClientTimeout converts the milliseconds to a duration
-func (config *HubConfig) ClientTimeout() time.Duration {
-	return time.Duration(config.ClientTimeoutMilliseconds) * time.Millisecond
+	Hosts               []string
+	User                string
+	PasswordEnvVar      string
+	Port                int
+	ConcurrentScanLimit int
+	TotalScanLimit      int
 }
 
 // Timings ...
 type Timings struct {
-	CheckForStalledScansPauseHours  int
-	StalledScanClientTimeoutHours   int
-	ModelMetricsPauseSeconds        int
-	UnknownImagePauseMilliseconds   int
-	PruneOrphanedImagesPauseMinutes int
+	CheckForStalledScansPauseHours int
+	StalledScanClientTimeoutHours  int
+	ModelMetricsPauseSeconds       int
+	UnknownImagePauseMilliseconds  int
+	HubClientTimeoutMilliseconds   int
+}
+
+// ClientTimeout ...
+func (t *Timings) ClientTimeout() time.Duration {
+	return time.Duration(t.HubClientTimeoutMilliseconds) * time.Millisecond
 }
 
 // CheckForStalledScansPause ...
@@ -71,21 +73,50 @@ func (t *Timings) UnknownImagePause() time.Duration {
 	return time.Duration(t.UnknownImagePauseMilliseconds) * time.Millisecond
 }
 
-// PruneOrphanedImagesPause ...
-func (t *Timings) PruneOrphanedImagesPause() time.Duration {
-	return time.Duration(t.PruneOrphanedImagesPauseMinutes) * time.Minute
-}
-
-// Config contains all configuration for Perceptor
-type Config struct {
-	Hub         *HubConfig
+// PerceptorConfig ...
+type PerceptorConfig struct {
 	Timings     *Timings
 	UseMockMode bool
 	Port        int
-	LogLevel    string
+}
+
+// Config ...
+type Config struct {
+	Hub       *HubConfig
+	Perceptor *PerceptorConfig
+	LogLevel  string
+}
+
+func (config *Config) model() *api.ModelConfig {
+	return &api.ModelConfig{
+		Hub: &api.ModelHubConfig{
+			ClientTimeout:       *api.NewModelTime(config.Perceptor.Timings.ClientTimeout()),
+			ConcurrentScanLimit: config.Hub.ConcurrentScanLimit,
+			PasswordEnvVar:      config.Hub.PasswordEnvVar,
+			Port:                config.Hub.Port,
+			TotalScanLimit:      config.Hub.TotalScanLimit,
+			User:                config.Hub.User,
+		},
+		LogLevel: config.LogLevel,
+		Port:     config.Perceptor.Port,
+		Timings: &api.ModelTimings{
+			CheckForStalledScansPause: *api.NewModelTime(config.Perceptor.Timings.CheckForStalledScansPause()),
+			ModelMetricsPause:         *api.NewModelTime(config.Perceptor.Timings.ModelMetricsPause()),
+			StalledScanClientTimeout:  *api.NewModelTime(config.Perceptor.Timings.StalledScanClientTimeout()),
+			UnknownImagePause:         *api.NewModelTime(config.Perceptor.Timings.UnknownImagePause()),
+		},
+	}
 }
 
 // GetLogLevel .....
 func (config *Config) GetLogLevel() (log.Level, error) {
 	return log.ParseLevel(config.LogLevel)
+}
+
+func (config *Config) dump() (string, error) {
+	bytes, err := json.Marshal(config)
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
 }

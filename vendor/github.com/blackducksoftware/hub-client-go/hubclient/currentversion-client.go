@@ -18,7 +18,6 @@ import (
 	"fmt"
 
 	"github.com/blackducksoftware/hub-client-go/hubapi"
-	log "github.com/sirupsen/logrus"
 )
 
 func (c *Client) CurrentVersion() (*hubapi.CurrentVersion, error) {
@@ -28,8 +27,7 @@ func (c *Client) CurrentVersion() (*hubapi.CurrentVersion, error) {
 	err := c.HttpGetJSON(currentVersionURL, &currentVersion, 200)
 
 	if err != nil {
-		log.Errorf("Error trying to get current version: %+v.", err)
-		return nil, err
+		return nil, AnnotateHubClientError(err, "Error trying to get current version")
 	}
 
 	return &currentVersion, nil

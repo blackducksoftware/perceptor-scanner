@@ -31,8 +31,7 @@ func (c *Client) ListProjectVersionComponents(link hubapi.ResourceLink) (*hubapi
 	err := c.HttpGetJSON(link.Href+"?limit=2", &bomList, 200)
 
 	if err != nil {
-		log.Errorf("Error while trying to get Project Version Component list: %+v.\n", err)
-		return nil, err
+		return nil, AnnotateHubClientError(err, "Error while trying to get Project Version Component list")
 	}
 
 	return &bomList, nil
@@ -48,8 +47,7 @@ func (c *Client) ListProjectVersionVulnerableComponents(link hubapi.ResourceLink
 	err := c.HttpGetJSON(link.Href+"?limit=2", &bomList, 200)
 
 	if err != nil {
-		log.Errorf("Error trying to retrieve vulnerable components list: %+v.\n", err)
-		return nil, err
+		return nil, AnnotateHubClientError(err, "Error trying to retrieve vulnerable components list")
 	}
 
 	return &bomList, nil
@@ -64,8 +62,7 @@ func (c *Client) PageProjectVersionVulnerableComponents(link hubapi.ResourceLink
 	err := c.HttpGetJSON(url, &bomList, 200)
 
 	if err != nil {
-		log.Errorf("Error trying to retrieve vulnerable components page: %+v.\n", err)
-		return nil, err
+		return nil, AnnotateHubClientError(err, "Error trying to retrieve vulnerable components page")
 	}
 
 	return &bomList, nil
@@ -80,8 +77,7 @@ func (c *Client) CountProjectVersionVulnerableComponents(link hubapi.ResourceLin
 	err := c.HttpGetJSON(link.Href+"?offset=0&limit=1", &bomList, 200)
 
 	if err != nil {
-		log.Errorf("Error trying to retrieve count of vulnerable components: %+v.\n", err)
-		return 0, err
+		return 0, AnnotateHubClientError(err, "Error trying to retrieve count of vulnerable components")
 	}
 
 	return bomList.TotalCount, nil

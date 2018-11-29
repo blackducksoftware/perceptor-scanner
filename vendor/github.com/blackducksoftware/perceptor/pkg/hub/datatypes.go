@@ -107,6 +107,11 @@ func (status ClientStatus) MarshalText() (text []byte, err error) {
 	return []byte(status.String()), nil
 }
 
+type clientStateMetrics struct {
+	scanStageCounts map[ScanStage]int
+	errorsCount     int
+}
+
 // PolicyStatus .....
 type PolicyStatus struct {
 	OverallStatus                PolicyStatusType
@@ -173,12 +178,6 @@ type Project struct {
 	Name     string
 	Source   string
 	Versions []Version
-}
-
-// Result models computations that may succeed or fail.
-type Result struct {
-	Value interface{}
-	Err   error
 }
 
 // RiskProfile .....
@@ -341,11 +340,41 @@ func (r *RiskProfileStatusCounts) HighRiskVulnerabilityCount() int {
 	return highCount
 }
 
+// ScanStage describes the current stage of the scan
+type ScanStage int
+
+// ...
+const (
+	ScanStageUnknown    ScanStage = iota
+	ScanStageScanClient ScanStage = iota
+	ScanStageHubScan    ScanStage = iota
+	ScanStageComplete   ScanStage = iota
+	ScanStageFailure    ScanStage = iota
+)
+
+// String .....
+func (s ScanStage) String() string {
+	switch s {
+	case ScanStageUnknown:
+		return "ScanStageUnknown"
+	case ScanStageScanClient:
+		return "ScanStageScanClient"
+	case ScanStageHubScan:
+		return "ScanStageHubScan"
+	case ScanStageComplete:
+		return "ScanStageComplete"
+	case ScanStageFailure:
+		return "ScanStageFailure"
+	default:
+		panic(fmt.Errorf("invalid ScanStage value: %d", s))
+	}
+}
+
 // Scan is a wrapper around a Hub code location, and full scan results.
 // If `ScanResults` is nil, that means the ScanResults have not been fetched yet.
 type Scan struct {
-	CodeLocation hubapi.CodeLocation
-	ScanResults  *ScanResults
+	Stage       ScanStage
+	ScanResults *ScanResults
 }
 
 // ScanResults models the results that we expect to get from the hub after
@@ -356,6 +385,7 @@ type ScanResults struct {
 	ScanSummaries                    []ScanSummary
 	ComponentsHref                   string
 	CodeLocationCreatedAt            string
+	CodeLocationHref                 string
 	CodeLocationMappedProjectVersion string
 	CodeLocationName                 string
 	CodeLocationType                 string
