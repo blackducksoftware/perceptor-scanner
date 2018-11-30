@@ -21,7 +21,6 @@
   revision = "75776aa0330a633894b700a7d766632f616d9ab8"
 
 [[projects]]
-  branch = "rc-2.2.0"
   digest = "1:8b05ef7ad59f3ac420662f0408fe780b494184fba8f84049ea1ea133033e4dc6"
   name = "github.com/blackducksoftware/perceptor"
   packages = [
@@ -34,6 +33,7 @@
   ]
   pruneopts = "UT"
   revision = "90a7d94bc18a617589eb477a31ada856298e2abd"
+  version = "v2.2.0"
 
 [[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
