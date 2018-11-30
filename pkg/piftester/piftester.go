@@ -173,9 +173,6 @@ func (pif *PifTester) GetModel() api.Model {
 	return <-ch
 }
 
-// PutHubs ...
-func (pif *PifTester) PutHubs(hubs *api.PutHubs) {}
-
 // perceiver
 
 // AddPod ...
@@ -278,9 +275,6 @@ func (pif *PifTester) GetNextImage() api.NextImage {
 func (pif *PifTester) PostFinishScan(job api.FinishedScanClientJob) error { return nil }
 
 // internal use
-
-//PostConfig ...
-func (pif *PifTester) PostConfig(config *api.PostConfig) {}
 
 // PostCommand ...
 func (pif *PifTester) PostCommand(commands *api.PostCommand) {}
