@@ -10,18 +10,18 @@
   revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
 
 [[projects]]
-  branch = "master"
-  digest = "1:034226efd2ce42ae68276ff2ec6cfd6e9eb8163d2e74a927d44293450f4d7ce8"
+  digest = "1:a09ab5a4f5a410efea876fee6cba097906d80d15227c3d8bf7c349c55649fdde"
   name = "github.com/blackducksoftware/hub-client-go"
   packages = [
     "hubapi",
     "hubclient",
   ]
   pruneopts = "UT"
-  revision = "75776aa0330a633894b700a7d766632f616d9ab8"
+  revision = "f1fdde519aec5ce540e9a42440fcce9bd641644a"
 
 [[projects]]
-  digest = "1:8b05ef7ad59f3ac420662f0408fe780b494184fba8f84049ea1ea133033e4dc6"
+  branch = "master"
+  digest = "1:b4881a19bb264efb5786a2161043d89704b5813aa1904068735ebaef3e08c019"
   name = "github.com/blackducksoftware/perceptor"
   packages = [
     "pkg/api",
@@ -32,8 +32,7 @@
     "pkg/util",
   ]
   pruneopts = "UT"
-  revision = "90a7d94bc18a617589eb477a31ada856298e2abd"
-  version = "v2.2.0"
+  revision = "2a96e74d35d36b92ffdb34bda91ff33fd390db3b"
 
 [[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
@@ -286,7 +285,7 @@
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = "UT"
-  revision = "eb0de9b17e854e9b1ccd9963efafc79862359959"
+  revision = "505ab145d0a99da450461ae2c1a9f6cd10d1f447"
 
 [[projects]]
   branch = "master"
@@ -300,7 +299,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "fae4c4e3ad76c295c3d6d259f898136b4bf833a8"
+  revision = "351d144fa1fc0bd934e2408202be0c29f25e35a0"
 
 [[projects]]
   branch = "master"
