@@ -23,10 +23,30 @@ package core
 
 import (
 	"fmt"
+	"time"
 
+	"github.com/blackducksoftware/hub-client-go/hubclient"
 	"github.com/blackducksoftware/perceptor/pkg/hub"
 	log "github.com/sirupsen/logrus"
 )
+
+type hubClientCreator func(host string) (*hub.Hub, error)
+
+func createMockHubClient(hubURL string) (*hub.Hub, error) {
+	mockRawClient := hub.NewMockRawClient(false, []string{})
+	return hub.NewHub("mock-username", "mock-password", hubURL, mockRawClient, hub.DefaultTimings), nil
+}
+
+func createHubClient(username string, password string, port int, httpTimeout time.Duration) hubClientCreator {
+	return func(host string) (*hub.Hub, error) {
+		baseURL := fmt.Sprintf("https://%s:%d", host, port)
+		rawClient, err := hubclient.NewWithSession(baseURL, hubclient.HubClientDebugTimings, httpTimeout)
+		if err != nil {
+			return nil, err
+		}
+		return hub.NewHub(username, password, host, rawClient, hub.DefaultTimings), nil
+	}
+}
 
 // Update is a wrapper around hub.Update which also tracks which Hub was the source.
 type Update struct {
@@ -37,33 +57,33 @@ type Update struct {
 // HubManagerInterface ...
 type HubManagerInterface interface {
 	SetHubs(hubURLs []string)
-	HubClients() map[string]hub.ClientInterface
+	HubClients() map[string]*hub.Hub
 	StartScanClient(hubURL string, scanName string) error
-	FinishScanClient(hubURL string, scanName string) error
-	ScanResults() map[string]map[string]*hub.ScanResults
+	FinishScanClient(hubURL string, scanName string, err error) error
+	ScanResults() map[string]map[string]*hub.Scan
 	Updates() <-chan *Update
 }
 
 // HubManager ...
 type HubManager struct {
-	newHub func(hubURL string) hub.ClientInterface
+	newHub hubClientCreator
 	//
 	stop    <-chan struct{}
 	updates chan *Update
 	//
-	hubs                  map[string]hub.ClientInterface
+	hubs                  map[string]*hub.Hub
 	didFetchScanResults   chan *hub.ScanResults
 	didFetchCodeLocations chan []string
 }
 
 // NewHubManager ...
-func NewHubManager(newHub func(hubURL string) hub.ClientInterface, stop <-chan struct{}) *HubManager {
+func NewHubManager(newHub hubClientCreator, stop <-chan struct{}) *HubManager {
 	// TODO needs to be made concurrent-safe
 	return &HubManager{
 		newHub:                newHub,
 		stop:                  stop,
 		updates:               make(chan *Update),
-		hubs:                  map[string]hub.ClientInterface{},
+		hubs:                  map[string]*hub.Hub{},
 		didFetchScanResults:   make(chan *hub.ScanResults),
 		didFetchCodeLocations: make(chan []string)}
 }
@@ -103,7 +123,10 @@ func (hm *HubManager) create(hubURL string) error {
 	if _, ok := hm.hubs[hubURL]; ok {
 		return fmt.Errorf("cannot create hub %s: already exists", hubURL)
 	}
-	hubClient := hm.newHub(hubURL)
+	hubClient, err := hm.newHub(hubURL)
+	if err != nil {
+		return err
+	}
 	hm.hubs[hubURL] = hubClient
 	go func() {
 		stop := hubClient.StopCh()
@@ -126,7 +149,7 @@ func (hm *HubManager) Updates() <-chan *Update {
 }
 
 // HubClients ...
-func (hm *HubManager) HubClients() map[string]hub.ClientInterface {
+func (hm *HubManager) HubClients() map[string]*hub.Hub {
 	return hm.hubs
 }
 
@@ -142,18 +165,18 @@ func (hm *HubManager) StartScanClient(hubURL string, scanName string) error {
 
 // FinishScanClient tells the appropriate hub client to start polling for
 // scan completion.
-func (hm *HubManager) FinishScanClient(hubURL string, scanName string) error {
+func (hm *HubManager) FinishScanClient(hubURL string, scanName string, scanErr error) error {
 	hub, ok := hm.hubs[hubURL]
 	if !ok {
 		return fmt.Errorf("hub %s not found", hubURL)
 	}
-	hub.FinishScanClient(scanName)
+	hub.FinishScanClient(scanName, scanErr)
 	return nil
 }
 
 // ScanResults ...
-func (hm *HubManager) ScanResults() map[string]map[string]*hub.ScanResults {
-	allScanResults := map[string]map[string]*hub.ScanResults{}
+func (hm *HubManager) ScanResults() map[string]map[string]*hub.Scan {
+	allScanResults := map[string]map[string]*hub.Scan{}
 	for hubURL, hub := range hm.hubs {
 		// TODO could cache to avoid blocking
 		allScanResults[hubURL] = <-hub.ScanResults()

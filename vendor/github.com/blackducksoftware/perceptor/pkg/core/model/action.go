@@ -21,7 +21,7 @@ under the License.
 
 package model
 
-// Action .....
-type Action interface {
-	Apply(model *Model)
+type action struct {
+	name  string
+	apply func() error
 }

@@ -39,10 +39,9 @@ func (c *Client) downloadScanClientHelper(path string, urlPath string) error {
 
 	resp, err := c.httpClient.Get(scanClientURL)
 	if err != nil {
-		return err
+		return AnnotateHubClientErrorf(err, "unable to http GET %s", urlPath)
 	} else if resp.StatusCode != http.StatusOK {
-		err = fmt.Errorf("GET failed: received status != 200 from %s: %s", scanClientURL, resp.Status)
-		return err
+		return HubClientErrorf("GET failed: received status != 200 from %s: %s", scanClientURL, resp.Status)
 	}
 
 	body := resp.Body
@@ -52,10 +51,10 @@ func (c *Client) downloadScanClientHelper(path string, urlPath string) error {
 
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0777)
 	if err != nil {
-		return err
+		return AnnotateHubClientError(err, "unable to open file")
 	}
 	if _, err = io.Copy(f, body); err != nil {
-		return err
+		return AnnotateHubClientError(err, "unable to copy file")
 	}
 
 	return nil

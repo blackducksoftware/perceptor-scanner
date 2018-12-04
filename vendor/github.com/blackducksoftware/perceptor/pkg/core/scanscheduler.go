@@ -22,6 +22,7 @@ under the License.
 package core
 
 import (
+	"github.com/blackducksoftware/perceptor/pkg/api"
 	m "github.com/blackducksoftware/perceptor/pkg/core/model"
 	"github.com/blackducksoftware/perceptor/pkg/hub"
 )
@@ -34,12 +35,20 @@ type ScanScheduler struct {
 }
 
 // AssignImage finds a Hub that is available to scan `image`.
-func (s *ScanScheduler) AssignImage(image *m.Image) hub.ClientInterface {
+func (s *ScanScheduler) AssignImage(image *m.Image) *hub.Hub {
 	for _, hub := range s.HubManager.HubClients() {
-		if <-hub.CodeLocationsCount() < s.TotalScanLimit && len(<-hub.InProgressScans()) < s.ConcurrentScanLimit {
+		if <-hub.ScansCount() < s.TotalScanLimit && len(<-hub.InProgressScans()) < s.ConcurrentScanLimit {
+			recordEvent("scanScheduler", "found hub")
 			return hub
 		}
 	}
-	// TODO eventually, could look through projects
+	recordEvent("scanScheduler", "did not find hub")
 	return nil
+}
+
+func (s *ScanScheduler) model() *api.ModelScanScheduler {
+	return &api.ModelScanScheduler{
+		ConcurrentScanLimit: s.ConcurrentScanLimit,
+		TotalScanLimit:      s.TotalScanLimit,
+	}
 }
