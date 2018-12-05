@@ -29,7 +29,6 @@ import (
 )
 
 func TestMetrics(t *testing.T) {
-	recordDiskMetrics(&DiskMetrics{})
 	recordActionType("abc")
 	recordHTTPRequest("qrs")
 	then := time.Now()

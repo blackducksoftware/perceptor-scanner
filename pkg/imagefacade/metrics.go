@@ -31,7 +31,6 @@ import (
 var httpRequestsCounter *prometheus.CounterVec
 var actionsCounter *prometheus.CounterVec
 var reducerActivityCounter *prometheus.CounterVec
-var diskMetricsGauge *prometheus.GaugeVec
 var imagePullResultCounter *prometheus.CounterVec
 
 func recordHTTPRequest(path string) {
@@ -53,13 +52,6 @@ func recordReducerActivity(isActive bool, duration time.Duration) {
 func megabytes(number uint64) float64 {
 	bytesPerMB := uint64(1024 * 1024)
 	return float64(number / bytesPerMB)
-}
-
-func recordDiskMetrics(diskMetrics *DiskMetrics) {
-	diskMetricsGauge.With(prometheus.Labels{"name": "available_MBs"}).Set(megabytes(diskMetrics.AvailableBytes))
-	diskMetricsGauge.With(prometheus.Labels{"name": "free_MBs"}).Set(megabytes(diskMetrics.FreeBytes))
-	diskMetricsGauge.With(prometheus.Labels{"name": "total_MBs"}).Set(megabytes(diskMetrics.TotalBytes))
-	diskMetricsGauge.With(prometheus.Labels{"name": "used_MBs"}).Set(megabytes(diskMetrics.UsedBytes))
 }
 
 func recordImagePullResult(success bool) {
@@ -91,14 +83,6 @@ func init() {
 		Help:      "activity of the reducer -- how much time it's been idle and active, in seconds",
 	}, []string{"state"})
 	prometheus.MustRegister(reducerActivityCounter)
-
-	diskMetricsGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Namespace: "perceptor",
-		Subsystem: "imagefacade",
-		Name:      "disk_metrics",
-		Help:      "usage statistics for disk",
-	}, []string{"name"})
-	prometheus.MustRegister(diskMetricsGauge)
 
 	imagePullResultCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "perceptor",

@@ -51,17 +51,6 @@ func NewImageFacade(dockerRegistries []pdocker.RegistryAuth, createImagesOnly bo
 
 	SetupHTTPServer(imageFacade)
 
-	go func() {
-		for {
-			select {
-			case <-stop:
-				return
-			case <-time.After(diskMetricsPause):
-				imageFacade.pullDiskMetrics()
-			}
-		}
-	}()
-
 	return imageFacade
 }
 
@@ -74,17 +63,6 @@ func (imf *ImageFacade) pullImage(image *common.Image) error {
 	}
 	recordImagePullResult(err == nil)
 	return err
-}
-
-func (imf *ImageFacade) pullDiskMetrics() {
-	log.Debugf("getting disk metrics")
-	diskMetrics, err := getDiskMetrics()
-	if err == nil {
-		log.Debugf("got disk metrics: %+v", diskMetrics)
-		recordDiskMetrics(diskMetrics)
-	} else {
-		log.Errorf("unable to get disk metrics: %s", err.Error())
-	}
 }
 
 // HTTPResponder implementation
