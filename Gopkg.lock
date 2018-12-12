@@ -20,8 +20,7 @@
   revision = "f1fdde519aec5ce540e9a42440fcce9bd641644a"
 
 [[projects]]
-  branch = "master"
-  digest = "1:b4881a19bb264efb5786a2161043d89704b5813aa1904068735ebaef3e08c019"
+  digest = "1:54f8381c30470dab8062d2ccc749d526ec3411f78b179d4a19f90f27fbed4a40"
   name = "github.com/blackducksoftware/perceptor"
   packages = [
     "pkg/api",
@@ -32,7 +31,8 @@
     "pkg/util",
   ]
   pruneopts = "UT"
-  revision = "2a96e74d35d36b92ffdb34bda91ff33fd390db3b"
+  revision = "d65fca6cb72dbc3cc04df06308cfb64bc3246cb8"
+  version = "v2.2.1"
 
 [[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
@@ -43,12 +43,12 @@
   version = "v1.4.7"
 
 [[projects]]
-  digest = "1:64241365fa95f35567976f0790ecfa85c9cb3d4131cc6d6cc7adb1cc6437159f"
+  digest = "1:6921c024df19499cfcdaf33e0df635da67b959a4541b8b68d00d159791b70d07"
   name = "github.com/go-resty/resty"
   packages = ["."]
   pruneopts = "UT"
-  revision = "13ff84ebd5bdfa46a342d9edb869e21560a478f8"
-  version = "v1.10.2"
+  revision = "a59932b061db030cf7edc11d970c8b6013d04a32"
+  version = "v1.10.3"
 
 [[projects]]
   digest = "1:97df918963298c287643883209a2c3f642e6593379f97ab400c2a2e219ab647d"
@@ -217,7 +217,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:9ea97158ea06d60b1f324aa384f6a4cbd596a81b3cae994e17108b195f398d01"
+  digest = "1:d39e7c7677b161c2dd4c635a2ac196460608c7d8ba5337cc8cae5825a2681f8f"
   name = "github.com/prometheus/procfs"
   packages = [
     ".",
@@ -226,7 +226,7 @@
     "xfs",
   ]
   pruneopts = "UT"
-  revision = "aa55a523dc0a8297edf51bb75e8eec13eb3be45d"
+  revision = "1dc9a6cbc91aacc3e8b2d63db4d2e957a5394ac4"
 
 [[projects]]
   digest = "1:69b1cc331fca23d702bd72f860c6a647afd0aa9fcbc1d0659b1365e26546dd70"
@@ -272,12 +272,12 @@
   version = "v1.0.3"
 
 [[projects]]
-  digest = "1:214775c11fd26da94a100111a62daa25339198a4f9c57cb4aab352da889f5b93"
+  digest = "1:de37e343c64582d7026bf8ab6ac5b22a72eac54f3a57020db31524affed9f423"
   name = "github.com/spf13/viper"
   packages = ["."]
   pruneopts = "UT"
-  revision = "2c12c60302a5a0e62ee102ca9bc996277c2f64f5"
-  version = "v1.2.1"
+  revision = "6d33b5a963d922d182c91e8a1c88d81fd150cfd4"
+  version = "v1.3.1"
 
 [[projects]]
   branch = "master"
@@ -299,18 +299,18 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "351d144fa1fc0bd934e2408202be0c29f25e35a0"
+  revision = "610586996380ceef02dd726cc09df7e00a3f8e56"
 
 [[projects]]
   branch = "master"
-  digest = "1:0c7cb58af944f9690af91474a75371eecfe54c1ce3771a8dc08924430ee785d3"
+  digest = "1:206c5fc6c77857fea5eebcf4ceb2db7272f269428456160589910e50d14244db"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "4ed8d59d0b35e1e29334a206d1b3f38b1e5dfb31"
+  revision = "b05ddf57801d2239d6ab0ee35f9d981e0420f4ac"
 
 [[projects]]
   digest = "1:436b24586f8fee329e0dd65fd67c817681420cda1d7f934345c13fe78c212a73"
