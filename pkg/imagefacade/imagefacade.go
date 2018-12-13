@@ -47,7 +47,7 @@ func NewImageFacade(dockerRegistries []pdocker.RegistryAuth, createImagesOnly bo
 	var imagePuller imagepullerinterface.ImagePuller
 
 	switch imagePullerType {
-	case "docker":
+	default:
 		imagePuller = pdocker.NewImagePuller(dockerRegistries)
 	}
 
