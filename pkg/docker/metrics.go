@@ -24,6 +24,7 @@ package docker
 import (
 	"time"
 
+	imageInterface "github.com/blackducksoftware/perceptor-scanner/pkg/interfaces"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -58,7 +59,7 @@ func recordTarFileSize(fileSizeMBs int) {
 	tarballSize.WithLabelValues("tarballSize").Observe(float64(fileSizeMBs))
 }
 
-func recordDockerError(errorStage string, errorName string, image Image, err error) {
+func recordDockerError(errorStage string, errorName string, image imageInterface.Image, err error) {
 	// TODO what use can be made of `image` and `err`?
 	// we might want to group the errors by image sha or something
 	errorsCounter.With(prometheus.Labels{"stage": errorStage, "errorName": errorName}).Inc()

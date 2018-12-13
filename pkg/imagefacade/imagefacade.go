@@ -26,6 +26,7 @@ import (
 
 	"github.com/blackducksoftware/perceptor-scanner/pkg/common"
 	pdocker "github.com/blackducksoftware/perceptor-scanner/pkg/docker"
+	imagepullerinterface "github.com/blackducksoftware/perceptor-scanner/pkg/interfaces"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -36,17 +37,23 @@ const (
 // ImageFacade ...
 type ImageFacade struct {
 	model            *Model
-	imagePuller      *pdocker.ImagePuller
+	imagePuller      imagepullerinterface.ImagePuller
 	createImagesOnly bool
 }
 
 // NewImageFacade ...
-func NewImageFacade(dockerRegistries []pdocker.RegistryAuth, createImagesOnly bool, stop <-chan struct{}) *ImageFacade {
+func NewImageFacade(dockerRegistries []pdocker.RegistryAuth, createImagesOnly bool, imagePullerType string, stop <-chan struct{}) *ImageFacade {
 	model := NewModel(stop)
+	var imagePuller imagepullerinterface.ImagePuller
+
+	switch imagePullerType {
+	case "docker":
+		imagePuller = pdocker.NewImagePuller(dockerRegistries)
+	}
 
 	imageFacade := &ImageFacade{
 		model:            model,
-		imagePuller:      pdocker.NewImagePuller(dockerRegistries),
+		imagePuller:      imagePuller,
 		createImagesOnly: createImagesOnly}
 
 	SetupHTTPServer(imageFacade)
