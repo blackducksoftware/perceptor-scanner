@@ -25,25 +25,25 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/blackducksoftware/perceptor-scanner/pkg/model"
+	imageInterface "github.com/blackducksoftware/perceptor-scanner/pkg/interfaces"
 )
 
-func urlEncodedName(image model.Image) string {
+func urlEncodedName(image imageInterface.Image) string {
 	return url.QueryEscape(image.DockerPullSpec())
 }
 
 // createURL returns the URL used for hitting the docker daemon's create endpoint
-func createURL(image model.Image) string {
+func createURL(image imageInterface.Image) string {
 	// TODO v1.24 refers to the docker version.  figure out how to avoid hard-coding this
 	// TODO can probably use the docker api code for this
 	return fmt.Sprintf("http://localhost/v1.24/images/create?fromImage=%s", urlEncodedName(image))
 }
 
 // getURL returns the URL used for hitting the docker daemon's get endpoint
-func getURL(image model.Image) string {
+func getURL(image imageInterface.Image) string {
 	return fmt.Sprintf("http://localhost/v1.24/images/%s/get", urlEncodedName(image))
 }
 
-func inspectURL(image model.Image) string {
+func inspectURL(image imageInterface.Image) string {
 	return fmt.Sprintf("http://localhost/v1.24/images/%s/json", urlEncodedName(image))
 }

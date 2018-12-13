@@ -19,15 +19,10 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package imagepuller
+package interfaces
 
-import (
-	"github.com/blackducksoftware/perceptor-scanner/pkg/model"
-)
-
-// ImagePuller defines the interface for image puller
-type ImagePuller interface {
-	PullImage(image model.Image) error
-	CreateImageInLocalDocker(image model.Image) error
-	SaveImageToTar(image model.Image) error
+// Image ...
+type Image interface {
+	DockerPullSpec() string
+	DockerTarFilePath() string
 }

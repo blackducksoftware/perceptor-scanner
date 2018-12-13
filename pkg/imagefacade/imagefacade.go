@@ -26,7 +26,7 @@ import (
 
 	"github.com/blackducksoftware/perceptor-scanner/pkg/common"
 	pdocker "github.com/blackducksoftware/perceptor-scanner/pkg/docker"
-	imagepullerinterface "github.com/blackducksoftware/perceptor-scanner/pkg/interface"
+	imagepullerinterface "github.com/blackducksoftware/perceptor-scanner/pkg/interfaces"
 	log "github.com/sirupsen/logrus"
 )
 

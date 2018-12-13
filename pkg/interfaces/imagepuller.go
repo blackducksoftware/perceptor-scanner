@@ -19,10 +19,11 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package model
+package interfaces
 
-// Image ...
-type Image interface {
-	DockerPullSpec() string
-	DockerTarFilePath() string
+// ImagePuller defines the interface for image puller
+type ImagePuller interface {
+	PullImage(image Image) error
+	CreateImageInLocalDocker(image Image) error
+	SaveImageToTar(image Image) error
 }

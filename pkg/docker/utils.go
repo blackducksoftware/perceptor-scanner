@@ -24,10 +24,10 @@ package docker
 import (
 	"strings"
 
-	"github.com/blackducksoftware/perceptor-scanner/pkg/model"
+	imageInterface "github.com/blackducksoftware/perceptor-scanner/pkg/interfaces"
 )
 
-func needsAuthHeader(image model.Image, registries []RegistryAuth) *RegistryAuth {
+func needsAuthHeader(image imageInterface.Image, registries []RegistryAuth) *RegistryAuth {
 	for _, registry := range registries {
 		if strings.HasPrefix(image.DockerPullSpec(), registry.URL) {
 			return &registry
