@@ -25,7 +25,6 @@ import (
 	"os"
 
 	imagefacade "github.com/blackducksoftware/perceptor-scanner/pkg/imagefacade"
-
 	log "github.com/sirupsen/logrus"
 )
 
@@ -35,5 +34,5 @@ func main() {
 	log.Infof("Config path: %s", configPath)
 
 	stopCh := make(chan struct{})
-	imagefacade.RunImageFacade(configPath, stopCh)
+	imagefacade.RunImageFacade(configPath, "docker", stopCh)
 }

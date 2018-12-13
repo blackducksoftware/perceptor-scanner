@@ -19,31 +19,15 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package docker
+package imagepuller
 
 import (
-	"fmt"
-	"net/url"
-
 	"github.com/blackducksoftware/perceptor-scanner/pkg/model"
 )
 
-func urlEncodedName(image model.Image) string {
-	return url.QueryEscape(image.DockerPullSpec())
-}
-
-// createURL returns the URL used for hitting the docker daemon's create endpoint
-func createURL(image model.Image) string {
-	// TODO v1.24 refers to the docker version.  figure out how to avoid hard-coding this
-	// TODO can probably use the docker api code for this
-	return fmt.Sprintf("http://localhost/v1.24/images/create?fromImage=%s", urlEncodedName(image))
-}
-
-// getURL returns the URL used for hitting the docker daemon's get endpoint
-func getURL(image model.Image) string {
-	return fmt.Sprintf("http://localhost/v1.24/images/%s/get", urlEncodedName(image))
-}
-
-func inspectURL(image model.Image) string {
-	return fmt.Sprintf("http://localhost/v1.24/images/%s/json", urlEncodedName(image))
+// ImagePuller defines the interface for image puller
+type ImagePuller interface {
+	PullImage(image model.Image) error
+	CreateImageInLocalDocker(image model.Image) error
+	SaveImageToTar(image model.Image) error
 }

@@ -19,19 +19,10 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package docker
+package model
 
-import (
-	"strings"
-
-	"github.com/blackducksoftware/perceptor-scanner/pkg/model"
-)
-
-func needsAuthHeader(image model.Image, registries []RegistryAuth) *RegistryAuth {
-	for _, registry := range registries {
-		if strings.HasPrefix(image.DockerPullSpec(), registry.URL) {
-			return &registry
-		}
-	}
-	return nil
+// Image ...
+type Image interface {
+	DockerPullSpec() string
+	DockerTarFilePath() string
 }

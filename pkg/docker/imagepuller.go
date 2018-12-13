@@ -30,6 +30,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/blackducksoftware/perceptor-scanner/pkg/model"
 	"github.com/juju/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -64,7 +65,7 @@ func NewImagePuller(registries []RegistryAuth) *ImagePuller {
 //   2. pulling down the newly created image and saving as a tarball
 // It does this by accessing the host's docker daemon, locally, over the docker
 // socket.  This gives us a window into any images that are local.
-func (ip *ImagePuller) PullImage(image Image) error {
+func (ip *ImagePuller) PullImage(image model.Image) error {
 	start := time.Now()
 
 	err := ip.CreateImageInLocalDocker(image)
@@ -90,7 +91,7 @@ func (ip *ImagePuller) PullImage(image Image) error {
 // this example hits the kipp registry:
 //   curl --unix-socket /var/run/docker.sock -X POST http://localhost/images/create\?fromImage\=registry.kipp.blackducksoftware.com%2Fblackducksoftware%2Fhub-jobrunner%3A4.5.0
 //
-func (ip *ImagePuller) CreateImageInLocalDocker(image Image) error {
+func (ip *ImagePuller) CreateImageInLocalDocker(image model.Image) error {
 	start := time.Now()
 	imageURL := createURL(image)
 	log.Infof("Attempting to create %s ......", imageURL)
@@ -142,7 +143,7 @@ func (ip *ImagePuller) CreateImageInLocalDocker(image Image) error {
 
 // SaveImageToTar -- part of what it does is to issue an http request similar to the following:
 //   curl --unix-socket /var/run/docker.sock -X GET http://localhost/images/openshift%2Forigin-docker-registry%3Av3.6.1/get
-func (ip *ImagePuller) SaveImageToTar(image Image) error {
+func (ip *ImagePuller) SaveImageToTar(image model.Image) error {
 	start := time.Now()
 	url := getURL(image)
 	log.Infof("Making docker GET image request: %s", url)
