@@ -27,6 +27,7 @@ import (
 	"github.com/blackducksoftware/perceptor-scanner/pkg/common"
 	pdocker "github.com/blackducksoftware/perceptor-scanner/pkg/docker"
 	imagepullerinterface "github.com/blackducksoftware/perceptor-scanner/pkg/interfaces"
+	"github.com/blackducksoftware/perceptor-scanner/pkg/skopeo"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -42,12 +43,14 @@ type ImageFacade struct {
 }
 
 // NewImageFacade ...
-func NewImageFacade(dockerRegistries []pdocker.RegistryAuth, createImagesOnly bool, imagePullerType string, stop <-chan struct{}) *ImageFacade {
+func NewImageFacade(dockerRegistries []common.RegistryAuth, createImagesOnly bool, imagePullerType string, stop <-chan struct{}) *ImageFacade {
 	model := NewModel(stop)
 	var imagePuller imagepullerinterface.ImagePuller
 
 	switch imagePullerType {
-	case "docker":
+	case "skopeo":
+		imagePuller = skopeo.NewImagePuller(dockerRegistries)
+	default:
 		imagePuller = pdocker.NewImagePuller(dockerRegistries)
 	}
 

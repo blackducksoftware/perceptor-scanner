@@ -30,8 +30,6 @@ import (
 
 func TestDocker(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunUtilsTests()
-	RunMetricsTests()
 	RunHeaderEncoderTests()
 	RunSpecs(t, "docker suite")
 }

@@ -19,24 +19,21 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package docker
+package common
 
 import (
-	"time"
+	"strings"
 
-	. "github.com/onsi/ginkgo"
-	//	. "github.com/onsi/gomega"
+	imageInterface "github.com/blackducksoftware/perceptor-scanner/pkg/interfaces"
 )
 
-func RunMetricsTests() {
-	Describe("Model", func() {
-		It("should handle metrics calls with arbitrary data", func() {
-			recordEvent("ab cd 123")
-			recordDockerGetDuration(time.Now().Sub(time.Now()))
-			recordDockerCreateDuration(time.Now().Sub(time.Now()))
-			recordDockerTotalDuration(time.Now().Sub(time.Now()))
-			//  recordDockerError("abc", "def", image, err)
-			recordTarFileSize(24)
-		})
-	})
+// NeedsAuthHeader will verify the given image is required authentication credentials for pulling the Docker image.
+// if Yes, it will return the corresponding registration auth
+func NeedsAuthHeader(image imageInterface.Image, registries []RegistryAuth) *RegistryAuth {
+	for _, registry := range registries {
+		if strings.HasPrefix(image.DockerPullSpec(), registry.URL) {
+			return &registry
+		}
+	}
+	return nil
 }

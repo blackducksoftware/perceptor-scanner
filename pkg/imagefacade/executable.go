@@ -31,7 +31,7 @@ import (
 )
 
 // RunImageFacade ...
-func RunImageFacade(configPath string, imagePullerType string, stop <-chan struct{}) {
+func RunImageFacade(configPath string, stop <-chan struct{}) {
 	config, err := GetConfig(configPath)
 	if err != nil {
 		log.Errorf("unable to read config: %s", err.Error())
@@ -48,7 +48,7 @@ func RunImageFacade(configPath string, imagePullerType string, stop <-chan struc
 	prometheus.Unregister(prometheus.NewProcessCollector(os.Getpid(), ""))
 	prometheus.Unregister(prometheus.NewGoCollector())
 
-	imageFacade := NewImageFacade(config.ImageFacade.PrivateDockerRegistries, config.ImageFacade.CreateImagesOnly, imagePullerType, stop)
+	imageFacade := NewImageFacade(config.ImageFacade.PrivateDockerRegistries, config.ImageFacade.CreateImagesOnly, config.ImageFacade.ImagePullerType, stop)
 
 	log.Infof("successfully instantiated imagefacade -- %+v", imageFacade)
 
