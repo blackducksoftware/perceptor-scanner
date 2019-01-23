@@ -19,10 +19,11 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package docker
+package common
 
 import (
 	"fmt"
+	"testing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -42,7 +43,7 @@ func (ti *testImage) DockerTarFilePath() string {
 }
 
 func RunUtilsTests() {
-	Describe("needsAuthHeader", func() {
+	Describe("NeedsAuthHeader", func() {
 		internalDockerRegistries := []RegistryAuth{
 			{URL: "abc.def:5000", User: "", Password: ""},
 			{URL: "docker-registry.default.svc:5000", User: "", Password: ""},
@@ -68,9 +69,14 @@ func RunUtilsTests() {
 		for _, testCase := range testCases {
 			c := testCase
 			It(fmt.Sprintf("should determine whether %s needs an auth header", c.pullSpec), func() {
-				registryAuth := needsAuthHeader(c, internalDockerRegistries)
+				registryAuth := NeedsAuthHeader(c, internalDockerRegistries)
 				Expect(registryAuth).To(Equal(c.registryAuth))
 			})
 		}
 	})
+}
+
+func TestUtil(t *testing.T) {
+	RunUtilsTests()
+	RunMetricsTests()
 }

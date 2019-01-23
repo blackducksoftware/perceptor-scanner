@@ -34,5 +34,5 @@ func main() {
 	log.Infof("Config path: %s", configPath)
 
 	stopCh := make(chan struct{})
-	imagefacade.RunImageFacade(configPath, "docker", stopCh)
+	imagefacade.RunImageFacade(configPath, stopCh)
 }
