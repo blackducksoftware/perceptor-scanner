@@ -19,15 +19,24 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package docker
+package common
 
-import "strings"
+import (
+	"time"
 
-func needsAuthHeader(image Image, registries []RegistryAuth) *RegistryAuth {
-	for _, registry := range registries {
-		if strings.HasPrefix(image.DockerPullSpec(), registry.URL) {
-			return &registry
-		}
-	}
-	return nil
+	. "github.com/onsi/ginkgo"
+	//	. "github.com/onsi/gomega"
+)
+
+func RunMetricsTests() {
+	Describe("Model", func() {
+		It("should handle metrics calls with arbitrary data", func() {
+			RecordEvent("ab cd 123")
+			RecordDockerGetDuration(time.Now().Sub(time.Now()))
+			RecordDockerCreateDuration(time.Now().Sub(time.Now()))
+			RecordDockerTotalDuration(time.Now().Sub(time.Now()))
+			//  RecordDockerError("abc", "def", image, err)
+			RecordTarFileSize(24)
+		})
+	})
 }

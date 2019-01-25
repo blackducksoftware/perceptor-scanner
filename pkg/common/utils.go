@@ -19,17 +19,21 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package docker
+package common
 
 import (
-	"testing"
+	"strings"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	imageInterface "github.com/blackducksoftware/perceptor-scanner/pkg/interfaces"
 )
 
-func TestDocker(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunHeaderEncoderTests()
-	RunSpecs(t, "docker suite")
+// NeedsAuthHeader will verify the given image is required authentication credentials for pulling the Docker image.
+// if Yes, it will return the corresponding registration auth
+func NeedsAuthHeader(image imageInterface.Image, registries []RegistryAuth) *RegistryAuth {
+	for _, registry := range registries {
+		if strings.HasPrefix(image.DockerPullSpec(), registry.URL) {
+			return &registry
+		}
+	}
+	return nil
 }

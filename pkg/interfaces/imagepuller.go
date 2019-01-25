@@ -19,24 +19,11 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package docker
+package interfaces
 
-import (
-	"time"
-
-	. "github.com/onsi/ginkgo"
-	//	. "github.com/onsi/gomega"
-)
-
-func RunMetricsTests() {
-	Describe("Model", func() {
-		It("should handle metrics calls with arbitrary data", func() {
-			recordEvent("ab cd 123")
-			recordDockerGetDuration(time.Now().Sub(time.Now()))
-			recordDockerCreateDuration(time.Now().Sub(time.Now()))
-			recordDockerTotalDuration(time.Now().Sub(time.Now()))
-			//  recordDockerError("abc", "def", image, err)
-			recordTarFileSize(24)
-		})
-	})
+// ImagePuller defines the interface for image puller
+type ImagePuller interface {
+	PullImage(image Image) error
+	CreateImageInLocalDocker(image Image) error
+	SaveImageToTar(image Image) error
 }

@@ -19,17 +19,10 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package docker
+package interfaces
 
-import (
-	"testing"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-)
-
-func TestDocker(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunHeaderEncoderTests()
-	RunSpecs(t, "docker suite")
+// Image ...
+type Image interface {
+	DockerPullSpec() string
+	DockerTarFilePath() string
 }

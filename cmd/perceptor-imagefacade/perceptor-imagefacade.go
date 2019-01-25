@@ -25,7 +25,6 @@ import (
 	"os"
 
 	imagefacade "github.com/blackducksoftware/perceptor-scanner/pkg/imagefacade"
-
 	log "github.com/sirupsen/logrus"
 )
 
