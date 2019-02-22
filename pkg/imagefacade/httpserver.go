@@ -36,7 +36,7 @@ import (
 // HTTPResponder ...
 type HTTPResponder interface {
 	PullImage(*common.Image) error
-	GetImage(*common.Image) common.ImageStatus
+	GetImage(*common.Image) common.ImageState
 	GetModel() map[string]interface{}
 }
 
@@ -89,8 +89,8 @@ func SetupHTTPServer(responder HTTPResponder) {
 				http.Error(w, err.Error(), 400)
 				return
 			}
-			imageStatus := responder.GetImage(image)
-			response := api.CheckImageResponse{ImageStatus: imageStatus, PullSpec: image.PullSpec}
+			imageState := responder.GetImage(image)
+			response := api.CheckImageResponse{DownloadURL: imageState.DownloadURL.String(), ImageStatus: imageState.ImageStatus, PullSpec: image.PullSpec}
 
 			responseBytes, err := json.Marshal(response)
 			if err != nil {

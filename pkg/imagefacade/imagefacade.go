@@ -119,8 +119,8 @@ func (imf *ImageFacade) PullImage(image *common.Image) error {
 }
 
 // GetImage ...
-func (imf *ImageFacade) GetImage(image *common.Image) common.ImageStatus {
-	return imf.model.GetImageStatus(image)
+func (imf *ImageFacade) GetImage(image *common.Image) common.ImageState {
+	return imf.model.GetImageState(image)
 }
 
 // GetModel ...

@@ -23,6 +23,7 @@ package common
 
 import (
 	"fmt"
+	"net/url"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -39,6 +40,18 @@ func (ti *testImage) DockerPullSpec() string {
 }
 
 func (ti *testImage) DockerTarFilePath() string {
+	return "TODO"
+}
+
+func (ti *testImage) GetDownloadURL() *url.URL {
+	return nil
+}
+
+func (ti *testImage) SetDownloadURL(downloadURL *url.URL) {
+	return
+}
+
+func (ti *testImage) DownloadFileLocation() string {
 	return "TODO"
 }
 

@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/blackducksoftware/perceptor-scanner/pkg/api"
@@ -72,7 +73,7 @@ func (ifp *ImageFacadeClient) PullImage(image *common.Image) error {
 	for {
 		time.Sleep(5 * time.Second)
 
-		imageStatus, err := ifp.checkImage(image)
+		imageStatus, downloadURLString, err := ifp.checkImage(image)
 		if err != nil {
 			log.Errorf("unable to check image %s: %s", image.PullSpec, err.Error())
 		}
@@ -86,6 +87,12 @@ func (ifp *ImageFacadeClient) PullImage(image *common.Image) error {
 			break
 		case common.ImageStatusDone:
 			log.Infof("finished pulling image %s", image.PullSpec)
+			downloadURL, err := url.Parse(downloadURLString)
+			if err != nil {
+				return fmt.Errorf("unable to parse downloaded image location for image %s: %s", image.PullSpec, err.Error())
+			}
+			log.Infof("image %s stored in location %s", image.PullSpec, image.DownloadURL.String())
+			image.SetDownloadURL(downloadURL)
 			return nil
 		case common.ImageStatusError:
 			return fmt.Errorf("unable to pull image %s", image.PullSpec)
@@ -120,40 +127,40 @@ func (ifp *ImageFacadeClient) startImagePull(image *common.Image) error {
 	return nil
 }
 
-func (ifp *ImageFacadeClient) checkImage(image *common.Image) (common.ImageStatus, error) {
+func (ifp *ImageFacadeClient) checkImage(image *common.Image) (common.ImageStatus, string, error) {
 	url := ifp.buildURL(checkImagePath)
 
 	requestBytes, err := json.Marshal(image)
 	if err != nil {
-		return common.ImageStatusUnknown, errors.Annotatef(err, "unable to marshal JSON for %s", image.PullSpec)
+		return common.ImageStatusUnknown, "", errors.Annotatef(err, "unable to marshal JSON for %s", image.PullSpec)
 	}
 
 	resp, err := ifp.httpClient.Post(url, "application/json", bytes.NewBuffer(requestBytes))
 	if err != nil {
-		return common.ImageStatusUnknown, errors.Annotatef(err, "unable to create request to %s for image %s", url, image.PullSpec)
+		return common.ImageStatusUnknown, "", errors.Annotatef(err, "unable to create request to %s for image %s", url, image.PullSpec)
 	}
 
 	if resp.StatusCode != 200 {
-		return common.ImageStatusUnknown, fmt.Errorf("GET %s failed with status code %d", url, resp.StatusCode)
+		return common.ImageStatusUnknown, "", fmt.Errorf("GET %s failed with status code %d", url, resp.StatusCode)
 	}
 
 	defer resp.Body.Close()
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		recordScannerError("unable to read response body")
-		return common.ImageStatusUnknown, errors.Annotatef(err, "unable to read response body from %s", url)
+		return common.ImageStatusUnknown, "", errors.Annotatef(err, "unable to read response body from %s", url)
 	}
 
 	var getImage api.CheckImageResponse
 	err = json.Unmarshal(bodyBytes, &getImage)
 	if err != nil {
 		recordScannerError("unmarshaling JSON body failed")
-		return common.ImageStatusUnknown, errors.Annotatef(err, "unmarshaling JSON body bytes %s failed for URL %s", string(bodyBytes), url)
+		return common.ImageStatusUnknown, "", errors.Annotatef(err, "unmarshaling JSON body bytes %s failed for URL %s", string(bodyBytes), url)
 	}
 
 	log.Debugf("image check for image %s succeeded, status %s", image.PullSpec, getImage.ImageStatus.String())
 
-	return getImage.ImageStatus, nil
+	return getImage.ImageStatus, getImage.DownloadURL, nil
 }
 
 func (ifp *ImageFacadeClient) buildURL(path string) string {

@@ -38,7 +38,7 @@ type action struct {
 type Model struct {
 	actions chan *action
 	State   ModelState
-	Images  map[string]common.ImageStatus
+	Images  map[string]*common.ImageState
 }
 
 // NewModel ...
@@ -46,7 +46,7 @@ func NewModel(stop <-chan struct{}) *Model {
 	model := &Model{
 		actions: make(chan *action),
 		State:   ModelStateReady,
-		Images:  map[string]common.ImageStatus{},
+		Images:  map[string]*common.ImageState{},
 	}
 
 	go func() {
@@ -95,11 +95,11 @@ func (model *Model) StartImagePull(image *common.Image) error {
 	return <-ch
 }
 
-// GetImageStatus ...
-func (model *Model) GetImageStatus(image *common.Image) common.ImageStatus {
-	ch := make(chan common.ImageStatus)
-	model.actions <- &action{"getImageStatus", func() error {
-		status, err := model.imageStatus(image)
+// GetImageState ...
+func (model *Model) GetImageState(image *common.Image) common.ImageState {
+	ch := make(chan common.ImageState)
+	model.actions <- &action{"getImageState", func() error {
+		status, err := model.imageState(image)
 		ch <- status
 		return err
 	}}
@@ -135,7 +135,7 @@ func (model *Model) pullImage(image *common.Image) error {
 	}
 
 	log.Infof("about to start pulling image %s -- model state %s", image.PullSpec, model.State.String())
-	model.Images[image.PullSpec] = common.ImageStatusInProgress
+	model.Images[image.PullSpec] = common.NewImageState(common.ImageStatusInProgress, image.GetDownloadURL())
 	model.State = ModelStatePulling
 	return nil
 }
@@ -146,27 +146,27 @@ func (model *Model) finishImagePull(image *common.Image, imagePullError error) e
 	}
 	if imagePullError == nil {
 		log.Infof("successfully finished image pull for %s", image.PullSpec)
-		model.Images[image.PullSpec] = common.ImageStatusDone
+		model.Images[image.PullSpec] = common.NewImageState(common.ImageStatusDone, image.GetDownloadURL())
 	} else {
 		log.Errorf("finished image pull for %s with error %s", image.PullSpec, imagePullError.Error())
-		model.Images[image.PullSpec] = common.ImageStatusError
+		model.Images[image.PullSpec] = common.NewImageState(common.ImageStatusError, image.GetDownloadURL())
 	}
 	model.State = ModelStateReady
 	return nil
 }
 
-func (model *Model) imageStatus(image *common.Image) (common.ImageStatus, error) {
-	imageStatus, ok := model.Images[image.PullSpec]
+func (model *Model) imageState(image *common.Image) (common.ImageState, error) {
+	imageState, ok := model.Images[image.PullSpec]
 	if !ok {
-		return common.ImageStatusUnknown, fmt.Errorf("image %s not found", image.PullSpec)
+		return *common.NewImageState(common.ImageStatusUnknown, nil), fmt.Errorf("image %s not found", image.PullSpec)
 	}
-	return imageStatus, nil
+	return *imageState, nil
 }
 
 func (model *Model) getAPIModel() map[string]interface{} {
-	images := map[string]string{}
+	images := map[string]*common.ImageState{}
 	for key, val := range model.Images {
-		images[key] = val.String()
+		images[key] = val
 	}
 	return map[string]interface{}{
 		"State":  model.State.String(),

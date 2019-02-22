@@ -19,17 +19,18 @@ specific language governing permissions and limitations
 under the License.
 */
 
-package interfaces
+package common
 
 import (
 	"net/url"
 )
 
-// Image ...
-type Image interface {
-	DockerPullSpec() string
-	DockerTarFilePath() string
-	GetDownloadURL() *url.URL
-	SetDownloadURL(*url.URL)
-	DownloadFileLocation() string
+// InageState ...
+type ImageState struct {
+	ImageStatus ImageStatus
+	DownloadURL *url.URL
+}
+
+func NewImageState(imageStatus ImageStatus, downloadURL *url.URL) *ImageState {
+	return &ImageState{ImageStatus: imageStatus, DownloadURL: downloadURL}
 }

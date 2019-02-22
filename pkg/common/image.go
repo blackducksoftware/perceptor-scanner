@@ -23,13 +23,15 @@ package common
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 )
 
 // Image ...
 type Image struct {
-	Directory string
-	PullSpec  string
+	Directory   string
+	PullSpec    string
+	DownloadURL *url.URL
 }
 
 // NewImage ...
@@ -48,4 +50,29 @@ func (image *Image) DockerTarFilePath() string {
 	imagePullSpec = strings.Replace(imagePullSpec, "@", "_", -1)
 	imagePullSpec = strings.Replace(imagePullSpec, ":", "_", -1)
 	return fmt.Sprintf("%s/%s.tar", image.Directory, imagePullSpec)
+}
+
+// GetDownloadURL ...
+func (image *Image) GetDownloadURL() *url.URL {
+	return image.DownloadURL
+}
+
+// SetDownloadURL ...
+func (image *Image) SetDownloadURL(url *url.URL) {
+	image.DownloadURL = url
+}
+
+// DownloadFileLocation ...
+func (image *Image) DownloadFileLocation() string {
+	if image.DownloadURL == nil {
+		return ""
+	} else if image.DownloadURL.Scheme == "file" {
+		filePath, err := url.PathUnescape(image.DownloadURL.EscapedPath())
+		if err != nil {
+			return ""
+		}
+		return fmt.Sprintf("%s/%s", image.Directory, filePath)
+	} else {
+		return image.DownloadURL.String()
+	}
 }

@@ -27,6 +27,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -147,19 +148,19 @@ func (ip *ImagePuller) CreateImageInLocalDocker(image imageInterface.Image) erro
 //   curl --unix-socket /var/run/docker.sock -X GET http://localhost/images/openshift%2Forigin-docker-registry%3Av3.6.1/get
 func (ip *ImagePuller) SaveImageToTar(image imageInterface.Image) error {
 	start := time.Now()
-	url := getURL(image)
-	log.Infof("Making docker GET image request: %s", url)
-	resp, err := ip.client.Get(url)
+	dockerURL := getURL(image)
+	log.Infof("Making docker GET image request: %s", dockerURL)
+	resp, err := ip.client.Get(dockerURL)
 	if err != nil {
 		common.RecordDockerError(getStage, "GET request failed", image, err)
 		return err
 	} else if resp.StatusCode != http.StatusOK {
-		err = fmt.Errorf("docker GET failed: received status != 200 from %s: %s", url, resp.Status)
+		err = fmt.Errorf("docker GET failed: received status != 200 from %s: %s", dockerURL, resp.Status)
 		common.RecordDockerError(getStage, "GET request failed", image, err)
 		return err
 	}
 
-	log.Infof("docker GET request for image %s successful", url)
+	log.Infof("docker GET request for image %s successful", dockerURL)
 
 	body := resp.Body
 	defer func() {
@@ -177,6 +178,10 @@ func (ip *ImagePuller) SaveImageToTar(image imageInterface.Image) error {
 		common.RecordDockerError(getStage, "unable to copy tar file", image, err)
 		return err
 	}
+
+	fileURL, _ := url.Parse(tarFilePath)
+	fileURL.Scheme = "file"
+	image.SetDownloadURL(fileURL)
 
 	common.RecordDockerGetDuration(time.Now().Sub(start))
 

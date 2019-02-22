@@ -21,10 +21,13 @@ under the License.
 
 package api
 
+import ()
+
 import "github.com/blackducksoftware/perceptor-scanner/pkg/common"
 
 // CheckImageResponse ...
 type CheckImageResponse struct {
 	PullSpec    string
 	ImageStatus common.ImageStatus
+	DownloadURL string
 }

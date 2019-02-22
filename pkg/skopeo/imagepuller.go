@@ -23,6 +23,7 @@ package skopeo
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 	"strings"
@@ -118,6 +119,10 @@ func (ip *ImagePuller) CreateImageInLocalDocker(image imageInterface.Image) erro
 
 	err = ip.recordTarFileSize(image)
 
+	fileURL, _ := url.Parse(dockerPullSpec)
+	fileURL.Scheme = "file"
+	image.SetDownloadURL(fileURL)
+
 	return err
 }
 
@@ -165,6 +170,10 @@ func (ip *ImagePuller) SaveImageToTar(image imageInterface.Image) error {
 	common.RecordDockerGetDuration(time.Now().Sub(start))
 
 	err = ip.recordTarFileSize(image)
+
+	fileURL, _ := url.Parse(tarFilePath)
+	fileURL.Scheme = "file"
+	image.SetDownloadURL(fileURL)
 
 	return err
 }

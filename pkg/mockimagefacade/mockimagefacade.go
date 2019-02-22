@@ -22,7 +22,9 @@ under the License.
 package mockimagefacade
 
 import (
+	"fmt"
 	"io"
+	"net/url"
 	"os"
 
 	common "github.com/blackducksoftware/perceptor-scanner/pkg/common"
@@ -67,15 +69,16 @@ func (mif *MockImagefacade) PullImage(image *common.Image) error {
 }
 
 // GetImage ...
-func (mif *MockImagefacade) GetImage(image *common.Image) common.ImageStatus {
+func (mif *MockImagefacade) GetImage(image *common.Image) common.ImageState {
 	log.Infof("received getImage: %+v", image)
 	sourcePath := "/tmp/alpine.tar"
 	err := copyFile(sourcePath, image.DockerTarFilePath())
 	if err != nil {
 		log.Errorf("unable to copy file from %s to %s: %s", sourcePath, image.DockerTarFilePath(), err.Error())
-		return common.ImageStatusError
+		return *common.NewImageState(common.ImageStatusError, nil)
 	}
-	return common.ImageStatusDone
+	downloadURL, _ := url.Parse(fmt.Sprintf("file://%s", image.DockerPullSpec()))
+	return *common.NewImageState(common.ImageStatusDone, downloadURL)
 }
 
 // GetModel ...

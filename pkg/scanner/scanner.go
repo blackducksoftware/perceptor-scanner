@@ -56,8 +56,8 @@ func (scanner *Scanner) ScanFullDockerImage(apiImage *api.ImageSpec) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	defer cleanUpFile(image.DockerTarFilePath())
-	return scanner.ScanFile(apiImage.HubURL, image.DockerTarFilePath(), apiImage.HubProjectName, apiImage.HubProjectVersionName, apiImage.HubScanName)
+	defer cleanUpFile(image.DownloadFileLocation())
+	return scanner.ScanFile(apiImage.HubURL, image.DownloadFileLocation(), apiImage.HubProjectName, apiImage.HubProjectVersionName, apiImage.HubScanName)
 }
 
 // ScanFile runs the scan client against a single file
