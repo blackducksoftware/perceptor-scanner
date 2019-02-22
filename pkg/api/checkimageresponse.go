@@ -21,8 +21,6 @@ under the License.
 
 package api
 
-import ()
-
 import "github.com/blackducksoftware/perceptor-scanner/pkg/common"
 
 // CheckImageResponse ...
