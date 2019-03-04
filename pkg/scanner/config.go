@@ -29,11 +29,10 @@ import (
 	"github.com/spf13/viper"
 )
 
-// HubConfig ...
-type HubConfig struct {
-	User           string
-	PasswordEnvVar string
-	Port           int
+// BlackDuckConfig ...
+type BlackDuckConfig struct {
+	PasswordEnvVar  string
+	TLSVerification bool
 }
 
 // ImageFacadeConfig ...
@@ -58,17 +57,17 @@ type PerceptorConfig struct {
 
 // ScannerConfig ...
 type ScannerConfig struct {
-	ImageDirectory          string
-	Port                    int
-	HubClientTimeoutSeconds int
+	ImageDirectory       string
+	Port                 int
+	ClientTimeoutSeconds int
 }
 
 // Config ...
 type Config struct {
-	Hub         HubConfig
-	ImageFacade ImageFacadeConfig
-	Perceptor   PerceptorConfig
-	Scanner     ScannerConfig
+	BlackDuck   *BlackDuckConfig
+	ImageFacade *ImageFacadeConfig
+	Perceptor   *PerceptorConfig
+	Scanner     *ScannerConfig
 
 	LogLevel string
 }
@@ -106,9 +105,8 @@ func GetConfig(configPath string) (*Config, error) {
 		viper.BindEnv("Perceptor.Host")
 		viper.BindEnv("Perceptor.Port")
 
-		viper.BindEnv("Hub.User")
-		viper.BindEnv("Hub.Port")
 		viper.BindEnv("Hub.PasswordEnvVar")
+		viper.BindEnv("Hub.TLSVerification")
 
 		viper.BindEnv("Scanner.Port")
 		viper.BindEnv("Scanner.ImageDirectory")

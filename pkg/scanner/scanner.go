@@ -37,14 +37,16 @@ type Scanner struct {
 	scanClient     ScanClientInterface
 	imageDirectory string
 	stop           <-chan struct{}
+	hosts          map[string]*Host
 }
 
 // NewScanner ...
-func NewScanner(ifClient ImageFacadeClientInterface, scanClient ScanClientInterface, imageDirectory string, stop <-chan struct{}) *Scanner {
+func NewScanner(ifClient ImageFacadeClientInterface, scanClient ScanClientInterface, imageDirectory string, hosts map[string]*Host, stop <-chan struct{}) *Scanner {
 	return &Scanner{
 		ifClient:       ifClient,
 		scanClient:     scanClient,
 		imageDirectory: imageDirectory,
+		hosts:          hosts,
 		stop:           stop}
 }
 
@@ -58,12 +60,15 @@ func (scanner *Scanner) ScanFullDockerImage(apiImage *api.ImageSpec) error {
 		return errors.Trace(err)
 	}
 	defer cleanUpFile(image.DockerTarFilePath())
-	return scanner.ScanFile(apiImage.HubURL, image.DockerTarFilePath(), apiImage.HubProjectName, apiImage.HubProjectVersionName, apiImage.HubScanName)
+	if host, ok := scanner.hosts[apiImage.HubURL]; ok {
+		return scanner.ScanFile(host.Scheme, apiImage.HubURL, host.Port, host.User, host.Password, image.DockerTarFilePath(), apiImage.HubProjectName, apiImage.HubProjectVersionName, apiImage.HubScanName)
+	}
+	return fmt.Errorf("unable to find the %s blackduck's information in secret", apiImage.HubURL)
 }
 
 // ScanFile runs the scan client against a single file
-func (scanner *Scanner) ScanFile(host string, path string, hubProjectName string, hubVersionName string, hubScanName string) error {
-	return scanner.scanClient.Scan(host, path, hubProjectName, hubVersionName, hubScanName)
+func (scanner *Scanner) ScanFile(hubScheme string, host string, port int, username string, password string, path string, hubProjectName string, hubVersionName string, hubScanName string) error {
+	return scanner.scanClient.Scan(hubScheme, host, port, username, password, path, hubProjectName, hubVersionName, hubScanName)
 }
 
 func cleanUpFile(path string) {

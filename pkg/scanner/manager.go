@@ -22,6 +22,7 @@ under the License.
 package scanner
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -42,26 +43,48 @@ type Manager struct {
 	stop            <-chan struct{}
 }
 
+// Host configures the Black Duck hosts
+type Host struct {
+	Scheme   string `json:"scheme"`
+	Domain   string `json:"domain"` // it can be domain name or ip address
+	Port     int    `json:"port"`
+	User     string `json:"user"`
+	Password string `json:"password"`
+}
+
+// getBlackDuckHosts will get the list of Black Duck hosts
+func getBlackDuckHosts(config *Config) (map[string]*Host, error) {
+	password, ok := os.LookupEnv(config.BlackDuck.PasswordEnvVar)
+	if !ok {
+		return nil, fmt.Errorf("cannot find Black Duck hosts: environment variable blackduck.json not found")
+	}
+
+	blackduckHosts := map[string]*Host{}
+	err := json.Unmarshal([]byte(password), &blackduckHosts)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshall Black Duck hosts due to %+v", err)
+	}
+
+	return blackduckHosts, nil
+}
+
 // NewManager ...
 func NewManager(config *Config, stop <-chan struct{}) (*Manager, error) {
 	log.Infof("instantiating Manager with config %+v", config)
 
-	hubPassword, ok := os.LookupEnv(config.Hub.PasswordEnvVar)
-	if !ok {
-		return nil, fmt.Errorf("unable to get Hub password: environment variable %s not set", config.Hub.PasswordEnvVar)
+	hosts, err := getBlackDuckHosts(config)
+	if err != nil {
+		panic(err)
 	}
 
 	imagePuller := NewImageFacadeClient(config.ImageFacade.GetHost(), config.ImageFacade.Port)
-	scanClient, err := NewScanClient(
-		config.Hub.User,
-		hubPassword,
-		config.Hub.Port)
+	scanClient, err := NewScanClient(config.BlackDuck.TLSVerification)
 	if err != nil {
 		return nil, errors.Annotatef(err, "unable to instantiate hub scan client")
 	}
 
 	return &Manager{
-		scanner:         NewScanner(imagePuller, scanClient, config.Scanner.GetImageDirectory(), stop),
+		scanner:         NewScanner(imagePuller, scanClient, config.Scanner.GetImageDirectory(), hosts, stop),
 		perceptorClient: NewPerceptorClient(config.Perceptor.Host, config.Perceptor.Port),
 		stop:            stop}, nil
 }
