@@ -27,11 +27,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/blackducksoftware/perceptor/pkg/core"
-
 	"github.com/blackducksoftware/perceptor-scanner/pkg/common"
 	"github.com/blackducksoftware/perceptor-scanner/pkg/scanner"
 	"github.com/blackducksoftware/perceptor/pkg/api"
+	"github.com/blackducksoftware/perceptor/pkg/core"
 	m "github.com/blackducksoftware/perceptor/pkg/core/model"
 	log "github.com/sirupsen/logrus"
 )
@@ -92,13 +91,13 @@ func (pif *PifTester) addPod(pod m.Pod) {
 }
 
 // APIModel ...
-func (pif *PifTester) APIModel() api.Model {
+func (pif *PifTester) APIModel() *api.Model {
 	_, err := json.MarshalIndent(pif, "", "  ")
 	if err != nil {
 		panic(err)
 	}
 	// TODO make this work?
-	return api.Model{}
+	return &api.Model{}
 }
 
 func (pif *PifTester) addImage(image m.Image) {
@@ -163,14 +162,14 @@ func (pif *PifTester) startPullingImages() {
 // api.Responder implementation
 
 // GetModel ...
-func (pif *PifTester) GetModel() api.Model {
-	ch := make(chan api.Model)
+func (pif *PifTester) GetModel() (*api.Model, error) {
+	ch := make(chan *api.Model)
 	pif.actions <- &action{"getModel", func() error {
 		model := pif.APIModel()
 		ch <- model
 		return nil
 	}}
-	return <-ch
+	return <-ch, nil
 }
 
 // perceiver
@@ -261,7 +260,11 @@ func (pif *PifTester) GetNextImage() api.NextImage {
 			HubProjectName:        image.HubProjectName(),
 			HubProjectVersionName: image.HubProjectVersionName(),
 			HubScanName:           image.HubScanName(),
-			HubURL:                "????? let's hope this isn't required",
+			Scheme:                "https",
+			Domain:                "????? let's hope this isn't required",
+			Port:                  8443,
+			User:                  "????? let's hope this isn't required",
+			Password:              "????? let's hope this isn't required",
 			Priority:              image.Priority,
 			Repository:            image.Repository,
 			Sha:                   string(image.Sha),
