@@ -22,9 +22,6 @@ under the License.
 package scanner
 
 import (
-	"encoding/json"
-	"fmt"
-	"os"
 	"time"
 
 	"github.com/blackducksoftware/perceptor/pkg/api"
@@ -52,30 +49,9 @@ type Host struct {
 	Password string `json:"password"`
 }
 
-// getBlackDuckHosts will get the list of Black Duck hosts
-func getBlackDuckHosts(config *Config) (map[string]*Host, error) {
-	password, ok := os.LookupEnv(config.BlackDuck.PasswordEnvVar)
-	if !ok {
-		return nil, fmt.Errorf("cannot find Black Duck hosts: environment variable blackduck.json not found")
-	}
-
-	blackduckHosts := map[string]*Host{}
-	err := json.Unmarshal([]byte(password), &blackduckHosts)
-	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshall Black Duck hosts due to %+v", err)
-	}
-
-	return blackduckHosts, nil
-}
-
 // NewManager ...
 func NewManager(config *Config, stop <-chan struct{}) (*Manager, error) {
 	log.Infof("instantiating Manager with config %+v", config)
-
-	hosts, err := getBlackDuckHosts(config)
-	if err != nil {
-		panic(err)
-	}
 
 	imagePuller := NewImageFacadeClient(config.ImageFacade.GetHost(), config.ImageFacade.Port)
 	scanClient, err := NewScanClient(config.BlackDuck.TLSVerification)
@@ -84,7 +60,7 @@ func NewManager(config *Config, stop <-chan struct{}) (*Manager, error) {
 	}
 
 	return &Manager{
-		scanner:         NewScanner(imagePuller, scanClient, config.Scanner.GetImageDirectory(), hosts, stop),
+		scanner:         NewScanner(imagePuller, scanClient, config.Scanner.GetImageDirectory(), stop),
 		perceptorClient: NewPerceptorClient(config.Perceptor.Host, config.Perceptor.Port),
 		stop:            stop}, nil
 }
