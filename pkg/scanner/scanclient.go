@@ -106,9 +106,9 @@ func (sc *ScanClient) Scan(hubScheme string, host string, port int, username str
 		sc.getTLSVerification(),
 		"-v",
 		path)
+	log.Infof("running command %+v for path %s\n", cmd, path)
 	cmd.Env = append(cmd.Env, fmt.Sprintf("BD_HUB_PASSWORD=%s", password))
 
-	log.Infof("running command %+v for path %s\n", cmd, path)
 	startScanClient := time.Now()
 	stdoutStderr, err := cmd.CombinedOutput()
 

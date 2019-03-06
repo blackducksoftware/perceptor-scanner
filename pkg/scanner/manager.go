@@ -101,7 +101,7 @@ func (sm *Manager) requestAndRunScanJob() {
 		errorString = err.Error()
 	}
 
-	finishedJob := api.FinishedScanClientJob{Err: errorString, ImageSpec: *nextImage.ImageSpec}
+	finishedJob := api.FinishedScanClientJob{Err: errorString, ImageSpec: nextImage.ImageSpec}
 	log.Infof("about to finish job, going to send over %+v", finishedJob)
 	sm.perceptorClient.PostFinishedScan(&finishedJob)
 	if err != nil {

@@ -21,7 +21,7 @@
 
 [[projects]]
   branch = "support-multiple-hubs"
-  digest = "1:5c4ada3c7a88387f786ee134f99c868881f2b16cc3401d2fe36f4c52e28307f6"
+  digest = "1:5aacfc27fce6b6d57592b8db8cbec70317a332f4b6f64a15d2fdbd62fbcad91a"
   name = "github.com/blackducksoftware/perceptor"
   packages = [
     "pkg/api",
@@ -32,7 +32,7 @@
     "pkg/util",
   ]
   pruneopts = "UT"
-  revision = "9ac29588ca0184903615fac7dd8f70b4218b4f8d"
+  revision = "189e69caeb41af963f373ae15e2829cb805c7421"
 
 [[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
@@ -304,14 +304,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:450c8a5021490079d681cae207e762e2bfffd25a861c39f6da1fa9de9742c682"
+  digest = "1:32f8c7cc78e478c39ce1cbe83dc4d54e4c4eed86197c50ff28fb935e6a32e090"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "e844e0132e93db857c984c24fd4fc86815e43be3"
+  revision = "30e92a19ae4a77dde818b8c3d41d51e4850cba12"
 
 [[projects]]
   digest = "1:436b24586f8fee329e0dd65fd67c817681420cda1d7f934345c13fe78c212a73"
