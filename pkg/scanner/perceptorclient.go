@@ -71,7 +71,7 @@ func (pc *PerceptorClient) GetNextImage() (*api.NextImage, error) {
 		SetHeader("Content-Type", "application/json").
 		SetResult(&nextImage).
 		Post(url)
-	log.Debugf("received resp %+v and error %+v from url %s", resp, err, url)
+	log.Debugf("received error %+v from url %s", err, url)
 	recordHTTPStats(nextImagePath, resp.StatusCode())
 	if err != nil {
 		recordScannerError("unable to get next image")
