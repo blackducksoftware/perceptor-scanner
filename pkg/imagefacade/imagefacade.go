@@ -43,7 +43,7 @@ type ImageFacade struct {
 }
 
 // NewImageFacade ...
-func NewImageFacade(dockerRegistries []common.RegistryAuth, createImagesOnly bool, imagePullerType string, stop <-chan struct{}) *ImageFacade {
+func NewImageFacade(dockerRegistries []*common.RegistryAuth, createImagesOnly bool, imagePullerType string, stop <-chan struct{}) *ImageFacade {
 	model := NewModel(stop)
 	var imagePuller imagepullerinterface.ImagePuller
 

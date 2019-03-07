@@ -43,11 +43,11 @@ const (
 
 // ImagePuller ...
 type ImagePuller struct {
-	registries []common.RegistryAuth
+	registries []*common.RegistryAuth
 }
 
 // NewImagePuller ...
-func NewImagePuller(registries []common.RegistryAuth) *ImagePuller {
+func NewImagePuller(registries []*common.RegistryAuth) *ImagePuller {
 	log.Infof("creating Skopeo image puller")
 	return &ImagePuller{registries: registries}
 }

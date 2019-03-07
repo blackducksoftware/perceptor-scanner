@@ -46,11 +46,11 @@ const (
 // ImagePuller ...
 type ImagePuller struct {
 	client     *http.Client
-	registries []common.RegistryAuth
+	registries []*common.RegistryAuth
 }
 
 // NewImagePuller ...
-func NewImagePuller(registries []common.RegistryAuth) *ImagePuller {
+func NewImagePuller(registries []*common.RegistryAuth) *ImagePuller {
 	log.Infof("creating docker image puller")
 	fd := func(proto, addr string) (conn net.Conn, err error) {
 		return net.Dial("unix", dockerSocketPath)
