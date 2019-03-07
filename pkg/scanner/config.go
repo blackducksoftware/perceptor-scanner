@@ -31,8 +31,8 @@ import (
 
 // BlackDuckConfig ...
 type BlackDuckConfig struct {
-	PasswordEnvVar  string
-	TLSVerification bool
+	BlackDuckConnectionsEnvVar string
+	TLSVerification            bool
 }
 
 // ImageFacadeConfig ...
