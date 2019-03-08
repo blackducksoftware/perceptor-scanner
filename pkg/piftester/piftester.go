@@ -257,18 +257,18 @@ func (pif *PifTester) GetNextImage() api.NextImage {
 	pif.actions <- &action{"getNextImage", func() error {
 		image := pif.getNextImage()
 		ch <- api.NewNextImage(&api.ImageSpec{
-			HubProjectName:        image.HubProjectName(),
-			HubProjectVersionName: image.HubProjectVersionName(),
-			HubScanName:           image.HubScanName(),
-			Scheme:                "https",
-			Domain:                "????? let's hope this isn't required",
-			Port:                  8443,
-			User:                  "????? let's hope this isn't required",
-			Password:              "????? let's hope this isn't required",
-			Priority:              image.Priority,
-			Repository:            image.Repository,
-			Sha:                   string(image.Sha),
-			Tag:                   image.Tag})
+			BlackDuckProjectName:        image.GetBlackDuckProjectName(),
+			BlackDuckProjectVersionName: image.GetBlackDuckProjectVersionName(),
+			BlackDuckScanName:           image.GetBlackDuckScanName(),
+			Scheme:                      "https",
+			Domain:                      "????? let's hope this isn't required",
+			Port:                        8443,
+			User:                        "????? let's hope this isn't required",
+			Password:                    "????? let's hope this isn't required",
+			Priority:                    image.Priority,
+			Repository:                  image.Repository,
+			Sha:                         string(image.Sha),
+			Tag:                         image.Tag})
 		return nil
 	}}
 	return *(<-ch)
