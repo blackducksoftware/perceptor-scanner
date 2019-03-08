@@ -21,7 +21,7 @@
 
 [[projects]]
   branch = "support-multiple-hubs"
-  digest = "1:5aacfc27fce6b6d57592b8db8cbec70317a332f4b6f64a15d2fdbd62fbcad91a"
+  digest = "1:fcec40ad1895da9b9b7f5f0af687ed9879d52c04c9e5baf782bfcb6b29c6fff7"
   name = "github.com/blackducksoftware/perceptor"
   packages = [
     "pkg/api",
@@ -32,7 +32,7 @@
     "pkg/util",
   ]
   pruneopts = "UT"
-  revision = "189e69caeb41af963f373ae15e2829cb805c7421"
+  revision = "cfa9bef428b7f5d8257efecc87411a738ef95316"
 
 [[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
@@ -217,7 +217,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:bfc66a1fd78dc8f14d419fd52a5a42db1d572e887ebcc80b98c1a515a8f2d837"
+  digest = "1:01cd0cd47758f04c5604daa3be4637e2afa1e0c15af7e08289e95360369e4f48"
   name = "github.com/prometheus/procfs"
   packages = [
     ".",
@@ -227,7 +227,7 @@
     "xfs",
   ]
   pruneopts = "UT"
-  revision = "bbced9601137e764853b2fad7ec3e2dc4c504e02"
+  revision = "d0f344d83b0c80a1bc03b547a2374a9ec6711144"
 
 [[projects]]
   digest = "1:87c2e02fb01c27060ccc5ba7c5a407cc91147726f8f40b70cceeedbc52b1f3a8"
@@ -304,14 +304,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:32f8c7cc78e478c39ce1cbe83dc4d54e4c4eed86197c50ff28fb935e6a32e090"
+  digest = "1:84634db3c6385a120c926d800106c52269a084b849c1c25e276284c9232ad641"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "30e92a19ae4a77dde818b8c3d41d51e4850cba12"
+  revision = "584f3b12f43e1e55248c90e84804777009eed0a4"
 
 [[projects]]
   digest = "1:436b24586f8fee329e0dd65fd67c817681420cda1d7f934345c13fe78c212a73"

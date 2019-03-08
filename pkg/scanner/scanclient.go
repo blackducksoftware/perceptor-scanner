@@ -32,7 +32,7 @@ import (
 
 // ScanClientInterface ...
 type ScanClientInterface interface {
-	Scan(hubScheme string, host string, port int, username string, password string, path string, projectName string, versionName string, scanName string) error
+	Scan(scheme string, host string, port int, username string, password string, path string, projectName string, versionName string, scanName string) error
 	//ScanCliSh(job ScanJob) error
 	//ScanDockerSh(job ScanJob) error
 }
@@ -50,7 +50,7 @@ func NewScanClient(tlsVerification bool) (*ScanClient, error) {
 	return &sc, nil
 }
 
-func (sc *ScanClient) ensureScanClientIsDownloaded(hubScheme string, host string, port int, username string, password string) error {
+func (sc *ScanClient) ensureScanClientIsDownloaded(scheme string, host string, port int, username string, password string) error {
 	if sc.scanClientInfo != nil {
 		return nil
 	}
@@ -58,7 +58,7 @@ func (sc *ScanClient) ensureScanClientIsDownloaded(hubScheme string, host string
 	scanClientInfo, err := DownloadScanClient(
 		OSTypeLinux,
 		cliRootPath,
-		hubScheme,
+		scheme,
 		host,
 		username,
 		password,
@@ -79,8 +79,8 @@ func (sc *ScanClient) getTLSVerification() string {
 }
 
 // Scan ...
-func (sc *ScanClient) Scan(hubScheme string, host string, port int, username string, password string, path string, projectName string, versionName string, scanName string) error {
-	if err := sc.ensureScanClientIsDownloaded(hubScheme, host, port, username, password); err != nil {
+func (sc *ScanClient) Scan(scheme string, host string, port int, username string, password string, path string, projectName string, versionName string, scanName string) error {
+	if err := sc.ensureScanClientIsDownloaded(scheme, host, port, username, password); err != nil {
 		return errors.Annotate(err, "cannot run scan cli")
 	}
 	startTotal := time.Now()
@@ -98,7 +98,7 @@ func (sc *ScanClient) Scan(hubScheme string, host string, port int, username str
 		"-jar", scanCliJarPath,
 		"--host", host,
 		"--port", fmt.Sprintf("%d", port),
-		"--scheme", hubScheme,
+		"--scheme", scheme,
 		"--project", projectName,
 		"--release", versionName,
 		"--username", username,

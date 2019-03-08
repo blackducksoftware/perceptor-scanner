@@ -58,12 +58,12 @@ func (scanner *Scanner) ScanFullDockerImage(apiImage *api.ImageSpec) error {
 		return errors.Trace(err)
 	}
 	defer cleanUpFile(image.DockerTarFilePath())
-	return scanner.ScanFile(apiImage.Scheme, apiImage.Domain, apiImage.Port, apiImage.User, apiImage.Password, image.DockerTarFilePath(), apiImage.HubProjectName, apiImage.HubProjectVersionName, apiImage.HubScanName)
+	return scanner.ScanFile(apiImage.Scheme, apiImage.Domain, apiImage.Port, apiImage.User, apiImage.Password, image.DockerTarFilePath(), apiImage.BlackDuckProjectName, apiImage.BlackDuckProjectVersionName, apiImage.BlackDuckScanName)
 }
 
 // ScanFile runs the scan client against a single file
-func (scanner *Scanner) ScanFile(hubScheme string, host string, port int, username string, password string, path string, hubProjectName string, hubVersionName string, hubScanName string) error {
-	return scanner.scanClient.Scan(hubScheme, host, port, username, password, path, hubProjectName, hubVersionName, hubScanName)
+func (scanner *Scanner) ScanFile(scheme string, host string, port int, username string, password string, path string, blackDuckProjectName string, blackDuckVersionName string, blackDuckScanName string) error {
+	return scanner.scanClient.Scan(scheme, host, port, username, password, path, blackDuckProjectName, blackDuckVersionName, blackDuckScanName)
 }
 
 func cleanUpFile(path string) {
