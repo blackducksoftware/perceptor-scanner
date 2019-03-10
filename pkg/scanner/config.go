@@ -105,7 +105,7 @@ func GetConfig(configPath string) (*Config, error) {
 		viper.BindEnv("Perceptor.Host")
 		viper.BindEnv("Perceptor.Port")
 
-		viper.BindEnv("BlackDuck.PasswordEnvVar")
+		viper.BindEnv("BlackDuck.ConnectionsEnvironmentVariableName")
 		viper.BindEnv("BlackDuck.TLSVerification")
 
 		viper.BindEnv("Scanner.Port")
