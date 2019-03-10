@@ -50,6 +50,7 @@ func NewScanClient(tlsVerification bool) (*ScanClient, error) {
 	return &sc, nil
 }
 
+// ensureScanClientIsDownloaded will make sure that the Black Duck scan client is Downloaded for scanning
 func (sc *ScanClient) ensureScanClientIsDownloaded(scheme string, host string, port int, username string, password string) error {
 	if sc.scanClientInfo != nil {
 		return nil
@@ -71,6 +72,7 @@ func (sc *ScanClient) ensureScanClientIsDownloaded(scheme string, host string, p
 	return nil
 }
 
+// getTLSVerification return the TLS verfiication of the Black Duck host
 func (sc *ScanClient) getTLSVerification() string {
 	if sc.tlsVerification {
 		return ""
@@ -78,7 +80,7 @@ func (sc *ScanClient) getTLSVerification() string {
 	return "--insecure"
 }
 
-// Scan ...
+// Scan executes the Black Duck scan for the input artifact
 func (sc *ScanClient) Scan(scheme string, host string, port int, username string, password string, path string, projectName string, versionName string, scanName string) error {
 	if err := sc.ensureScanClientIsDownloaded(scheme, host, port, username, password); err != nil {
 		return errors.Annotate(err, "cannot run scan cli")

@@ -49,7 +49,7 @@ type Host struct {
 	Password string `json:"password"`
 }
 
-// NewManager ...
+// NewManager return the manager type
 func NewManager(config *Config, stop <-chan struct{}) (*Manager, error) {
 	log.Infof("instantiating Manager with config %+v", config)
 
@@ -80,6 +80,7 @@ func (sm *Manager) StartRequestingScanJobs() {
 	}()
 }
 
+// requestAndRunScanJob will request for scan jobs from the Perceptor
 func (sm *Manager) requestAndRunScanJob() {
 	log.Debug("requesting scan job")
 	nextImage, err := sm.perceptorClient.GetNextImage()

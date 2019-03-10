@@ -33,7 +33,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// ImageFacadeConfig ...
+// ImageFacadeConfig maps to the ImageFacade config of the input configmap
 type ImageFacadeConfig struct {
 	// These allow images to be pulled from registries that require authentication
 	PrivateDockerRegistries []*common.RegistryAuth
@@ -42,13 +42,13 @@ type ImageFacadeConfig struct {
 	Port                    int
 }
 
-// Config ...
+// Config return the Image Facade configurations
 type Config struct {
 	LogLevel    string
 	ImageFacade *ImageFacadeConfig
 }
 
-// GetLogLevel ...
+// GetLogLevel returns the log level
 func (config *Config) GetLogLevel() (log.Level, error) {
 	return log.ParseLevel(config.LogLevel)
 }

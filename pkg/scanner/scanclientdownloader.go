@@ -31,7 +31,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// DownloadScanClient ...
+// DownloadScanClient downloads the Black Duck scan client
 func DownloadScanClient(osType OSType, cliRootPath string, hubScheme string, hubHost string, hubUser string, hubPassword string, hubPort int, timeout time.Duration) (*ScanClientInfo, error) {
 	// 1. instantiate hub client
 	hubBaseURL := fmt.Sprintf("%s://%s:%d", hubScheme, hubHost, hubPort)
