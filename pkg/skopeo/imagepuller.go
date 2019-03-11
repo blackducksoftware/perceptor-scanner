@@ -41,13 +41,13 @@ const (
 	getStage  = "get docker image"
 )
 
-// ImagePuller ...
+// ImagePuller contains the http Docker client and the secured Docker registry credentials
 type ImagePuller struct {
-	registries []common.RegistryAuth
+	registries []*common.RegistryAuth
 }
 
-// NewImagePuller ...
-func NewImagePuller(registries []common.RegistryAuth) *ImagePuller {
+// NewImagePuller returns the Image puller type
+func NewImagePuller(registries []*common.RegistryAuth) *ImagePuller {
 	log.Infof("creating Skopeo image puller")
 	return &ImagePuller{registries: registries}
 }
@@ -169,6 +169,7 @@ func (ip *ImagePuller) SaveImageToTar(image imageInterface.Image) error {
 	return err
 }
 
+// needAuthHeader will determine whether the secured registry credentials to be passed to the skopeo client for docker pull
 func (ip *ImagePuller) needAuthHeader(image imageInterface.Image) string {
 	var headerValue string
 	dockerPullSpec := image.DockerPullSpec()
@@ -188,6 +189,7 @@ func (ip *ImagePuller) needAuthHeader(image imageInterface.Image) string {
 	return headerValue
 }
 
+// recordTarFileSize will record the TAR file size
 func (ip *ImagePuller) recordTarFileSize(image imageInterface.Image) error {
 	// What's the right way to get the size of the file?
 	//  1. resp.ContentLength

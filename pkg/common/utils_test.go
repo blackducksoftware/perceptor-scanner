@@ -44,7 +44,7 @@ func (ti *testImage) DockerTarFilePath() string {
 
 func RunUtilsTests() {
 	Describe("NeedsAuthHeader", func() {
-		internalDockerRegistries := []RegistryAuth{
+		internalDockerRegistries := []*RegistryAuth{
 			{URL: "abc.def:5000", User: "", Password: ""},
 			{URL: "docker-registry.default.svc:5000", User: "", Password: ""},
 			{URL: "172.1.1.0:abcd", User: "", Password: ""},
@@ -54,13 +54,13 @@ func RunUtilsTests() {
 				pullSpec: "", registryAuth: nil,
 			},
 			{
-				pullSpec: "abc.def:5000/qqq", registryAuth: &internalDockerRegistries[0],
+				pullSpec: "abc.def:5000/qqq", registryAuth: internalDockerRegistries[0],
 			},
 			{
-				pullSpec: "docker-registry.default.svc:5000/ttt", registryAuth: &internalDockerRegistries[1],
+				pullSpec: "docker-registry.default.svc:5000/ttt", registryAuth: internalDockerRegistries[1],
 			},
 			{
-				pullSpec: "172.1.1.0:abcd/abc", registryAuth: &internalDockerRegistries[2],
+				pullSpec: "172.1.1.0:abcd/abc", registryAuth: internalDockerRegistries[2],
 			},
 			{
 				pullSpec: "172.1.1.0:abc/abc", registryAuth: nil,

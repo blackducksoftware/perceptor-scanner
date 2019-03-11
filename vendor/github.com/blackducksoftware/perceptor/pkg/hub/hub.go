@@ -35,12 +35,13 @@ type hubAction struct {
 	apply func() error
 }
 
-// Hub .....
+// Hub stores the Black Duck configuration
 type Hub struct {
 	client *Client
 	// basic hub info
-	host   string
-	status ClientStatus
+	host                 string
+	concurrrentScanLimit int
+	status               ClientStatus
 	// data
 	model  *Model
 	errors []error
@@ -56,16 +57,17 @@ type Hub struct {
 	actions chan *hubAction
 }
 
-// NewHub returns a new Hub.  It will not be logged in.
-func NewHub(username string, password string, host string, rawClient RawClientInterface, timings *Timings) *Hub {
+// NewHub returns a new Black Duck.  It will not be logged in.
+func NewHub(username string, password string, host string, concurrentScanLimit int, rawClient RawClientInterface, timings *Timings) *Hub {
 	hub := &Hub{
-		client:  NewClient(username, password, host, rawClient),
-		host:    host,
-		status:  ClientStatusDown,
-		model:   nil,
-		errors:  []error{},
-		stop:    make(chan struct{}),
-		actions: make(chan *hubAction)}
+		client:               NewClient(username, password, host, rawClient),
+		host:                 host,
+		concurrrentScanLimit: concurrentScanLimit,
+		status:               ClientStatusDown,
+		model:                nil,
+		errors:               []error{},
+		stop:                 make(chan struct{}),
+		actions:              make(chan *hubAction)}
 	// model setup
 	hub.model = NewModel(host, hub.stop, func(scanName string) (*ScanResults, error) {
 		return hub.client.fetchScan(scanName)
@@ -98,20 +100,26 @@ func NewHub(username string, password string, host string, rawClient RawClientIn
 
 // Private methods
 
+// getStateMetrics get the state metrics
 func (hub *Hub) getStateMetrics() {
 	hub.model.getStateMetrics()
 }
 
-func (hub *Hub) recordError(err error) {
+// recordError records the error
+func (hub *Hub) recordError(description string, err error) {
 	if err != nil {
+		log.Errorf("%s: %s", description, err.Error())
 		hub.errors = append(hub.errors, err)
+	} else {
+		log.Debugf("no error for %s", description)
 	}
 	if len(hub.errors) > 1000 {
 		hub.errors = hub.errors[500:]
 	}
 }
 
-func (hub *Hub) apiModel() *api.ModelHub {
+// apiModel returns the api Model
+func (hub *Hub) apiModel() *api.ModelBlackDuck {
 	errors := make([]string, len(hub.errors))
 	for ix, err := range hub.errors {
 		errors[ix] = err.Error()
@@ -123,66 +131,73 @@ func (hub *Hub) apiModel() *api.ModelHub {
 	return apiModel
 }
 
+// login logins to the Black Duck instance
 func (hub *Hub) login() {
-	log.Debugf("starting to login to hub")
+	log.Debugf("starting to login to hub %s", hub.host)
 	err := hub.client.login()
 	hub.actions <- &hubAction{"didLogin", func() error {
-		hub.recordError(err)
+		hub.recordError(fmt.Sprintf("login to hub %s", hub.host), err)
 		if err != nil && hub.status == ClientStatusUp {
 			hub.status = ClientStatusDown
-			hub.recordError(hub.checkScansForCompletionTimer.Pause())
-			hub.recordError(hub.fetchScansTimer.Pause())
-			hub.recordError(hub.fetchAllScansTimer.Pause())
-			hub.recordError(hub.refreshScansTimer.Pause())
+			hub.recordError(fmt.Sprintf("pause check scans for completion timer %s", hub.host), hub.checkScansForCompletionTimer.Pause())
+			hub.recordError(fmt.Sprintf("pause fetch scans timer %s", hub.host), hub.fetchScansTimer.Pause())
+			hub.recordError(fmt.Sprintf("pause fetch all scans timer %s", hub.host), hub.fetchAllScansTimer.Pause())
+			hub.recordError(fmt.Sprintf("pause refresh scans timer %s", hub.host), hub.refreshScansTimer.Pause())
 		} else if err == nil && hub.status == ClientStatusDown {
 			hub.status = ClientStatusUp
-			hub.recordError(hub.checkScansForCompletionTimer.Resume(true))
-			hub.recordError(hub.fetchScansTimer.Resume(true))
-			hub.recordError(hub.fetchAllScansTimer.Resume(true))
-			hub.recordError(hub.refreshScansTimer.Resume(true))
+			hub.recordError(fmt.Sprintf("resume check scans for completion timer %s", hub.host), hub.checkScansForCompletionTimer.Resume(true))
+			hub.recordError(fmt.Sprintf("resume fetch scans timer  %s", hub.host), hub.fetchScansTimer.Resume(true))
+			hub.recordError(fmt.Sprintf("resume fetch all scans timer  %s", hub.host), hub.fetchAllScansTimer.Resume(true))
+			hub.recordError(fmt.Sprintf("resume refresh scans timer  %s", hub.host), hub.refreshScansTimer.Resume(true))
 		}
 		return nil
 	}}
 }
 
+// fetchAllScans fetches all Black Duck scans
 func (hub *Hub) fetchAllScans() {
 	log.Debugf("starting to fetch all scans")
 	cls, err := hub.client.listAllCodeLocations()
-	hub.recordError(err)
+	hub.recordError(fmt.Sprintf("fetch all code locations for hub %s", hub.host), err)
 	hub.model.didFetchScans(cls, err)
 }
 
+// fetchAllScans fetches all unknown Black Duck scans
 func (hub *Hub) fetchUnknownScans() {
 	log.Debugf("starting to fetch unknown scans")
 	hub.model.fetchUnknownScans()
 }
 
 // Regular jobs
-
+// startRefreshScansTimer return the start refresh scan timer
 func (hub *Hub) startRefreshScansTimer(pause time.Duration) *util.Timer {
 	return util.NewTimer(fmt.Sprintf("refresh-scans-%s", hub.host), pause, hub.stop, func() {
 		// TODO implement
 	})
 }
 
+// startLoginTimer return the start login timer
 func (hub *Hub) startLoginTimer(pause time.Duration) *util.Timer {
 	return util.NewRunningTimer(fmt.Sprintf("login-%s", hub.host), pause, hub.stop, true, func() {
 		hub.login()
 	})
 }
 
+// startFetchAllScansTimer return the start fetch all scans timer
 func (hub *Hub) startFetchAllScansTimer(pause time.Duration) *util.Timer {
 	return util.NewTimer(fmt.Sprintf("fetchScans-%s", hub.host), pause, hub.stop, func() {
 		hub.fetchAllScans()
 	})
 }
 
+// startFetchAllScansTimer return the start fetch unknown scans timer
 func (hub *Hub) startFetchUnknownScansTimer(pause time.Duration) *util.Timer {
 	return util.NewTimer(fmt.Sprintf("fetchUnknownScans-%s", hub.host), pause, hub.stop, func() {
 		hub.fetchUnknownScans()
 	})
 }
 
+// startFetchAllScansTimer return the start get metrics timer
 func (hub *Hub) startGetMetricsTimer(pause time.Duration) *util.Timer {
 	name := fmt.Sprintf("getMetrics-%s", hub.host)
 	return util.NewRunningTimer(name, pause, hub.stop, true, func() {
@@ -190,6 +205,7 @@ func (hub *Hub) startGetMetricsTimer(pause time.Duration) *util.Timer {
 	})
 }
 
+// startFetchAllScansTimer return the start check scans for completion timer
 func (hub *Hub) startCheckScansForCompletionTimer(pause time.Duration) *util.Timer {
 	name := fmt.Sprintf("checkScansForCompletion-%s", hub.host)
 	return util.NewTimer(name, pause, hub.stop, func() {
@@ -199,27 +215,27 @@ func (hub *Hub) startCheckScansForCompletionTimer(pause time.Duration) *util.Tim
 
 // Some public API methods ...
 
-// StartScanClient ...
+// StartScanClient starts the scan client
 func (hub *Hub) StartScanClient(scanName string) {
 	hub.model.StartScanClient(scanName)
 }
 
-// FinishScanClient ...
+// FinishScanClient finishes the scan client
 func (hub *Hub) FinishScanClient(scanName string, scanErr error) {
 	hub.model.FinishScanClient(scanName, scanErr)
 }
 
-// ScansCount ...
+// ScansCount return the Black Duck scan count
 func (hub *Hub) ScansCount() <-chan int {
 	return hub.model.ScansCount()
 }
 
-// InProgressScans ...
+// InProgressScans return the Inprogress scan count of the Black Duck instance
 func (hub *Hub) InProgressScans() <-chan []string {
 	return hub.model.InProgressScans()
 }
 
-// ScanResults ...
+// ScanResults return the scan results
 func (hub *Hub) ScanResults() <-chan map[string]*Scan {
 	return hub.model.ScanResults()
 }
@@ -232,7 +248,7 @@ func (hub *Hub) Updates() <-chan Update {
 	return hub.model.Updates()
 }
 
-// Stop ...
+// Stop stops the Black Duck
 func (hub *Hub) Stop() {
 	close(hub.stop)
 }
@@ -242,20 +258,25 @@ func (hub *Hub) StopCh() <-chan struct{} {
 	return hub.stop
 }
 
-// Host ...
+// Host return the Host
 func (hub *Hub) Host() string {
 	return hub.host
 }
 
-// ResetCircuitBreaker ...
+// ConcurrentScanLimit return the concurrent scan limit
+func (hub *Hub) ConcurrentScanLimit() int {
+	return hub.concurrrentScanLimit
+}
+
+// ResetCircuitBreaker resets the circuit breaker
 func (hub *Hub) ResetCircuitBreaker() {
 	recordEvent(hub.host, "resetCircuitBreaker")
 	hub.client.resetCircuitBreaker()
 }
 
-// Model ...
-func (hub *Hub) Model() <-chan *api.ModelHub {
-	ch := make(chan *api.ModelHub)
+// Model return the model
+func (hub *Hub) Model() <-chan *api.ModelBlackDuck {
+	ch := make(chan *api.ModelBlackDuck)
 	hub.actions <- &hubAction{"getModel", func() error {
 		ch <- hub.apiModel()
 		return nil
@@ -263,7 +284,7 @@ func (hub *Hub) Model() <-chan *api.ModelHub {
 	return ch
 }
 
-// HasFetchedScans ...
+// HasFetchedScans return whether there is any fetched scans
 func (hub *Hub) HasFetchedScans() <-chan bool {
 	return hub.model.HasFetchedScans()
 }
