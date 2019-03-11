@@ -32,7 +32,7 @@
 [[constraint]]
   name = "github.com/blackducksoftware/perceptor"
   #version = "v2.2.2"
-  branch = "support-multiple-hubs"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/prometheus/client_golang"
