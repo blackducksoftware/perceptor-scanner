@@ -93,6 +93,7 @@ func (ip *ImagePuller) CreateImageInLocalDocker(image imageInterface.Image) erro
 	if len(headerValue) > 0 {
 		cmd = exec.Command("skopeo",
 			"--insecure-policy",
+			"--tls-verify=false",
 			"copy",
 			headerValue,
 			fmt.Sprintf("docker://%s", dockerPullSpec),
@@ -100,6 +101,7 @@ func (ip *ImagePuller) CreateImageInLocalDocker(image imageInterface.Image) erro
 	} else {
 		cmd = exec.Command("skopeo",
 			"--insecure-policy",
+			"--tls-verify=false",
 			"copy",
 			fmt.Sprintf("docker://%s", dockerPullSpec),
 			fmt.Sprintf("docker-daemon:%s", dockerPullSpec))
@@ -140,6 +142,7 @@ func (ip *ImagePuller) SaveImageToTar(image imageInterface.Image) error {
 	if len(headerValue) > 0 {
 		cmd = exec.Command("skopeo",
 			"--insecure-policy",
+			"--tls-verify=false",
 			"copy",
 			headerValue,
 			fmt.Sprintf("docker://%s", dockerPullSpec),
@@ -147,6 +150,7 @@ func (ip *ImagePuller) SaveImageToTar(image imageInterface.Image) error {
 	} else {
 		cmd = exec.Command("skopeo",
 			"--insecure-policy",
+			"--tls-verify=false",
 			"copy",
 			fmt.Sprintf("docker://%s", dockerPullSpec),
 			fmt.Sprintf("docker-archive:%s", tarFilePath))
