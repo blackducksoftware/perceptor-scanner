@@ -31,8 +31,8 @@
 
 [[constraint]]
   name = "github.com/blackducksoftware/perceptor"
-  #version = "v2.2.2"
-  branch = "master"
+  version = "v2.2.3"
+  #branch = "master"
 
 [[constraint]]
   name = "github.com/prometheus/client_golang"
